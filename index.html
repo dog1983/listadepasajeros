@@ -3,72 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuadro Tarifario</title>
+    <title>Calculadora de Diferencia en Porcentaje</title>
     <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
         }
 
-        th, td {
-            border: 1px solid #ddd;
+        input {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
             padding: 10px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <h2>Cuadro Tarifario de Pasajes</h2>
+    <h2>Calculadora de Diferencia en Porcentaje</h2>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Ruta</th>
-                <th>Clase</th>
-                <th>Precio</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Origen - Destino 1</td>
-                <td>Económica</td>
-                <td>$100</td>
-            </tr>
-            <tr>
-                <td>Origen - Destino 1</td>
-                <td>Primera Clase</td>
-                <td>$200</td>
-            </tr>
-            <tr>
-                <td>Origen - Destino 2</td>
-                <td>Económica</td>
-                <td>$120</td>
-            </tr>
-            <tr>
-                <td>Origen - Destino 2</td>
-                <td>Primera Clase</td>
-                <td>$250</td>
-            </tr>
-            <!-- Agrega más filas según sea necesario -->
-            <tr>
-                <td>Origen - Destino 3</td>
-                <td>Económica</td>
-                <td>$150</td>
-            </tr>
-            <tr>
-                <td>Origen - Destino 3</td>
-                <td>Primera Clase</td>
-                <td>$300</td>
-            </tr>
-            <!-- Agrega más filas según sea necesario -->
-        </tbody>
-    </table>
+    <label for="tarifa1">Tarifa 1:</label>
+    <input type="number" id="tarifa1" placeholder="Ingrese la primera tarifa">
+
+    <br>
+
+    <label for="tarifa2">Tarifa 2:</label>
+    <input type="number" id="tarifa2" placeholder="Ingrese la segunda tarifa">
+
+    <br>
+
+    <button onclick="calcularDiferencia()">Calcular Diferencia</button>
+
+    <p id="resultado"></p>
+
+    <script>
+        function calcularDiferencia() {
+            var tarifa1 = parseFloat(document.getElementById("tarifa1").value);
+            var tarifa2 = parseFloat(document.getElementById("tarifa2").value);
+
+            if (isNaN(tarifa1) || isNaN(tarifa2)) {
+                alert("Por favor, ingrese valores numéricos válidos.");
+                return;
+            }
+
+            var diferencia = tarifa2 - tarifa1;
+            var porcentaje = (diferencia / tarifa1) * 100;
+
+            document.getElementById("resultado").innerHTML = "La diferencia es: " + diferencia.toFixed(2) + "<br>El porcentaje de diferencia es: " + porcentaje.toFixed(2) + "%";
+        }
+    </script>
 
 </body>
 </html>
