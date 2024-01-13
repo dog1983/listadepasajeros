@@ -1,368 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabla de Posiciones y Fixture</title>
+    <title>Cuadro Tarifario</title>
     <style>
-        /* Estilo para la tabla de posiciones */
         table {
-            border-collapse: separate;
-            width: 50%;
-            margin: 20px;
-            border: 1px solid #ddd;
-                                }
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
 
         th, td {
-            padding: 8px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
             border: 1px solid #ddd;
-                   }
+            padding: 10px;
+            text-align: left;
+        }
 
         th {
-            background-color: #00FFFF;
-        }
-
-        /* Estilo para el fixture */
-        #fixture {
-            width: 50%;
-            margin: 20px;
-        }
-
-        #fixture th, #fixture td {
-            padding: 8px;
-            text-align: center;
-            border: 1px solid #ddd;
+            background-color: #f2f2f2;
         }
     </style>
 </head>
 <body>
-    <h1>Tabla de Posiciones</h1>
-    <table id="tablaPosiciones">
+
+    <h2>Cuadro Tarifario de Pasajes</h2>
+
+    <table>
         <thead>
             <tr>
-                <th>Jugador</th>
-                <th>Puntos</th>
+                <th>Ruta</th>
+                <th>Clase</th>
+                <th>Precio</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>Dario</td>
-                <td>3</td>
+                <td>Origen - Destino 1</td>
+                <td>Económica</td>
+                <td>$100</td>
             </tr>
             <tr>
-                <td>Churra</td>
-                <td>17</td>
+                <td>Origen - Destino 1</td>
+                <td>Primera Clase</td>
+                <td>$200</td>
             </tr>
             <tr>
-                <td>Dani</td>
-                <td>15</td>
+                <td>Origen - Destino 2</td>
+                <td>Económica</td>
+                <td>$120</td>
             </tr>
-            <tr>
-                <td>Burro</td>
-                <td>10</td>
-            </tr>
-            <tr>
-                <td>Magia</td>
-                <td>11</td>
-            </tr>
-            <tr>
-                <td>Fede</td>
-                <td>4</td>
-            </tr>
-            <tr>
-                <td>Diego</td>
-                <td>13</td>
-            </tr>
-            <tr>
-                <td>Marcos</td>
-                <td>16</td>
-            </tr>
+            <!-- Agrega más filas según sea necesario -->
         </tbody>
     </table>
 
-    <h1>Fixture</h1>
-    <table id="fixture">
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Partido</th>
-                <th>Resultado</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Fecha 1</td>
-                <td>Magia/Burro vs. Churra/Fede</td>
-                <td>6-5</td>
-            </tr>
-            <tr>
-                <td>Fecha 1</td>
-                <td>Dani/Marcos vs. Dario/Diego</td>
-                <td>6-0</td>
-            </tr>
-            <tr>
-                <td>Fecha 1</td>
-                <td>Magia/Burro vs. Dani/Marcos</td>
-                <td>2-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 1</td>
-                <td>Dario/Diego vs. Churra/Fede</td>
-                <td>1-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 1</td>
-                <td>Dani/Marcos vs. Churra/Fede</td>
-                <td>6-3</td>
-            </tr>
-            <tr>
-                <td>Fecha 1</td>
-                <td>Magia/Burro vs. Dario/Diego</td>
-                <td>6-2</td>
-            </tr>
-                  <tr>
-                <td>Fecha 2</td>
-                <td>Marcos/Churra vs. Dani/Fede</td>
-                <td>6-5</td>
-            </tr>
-            <tr>
-                <td>Fecha 2</td>
-                <td>Magia/Dario vs. Burro/Diego</td>
-                <td>0-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 2</td>
-                <td>Marcos/Churra vs. Burro/Diego</td>
-                <td>6-2</td>
-            </tr>
-            <tr>
-                <td>Fecha 2</td>
-                <td>Magia/Dario vs. Dani/Fede</td>
-                <td>5-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 2</td>
-                <td>Burro/Diego vs. Dani/Fede</td>
-                <td>6-2</td>
-            </tr>
-            <tr>
-                <td>Fecha 2</td>
-                <td>Marcos/Churra vs. Magia/Dario</td>
-                <td>6-1</td>
-
-    <tr>
-                <td>Fecha 3</td>
-                <td>Marcos/Magia vs. Cesar/Churra</td>
-                <td>1-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 3</td>
-                <td>Dani/Burro vs. Fede/Diego</td>
-                <td>6-4</td>
-            </tr>
-            <tr>
-                <td>Fecha 3</td>
-                <td>Marcos/Magia vs. Dani/Burro</td>
-                <td>4-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 3</td>
-                <td>Fede/Diego vs. Cesar/Churra</td>
-                <td>1-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 3</td>
-                <td>Fede/Diego vs. Marcos/Magia</td>
-                <td>4-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 3</td>
-                <td>Cesar/Churra vs. Dani/Burro</td>
-                <td>6-2</td>
-
-
-   <tr>
-                <td>Fecha 4</td>
-                <td>Marcos/Burro vs. Diego/Churra</td>
-                <td>2-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 4</td>
-                <td>Dani/Magia vs. Fede/Dario</td>
-                <td>6-2</td>
-            </tr>
-            <tr>
-                <td>Fecha 4</td>
-                <td>Marcos/Burro vs. Dani/Magia</td>
-                <td>6-2</td>
-            </tr>
-            <tr>
-                <td>Fecha 4</td>
-                <td>Fede/Dario vs. Diego/Churra</td>
-                <td>2-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 4</td>
-                <td>Fede/Dario vs. Marcos/Burro</td>
-                <td>4-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 4</td>
-                <td>Diego/Churra vs. Dani/Magia</td>
-                <td>4-6</td>
-
-<tr>
-                <td>Fecha 5</td>
-                <td>Marcos/Dario vs. Magia/Churra</td>
-                <td>6-4</td>
-            </tr>
-            <tr>
-                <td>Fecha 5</td>
-                <td>Dani/Diego vs. Fede/Burro</td>
-                <td>6-2</td>
-            </tr>
-            <tr>
-                <td>Fecha 5</td>
-                <td>Marcos/Dario vs. Dani/Diego</td>
-                <td>2-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 5</td>
-                <td>Fede/Burro vs. Magia/Churra</td>
-                <td>3-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 5</td>
-                <td>Fede/Burro vs. Marcos/Dario</td>
-                <td>6-5</td>
-            </tr>
-            <tr>
-                <td>Fecha 5</td>
-                <td>Magia/Churra vs. Dani/Diego</td>
-                <td>0-6</td>
-
-<tr>
-                <td>Fecha 6</td>
-                <td>Marcos/Diego vs. Magia/Fede</td>
-                <td>6-1</td>
-            </tr>
-            <tr>
-                <td>Fecha 6</td>
-                <td>Dani/Dario vs. Churra/Agustin</td>
-                <td>1-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 6</td>
-                <td>Marcos/Diego vs. Dani/Dario</td>
-                <td>6-3</td>
-            </tr>
-            <tr>
-                <td>Fecha 6</td>
-                <td>Churra/Agustin vs. Magia/Fede</td>
-                <td>6-3</td>
-            </tr>
-            <tr>
-                <td>Fecha 6</td>
-                <td>Churra/Agustin vs. Marcos/Diego</td>
-                <td>6-0</td>
-            </tr>
-            <tr>
-                <td>Fecha 6</td>
-                <td>Magia/Fede vs. Dani/Dario</td>
-                <td>4-6</td>
-
-<tr>
-                <td>Fecha 7</td>
-                <td>Marcos/Fede vs. Dani/Churra</td>
-                <td>2-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 7</td>
-                <td>Magia/Diego vs. Dario/Burro</td>
-                <td>6-3</td>
-            </tr>
-            <tr>
-                <td>Fecha 7</td>
-                <td>Marcos/Fede vs. Magia/Diego</td>
-                <td>1-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 7</td>
-                <td>Dario/Burro vs. Dani/Churra</td>
-                <td>2-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 7</td>
-                <td>Dario/Burro vs. Marcos/Fede</td>
-                <td>5-6</td>
-            </tr>
-            <tr>
-                <td>Fecha 7</td>
-                <td>Magia/Diego vs. Dani/Churra</td>
-                <td>2-6</td>
-            <tr>
-                <td>Fecha Final</td>
-                <td>Dario/Churra vs. Dani/Fede</td>
-                <td>6-5</td>
-            </tr>
-            <tr>
-                <td>Fecha Final</td>
-                <td>Marcos/Magia vs. Diego/Burro</td>
-                <td>6-4</td>
-            </tr>
-            <tr>
-                <td>Fecha Final</td>
-                <td>Dario/Churra vs. Marcos/Magia</td>
-                <td>4-6</td>
-            </tr>
-            <tr>
-                <td>Fecha Final</td>
-                <td>Diego/Burro vs. Dani/Fede</td>
-                <td>6-0</td>
-            </tr>
-            <tr>
-                <td>Fecha Final</td>
-                <td>Dario/Churra vs. Diego/Burro</td>
-                <td>3-6</td>
-            </tr>
-            <tr>
-                <td>Fecha Final</td>
-                <td>Dani/Fede vs. Marcos/Magia</td>
-                <td>4-6</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <script>
-        // Función para ordenar la tabla de posiciones por puntos
-        function ordenarPorPuntos() {
-            var table, rows, switching, i, x, y, shouldSwitch;
-            table = document.getElementById("tablaPosiciones");
-            switching = true;
-            while (switching) {
-                switching = false;
-                rows = table.rows;
-                for (i = 1; i < (rows.length - 1); i++) {
-                    shouldSwitch = false;
-                    x = parseFloat(rows[i].getElementsByTagName("td")[1].textContent);
-                    y = parseFloat(rows[i + 1].getElementsByTagName("td")[1].textContent);
-                    if (x < y) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                }
-                if (shouldSwitch) {
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                }
-            }
-        }
-
-        // Llamar a la función de ordenar cuando se cargue la página
-        window.onload = ordenarPorPuntos;
-    </script>
 </body>
 </html>
-
