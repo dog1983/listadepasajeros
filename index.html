@@ -3,50 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta de Tarifa</title>
+  <title>Consulta AJAX</title>
 </head>
 <body>
-  <h1>Consulta de Tarifa</h1>
-  
-  <form id="tarifaForm">
-    <label for="origen">Origen:</label>
-    <input type="text" id="origen" name="origen" required>
-    
-    <label for="destino">Destino:</label>
-    <input type="text" id="destino" name="destino" required>
-    
-    <button type="button" onclick="consultarTarifa()">Consultar Tarifa</button>
-  </form>
-  
-  <div id="resultadoTarifa"></div>
+  <h1>Consulta AJAX</h1>
+
+  <div id="resultadoConsulta"></div>
 
   <script>
-    function consultarTarifa() {
-      // Obtener valores de origen y destino
-      var origen = document.getElementById('origen').value;
-      var destino = document.getElementById('destino').value;
+    function realizarConsulta() {
+      // Crear el objeto XMLHttpRequest
+      var xhr = new XMLHttpRequest();
 
-      // Aquí debes realizar la lógica de consulta de tarifa en el servidor
-      // Puedes utilizar AJAX o Fetch para enviar los datos al servidor y recibir la tarifa
+      // Configurar la solicitud
+      xhr.open('GET', 'https://jsonplaceholder.typicode.com/todos/1', true);
 
-      // En este ejemplo, simplemente se mostrará un mensaje en el cliente
-      var tarifa = calcularTarifaFake(origen, destino);
-      mostrarResultadoTarifa(tarifa);
+      // Definir la función de respuesta
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          // Manejar la respuesta del servidor
+          var resultadoConsultaElement = document.getElementById('resultadoConsulta');
+          resultadoConsultaElement.innerHTML = 'Respuesta del servidor: ' + xhr.responseText;
+        }
+      };
+
+      // Enviar la solicitud
+      xhr.send();
     }
 
-    function calcularTarifaFake(origen, destino) {
-      // Esta función simula la lógica de cálculo de tarifa
-      // Reemplázala con la lógica real de tu aplicación en el servidor
-      var tarifaFake = Math.floor(Math.random() * 100) + 1; // Número aleatorio como tarifa
-      return tarifaFake;
-    }
-
-    function mostrarResultadoTarifa(tarifa) {
-      // Mostrar la tarifa en el elemento con id "resultadoTarifa"
-      var resultadoTarifaElement = document.getElementById('resultadoTarifa');
-      resultadoTarifaElement.innerHTML = 'Tarifa: $' + tarifa;
-    }
+    // Llamar a la función cuando la página cargue (solo para propósitos de demostración)
+    document.addEventListener('DOMContentLoaded', function() {
+      realizarConsulta();
+    });
   </script>
 </body>
 </html>
-
