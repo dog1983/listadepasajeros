@@ -3,38 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta AJAX</title>
+  <title>Búsqueda con AJAX</title>
 </head>
 <body>
-  <h1>Consulta AJAX</h1>
+  <h1>Búsqueda con AJAX</h1>
 
-  <div id="resultadoConsulta"></div>
+  <label for="searchInput">Buscar Usuario:</label>
+  <input type="text" id="searchInput" placeholder="Ingrese el nombre del usuario">
+  <button onclick="realizarBusqueda()">Buscar</button>
+
+  <div id="resultadoBusqueda"></div>
 
   <script>
-    function realizarConsulta() {
+    function realizarBusqueda() {
+      // Obtener el valor del textbox
+      var searchTerm = document.getElementById('searchInput').value;
+
       // Crear el objeto XMLHttpRequest
       var xhr = new XMLHttpRequest();
 
-      // Configurar la solicitud
-      xhr.open('GET', 'https://jsonplaceholder.typicode.com/todos/1', true);
+      // Configurar la solicitud GET con el término de búsqueda
+      xhr.open('GET', 'https://jsonplaceholder.typicode.com/users?name=' + searchTerm, true);
 
       // Definir la función de respuesta
       xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
           // Manejar la respuesta del servidor
-          var resultadoConsultaElement = document.getElementById('resultadoConsulta');
-          resultadoConsultaElement.innerHTML = 'Respuesta del servidor: ' + xhr.responseText;
+          var resultadoBusquedaElement = document.getElementById('resultadoBusqueda');
+          resultadoBusquedaElement.innerHTML = 'Resultados de la búsqueda: ' + xhr.responseText;
         }
       };
 
       // Enviar la solicitud
       xhr.send();
     }
-
-    // Llamar a la función cuando la página cargue (solo para propósitos de demostración)
-    document.addEventListener('DOMContentLoaded', function() {
-      realizarConsulta();
-    });
   </script>
 </body>
 </html>
+
