@@ -71,8 +71,8 @@
 
       // Ordenar por Apellido (columna 1)
       body.sort((a, b) => {
-        const apellidoA = a[1]?.toLowerCase() || '';
-        const apellidoB = b[1]?.toLowerCase() || '';
+        const apellidoA = a[0]?.toLowerCase() || '';
+        const apellidoB = b[0]?.toLowerCase() || '';
         return apellidoA.localeCompare(apellidoB);
       });
 
