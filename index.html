@@ -180,4 +180,50 @@
       renderTable();
     }
 
-    function removeSelectedRows
+    function removeSelectedRows() {
+      const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
+      const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+
+      if (indexesToRemove.length === 0) {
+        alert('No hay filas seleccionadas para eliminar.');
+        return;
+      }
+
+      // Elimina las filas desde el final para no alterar los índices
+      indexesToRemove.sort((a, b) => b - a);
+
+      indexesToRemove.forEach(index => {
+        tableData.splice(index, 1); // recordá que index 0 es el header
+      });
+
+      renderTable();
+    }
+
+    // Modal funciones
+    function openModal() {
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    function confirmDownload() {
+      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
+      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+
+      const csvContent = tableData.map(row => row.join(';')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+
+      closeModal();
+    }
+  </script>
+
+</body>
+</html>
