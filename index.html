@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web - Modal para Descargar</title>
+  <title>Editor CSV Web - Eliminar filas específicas</title>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -20,9 +20,9 @@
     button {
       margin: 5px;
     }
-    /* Estilos del Modal */
+    /* Modal */
     .modal {
-      display: none; /* oculto por defecto */
+      display: none;
       position: fixed;
       z-index: 1;
       left: 0; top: 0;
@@ -51,14 +51,14 @@
 
   <div>
     <button onclick="addRow()">Agregar fila</button>
-    <button onclick="removeLastRow()">Eliminar última fila</button>
+    <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
     <br><br>
     <button onclick="openModal()">Descargar CSV</button>
   </div>
 
   <div id="tableContainer"></div>
 
-  <!-- Modal -->
+  <!-- Modal para nombre de archivo -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <h3>Nombre del archivo</h3>
@@ -112,6 +112,10 @@
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
 
+      const thCheck = document.createElement('th');
+      thCheck.textContent = "Seleccionar";
+      headRow.appendChild(thCheck);
+
       const thNum = document.createElement('th');
       thNum.textContent = "#";
       headRow.appendChild(thNum);
@@ -129,6 +133,14 @@
 
       body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
+
+        const tdCheck = document.createElement('td');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'rowCheckbox';
+        checkbox.dataset.index = rowIndex + 1; // índice real considerando el header
+        tdCheck.appendChild(checkbox);
+        tr.appendChild(tdCheck);
 
         const tdNum = document.createElement('td');
         tdNum.textContent = rowIndex + 1;
@@ -168,37 +180,4 @@
       renderTable();
     }
 
-    function removeLastRow() {
-      if (tableData.length <= 1) return;
-      tableData.pop();
-      renderTable();
-    }
-
-    // Funciones del Modal
-    function openModal() {
-      document.getElementById('modal').style.display = 'block';
-    }
-
-    function closeModal() {
-      document.getElementById('modal').style.display = 'none';
-    }
-
-    function confirmDownload() {
-      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
-      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-
-      const csvContent = tableData.map(row => row.join(';')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-
-      closeModal();
-    }
-  </script>
-
-</body>
-</html>
+    function removeSelectedRows
