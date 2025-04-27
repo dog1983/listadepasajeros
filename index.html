@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web - Numerado y Ordenado</title>
+  <title>Editor CSV Web - Numerado, Ordenado y Descarga Personalizada</title>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -10,7 +10,7 @@
       padding: 5px;
       text-align: center;
     }
-    input[type="file"] {
+    input[type="file"], input[type="text"] {
       margin-bottom: 10px;
     }
     input {
@@ -23,13 +23,16 @@
   </style>
 </head>
 <body>
-  <h1>Editor CSV Web - Numerado y Ordenado</h1>
+  <h1>Editor CSV Web - Todo en uno 🚀</h1>
 
   <input type="file" id="csvFile" accept=".csv"><br>
 
   <div>
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeLastRow()">Eliminar última fila</button>
+    <br><br>
+
+    <input type="text" id="fileNameInput" placeholder="Nombre del archivo (sin .csv)">
     <button onclick="downloadCSV()">Descargar CSV</button>
   </div>
 
@@ -65,18 +68,16 @@
 
       if (tableData.length === 0) return;
 
-      // Separar encabezado y datos
       const header = tableData[0];
       const body = tableData.slice(1);
 
-      // Ordenar por Apellido (columna 1)
+      // Ordenar por Apellido (columna 0)
       body.sort((a, b) => {
         const apellidoA = a[0]?.toLowerCase() || '';
         const apellidoB = b[0]?.toLowerCase() || '';
         return apellidoA.localeCompare(apellidoB);
       });
 
-      // Crear encabezado con numeración vacía
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
 
@@ -93,14 +94,13 @@
       thead.appendChild(headRow);
       table.appendChild(thead);
 
-      // Crear cuerpo de tabla
       const tbody = document.createElement('tbody');
 
       body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
 
         const tdNum = document.createElement('td');
-        tdNum.textContent = rowIndex + 1; // Numeración visible
+        tdNum.textContent = rowIndex + 1;
         tr.appendChild(tdNum);
 
         row.forEach((cell, colIndex) => {
@@ -123,7 +123,6 @@
       table.appendChild(tbody);
       container.appendChild(table);
 
-      // Actualizar los datos combinando encabezado y cuerpo
       updateTableData(header, body);
     }
 
@@ -145,13 +144,16 @@
     }
 
     function downloadCSV() {
+      const fileNameInput = document.getElementById('fileNameInput').value.trim();
+      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+
       const csvContent = tableData.map(row => row.join(';')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
 
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'datos_editados.csv';
+      a.download = fileName;
       a.click();
     }
   </script>
