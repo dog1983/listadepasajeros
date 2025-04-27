@@ -4,22 +4,81 @@
   <meta charset="UTF-8">
   <title>Editor CSV Web Mejorado</title>
   <style>
-    table, th, td {
-      border: 1px solid black;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #4a90e2;
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+
+    input[type="file"], input[type="text"], button {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    input[type="text"] {
+      width: 200px;
+    }
+
+    button {
+      background-color: #4a90e2;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #357ABD;
+    }
+
+    table {
+      width: 100%;
       border-collapse: collapse;
-      padding: 5px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
       text-align: center;
     }
-    input[type="file"], input[type="text"] {
-      margin-bottom: 10px;
+
+    th {
+      background-color: #e6f0fa;
     }
-    input {
-      width: 120px;
-      box-sizing: border-box;
+
+    tr:hover {
+      background-color: #f1f9ff;
     }
-    button {
-      margin: 5px;
+
+    input[type="checkbox"] {
+      transform: scale(1.2);
+      margin-top: 5px;
     }
+
+    input[type="text"]:not(#searchInput):not(#fileNameInputModal) {
+      width: 100px;
+    }
+
     /* Modal */
     .modal {
       display: none;
@@ -28,34 +87,42 @@
       left: 0; top: 0;
       width: 100%; height: 100%;
       background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
     }
+
     .modal-content {
-      background-color: #fefefe;
-      margin: 15% auto;
-      padding: 20px;
-      border: 1px solid #888;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
       width: 300px;
       text-align: center;
-      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    .modal input {
+
+    .modal-content input {
       width: 90%;
-      margin-bottom: 10px;
+      padding: 8px;
+      margin-top: 10px;
+      border-radius: 5px;
+    }
+
+    .modal-content button {
+      margin-top: 10px;
+      width: 45%;
     }
   </style>
 </head>
 <body>
-  <h1>Editor CSV Web 🚀</h1>
 
-  <input type="file" id="csvFile" accept=".csv"><br>
+  <h1>Editor de CSV Web 🚀</h1>
 
-  <input type="text" id="searchInput" placeholder="Buscar por apellido..." oninput="renderTable()">
-
-  <div>
+  <div id="controls">
+    <input type="file" id="csvFile" accept=".csv">
+    <input type="text" id="searchInput" placeholder="Buscar por apellido..." oninput="renderTable()">
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
     <button onclick="saveAndSort()">Guardar cambios y ordenar</button>
-    <br><br>
     <button onclick="openModal()">Descargar CSV</button>
   </div>
 
@@ -90,14 +157,12 @@
 
     function parseCSV(text) {
       const rows = text.trim().split('\n');
-      const data = rows.map(row => row.split(';'));
-      return data;
+      return rows.map(row => row.split(';'));
     }
 
     function renderTable() {
       const container = document.getElementById('tableContainer');
       const table = document.createElement('table');
-
       container.innerHTML = '';
 
       if (tableData.length === 0) return;
@@ -105,13 +170,11 @@
       const header = tableData[0];
       let body = tableData.slice(1);
 
-      // Filtro de búsqueda
       const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
       if (searchTerm) {
         body = body.filter(row => row[0]?.toLowerCase().includes(searchTerm));
       }
 
-      // Ordenar por apellido
       body.sort((a, b) => {
         const apellidoA = a[0]?.toLowerCase() || '';
         const apellidoB = b[0]?.toLowerCase() || '';
@@ -121,19 +184,8 @@
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
 
-      const thCheck = document.createElement('th');
-      thCheck.textContent = "Seleccionar";
-      headRow.appendChild(thCheck);
-
-      const thNum = document.createElement('th');
-      thNum.textContent = "#";
-      headRow.appendChild(thNum);
-
-      header.forEach(title => {
-        const th = document.createElement('th');
-        th.textContent = title.trim();
-        headRow.appendChild(th);
-      });
+      headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` +
+        header.map(title => `<th>${title.trim()}</th>`).join('');
 
       thead.appendChild(headRow);
       table.appendChild(thead);
@@ -143,17 +195,8 @@
       body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
 
-        const tdCheck = document.createElement('td');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'rowCheckbox';
-        checkbox.dataset.index = rowIndex + 1;
-        tdCheck.appendChild(checkbox);
-        tr.appendChild(tdCheck);
-
-        const tdNum = document.createElement('td');
-        tdNum.textContent = rowIndex + 1;
-        tr.appendChild(tdNum);
+        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}"></td>`;
+        tr.innerHTML += `<td>${rowIndex + 1}</td>`;
 
         row.forEach((cell, colIndex) => {
           const td = document.createElement('td');
@@ -183,7 +226,7 @@
       if (tableData.length === 0) return;
       const newRow = new Array(tableData[0].length).fill('');
       tableData.push(newRow);
-      saveAndSort(); // Guardar y reordenar
+      saveAndSort();
     }
 
     function removeSelectedRows() {
@@ -196,17 +239,15 @@
       }
 
       indexesToRemove.sort((a, b) => b - a);
-
       indexesToRemove.forEach(index => {
         tableData.splice(index, 1);
       });
 
-      saveAndSort(); // Actualizar
+      saveAndSort();
     }
 
     function saveAndSort(reRender = true) {
       if (tableData.length <= 1) return;
-
       const header = tableData[0];
       const body = tableData.slice(1);
 
@@ -223,9 +264,8 @@
       }
     }
 
-    // Modal funciones
     function openModal() {
-      document.getElementById('modal').style.display = 'block';
+      document.getElementById('modal').style.display = 'flex';
     }
 
     function closeModal() {
@@ -233,7 +273,7 @@
     }
 
     function confirmDownload() {
-      saveAndSort(); // Asegurar todo ordenado antes de descargar
+      saveAndSort();
 
       const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
