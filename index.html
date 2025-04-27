@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web</title>
+  <title>Editor CSV Web - Inputs por Celda</title>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -12,13 +12,17 @@
     input[type="file"] {
       margin-bottom: 10px;
     }
+    input {
+      width: 100px;
+      box-sizing: border-box;
+    }
     button {
       margin: 5px;
     }
   </style>
 </head>
 <body>
-  <h1>Editor CSV en el Navegador</h1>
+  <h1>Editor CSV Web</h1>
   <input type="file" id="csvFile" accept=".csv"><br>
   <div>
     <button onclick="addRow()">Agregar fila</button>
@@ -59,21 +63,21 @@
 
         row.forEach((cell, colIndex) => {
           const td = document.createElement('td');
+          const input = document.createElement('input');
+          input.value = cell;
 
           if (rowIndex === 0) {
-            td.textContent = cell;
-            td.style.fontWeight = 'bold';
-            td.style.backgroundColor = '#f0f0f0';
+            input.readOnly = true;
+            input.style.backgroundColor = '#f0f0f0';
+            input.style.fontWeight = 'bold';
           } else {
-            const input = document.createElement('input');
-            input.value = cell;
             input.addEventListener('input', (e) => {
               tableData[rowIndex][colIndex] = e.target.value;
               saveToStorage();
             });
-            td.appendChild(input);
           }
 
+          td.appendChild(input);
           tr.appendChild(td);
         });
 
@@ -125,16 +129,16 @@
     }
 
     function clearStorage() {
-      const confirmed = confirm('¿Estás seguro de que deseas borrar los datos guardados? Esta acción no se puede deshacer.');
+      const confirmed = confirm('¿Estás seguro de borrar los datos?');
       if (confirmed) {
         localStorage.removeItem('csvData');
         tableData = [];
         document.getElementById('tableContainer').innerHTML = '';
-        alert('Datos borrados del almacenamiento local.');
+        alert('Datos borrados.');
       }
     }
 
-    // Evita cierre accidental si hay datos cargados
+    // Evitar perder datos al cerrar
     window.addEventListener('beforeunload', function (e) {
       if (localStorage.getItem('csvData')) {
         e.preventDefault();
@@ -142,7 +146,6 @@
       }
     });
 
-    // Cargar datos automáticamente si existen
     window.onload = () => {
       const stored = localStorage.getItem('csvData');
       if (stored) {
