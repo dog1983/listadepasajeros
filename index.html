@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web - Numerado, Ordenado y Descarga Personalizada</title>
+  <title>Editor CSV Web - Modal para Descargar</title>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -10,7 +10,7 @@
       padding: 5px;
       text-align: center;
     }
-    input[type="file"], input[type="text"] {
+    input[type="file"] {
       margin-bottom: 10px;
     }
     input {
@@ -20,10 +20,32 @@
     button {
       margin: 5px;
     }
+    /* Estilos del Modal */
+    .modal {
+      display: none; /* oculto por defecto */
+      position: fixed;
+      z-index: 1;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 300px;
+      text-align: center;
+      border-radius: 10px;
+    }
+    .modal input {
+      width: 90%;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>Editor CSV Web - Todo en uno 🚀</h1>
+  <h1>Editor CSV Web 🚀</h1>
 
   <input type="file" id="csvFile" accept=".csv"><br>
 
@@ -31,12 +53,21 @@
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeLastRow()">Eliminar última fila</button>
     <br><br>
-
-    <input type="text" id="fileNameInput" placeholder="Nombre del archivo (sin .csv)">
-    <button onclick="downloadCSV()">Descargar CSV</button>
+    <button onclick="openModal()">Descargar CSV</button>
   </div>
 
   <div id="tableContainer"></div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3>Nombre del archivo</h3>
+      <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
+      <br>
+      <button onclick="confirmDownload()">Aceptar</button>
+      <button onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
 
   <script>
     let tableData = [];
@@ -143,8 +174,17 @@
       renderTable();
     }
 
-    function downloadCSV() {
-      const fileNameInput = document.getElementById('fileNameInput').value.trim();
+    // Funciones del Modal
+    function openModal() {
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    function confirmDownload() {
+      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
 
       const csvContent = tableData.map(row => row.join(';')).join('\n');
@@ -155,6 +195,8 @@
       a.href = url;
       a.download = fileName;
       a.click();
+
+      closeModal();
     }
   </script>
 
