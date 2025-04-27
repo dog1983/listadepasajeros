@@ -75,7 +75,7 @@
       margin-top: 5px;
     }
 
-    input[type="text"]:not(#searchInput):not(#fileNameInputModal) {
+    input[type="text"]:not(#fileNameInputModal) {
       width: 100px;
     }
 
@@ -119,7 +119,6 @@
 
   <div id="controls">
     <input type="file" id="csvFile" accept=".csv">
-    <input type="text" id="searchInput" placeholder="Buscar por apellido..." oninput="renderTable()">
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
     <button onclick="saveAndSort()">Guardar cambios y ordenar</button>
@@ -169,11 +168,6 @@
 
       const header = tableData[0];
       let body = tableData.slice(1);
-
-      const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-      if (searchTerm) {
-        body = body.filter(row => row[0]?.toLowerCase().includes(searchTerm));
-      }
 
       body.sort((a, b) => {
         const apellidoA = a[0]?.toLowerCase() || '';
