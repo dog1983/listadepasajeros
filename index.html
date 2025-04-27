@@ -2,42 +2,156 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Búsqueda con AJAX</title>
+  <title>Editor CSV Web</title>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 5px;
+    }
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+    button {
+      margin: 5px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Búsqueda con AJAX</h1>
-
-  <label for="searchInput">Buscar Usuario:</label>
-  <input type="text" id="searchInput" placeholder="Ingrese el nombre del usuario">
-  <button onclick="realizarBusqueda()">Buscar</button>
-
-  <div id="resultadoBusqueda"></div>
+  <h1>Editor CSV en el Navegador</h1>
+  <input type="file" id="csvFile" accept=".csv"><br>
+  <div>
+    <button onclick="addRow()">Agregar fila</button>
+    <button onclick="removeLastRow()">Eliminar última fila</button>
+    <button onclick="downloadCSV()">Descargar CSV</button>
+    <button onclick="loadFromStorage()">Cargar desde localStorage</button>
+    <button onclick="clearStorage()">Borrar almacenamiento</button>
+  </div>
+  <div id="tableContainer"></div>
 
   <script>
-    function realizarBusqueda() {
-      // Obtener el valor del textbox
-      var searchTerm = document.getElementById('searchInput').value;
+    let tableData = [];
 
-      // Crear el objeto XMLHttpRequest
-      var xhr = new XMLHttpRequest();
+    document.getElementById('csvFile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
 
-      // Configurar la solicitud GET con el término de búsqueda
-      xhr.open('GET', 'https://jsonplaceholder.typicode.com/users?name=' + searchTerm, true);
-
-      // Definir la función de respuesta
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-          // Manejar la respuesta del servidor
-          var resultadoBusquedaElement = document.getElementById('resultadoBusqueda');
-          resultadoBusquedaElement.innerHTML = 'Resultados de la búsqueda: ' + xhr.responseText;
-        }
+      reader.onload = function (event) {
+        const text = event.target.result;
+        tableData = parseCSV(text);
+        saveToStorage();
+        renderTable(tableData);
       };
 
-      // Enviar la solicitud
-      xhr.send();
+      reader.readAsText(file);
+    });
+
+    function parseCSV(text) {
+      return text.trim().split('\n').map(row => row.split(','));
     }
+
+    function renderTable(data) {
+      const container = document.getElementById('tableContainer');
+      const table = document.createElement('table');
+
+      data.forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+
+        row.forEach((cell, colIndex) => {
+          const td = document.createElement('td');
+
+          if (rowIndex === 0) {
+            td.textContent = cell;
+            td.style.fontWeight = 'bold';
+            td.style.backgroundColor = '#f0f0f0';
+          } else {
+            const input = document.createElement('input');
+            input.value = cell;
+            input.addEventListener('input', (e) => {
+              tableData[rowIndex][colIndex] = e.target.value;
+              saveToStorage();
+            });
+            td.appendChild(input);
+          }
+
+          tr.appendChild(td);
+        });
+
+        table.appendChild(tr);
+      });
+
+      container.innerHTML = '';
+      container.appendChild(table);
+    }
+
+    function addRow() {
+      if (tableData.length === 0) return;
+      const newRow = new Array(tableData[0].length).fill('');
+      tableData.push(newRow);
+      saveToStorage();
+      renderTable(tableData);
+    }
+
+    function removeLastRow() {
+      if (tableData.length <= 1) return;
+      tableData.pop();
+      saveToStorage();
+      renderTable(tableData);
+    }
+
+    function downloadCSV() {
+      const csvContent = tableData.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'archivo_editado.csv';
+      a.click();
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('csvData', JSON.stringify(tableData));
+    }
+
+    function loadFromStorage() {
+      const stored = localStorage.getItem('csvData');
+      if (stored) {
+        tableData = JSON.parse(stored);
+        renderTable(tableData);
+      } else {
+        alert('No hay datos guardados en localStorage.');
+      }
+    }
+
+    function clearStorage() {
+      const confirmed = confirm('¿Estás seguro de que deseas borrar los datos guardados? Esta acción no se puede deshacer.');
+      if (confirmed) {
+        localStorage.removeItem('csvData');
+        tableData = [];
+        document.getElementById('tableContainer').innerHTML = '';
+        alert('Datos borrados del almacenamiento local.');
+      }
+    }
+
+    // Evita cierre accidental si hay datos cargados
+    window.addEventListener('beforeunload', function (e) {
+      if (localStorage.getItem('csvData')) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    // Cargar datos automáticamente si existen
+    window.onload = () => {
+      const stored = localStorage.getItem('csvData');
+      if (stored) {
+        tableData = JSON.parse(stored);
+        renderTable(tableData);
+      }
+    };
   </script>
 </body>
 </html>
+
 
