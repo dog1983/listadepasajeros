@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web - Eliminar filas específicas</title>
+  <title>Editor CSV Web Mejorado</title>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -10,7 +10,7 @@
       padding: 5px;
       text-align: center;
     }
-    input[type="file"] {
+    input[type="file"], input[type="text"] {
       margin-bottom: 10px;
     }
     input {
@@ -49,17 +49,19 @@
 
   <input type="file" id="csvFile" accept=".csv"><br>
 
-<div>
-  <button onclick="addRow()">Agregar fila</button>
-  <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
-  <button onclick="saveAndSort()">Guardar cambios y ordenar</button> <!-- 🆕 NUEVO BOTÓN -->
-  <br><br>
-  <button onclick="openModal()">Descargar CSV</button>
-</div>
+  <input type="text" id="searchInput" placeholder="Buscar por apellido..." oninput="renderTable()">
+
+  <div>
+    <button onclick="addRow()">Agregar fila</button>
+    <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
+    <button onclick="saveAndSort()">Guardar cambios y ordenar</button>
+    <br><br>
+    <button onclick="openModal()">Descargar CSV</button>
+  </div>
 
   <div id="tableContainer"></div>
 
-  <!-- Modal para nombre de archivo -->
+  <!-- Modal para nombre del archivo -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <h3>Nombre del archivo</h3>
@@ -101,9 +103,15 @@
       if (tableData.length === 0) return;
 
       const header = tableData[0];
-      const body = tableData.slice(1);
+      let body = tableData.slice(1);
 
-      // Ordenar por Apellido (columna 0)
+      // Filtro de búsqueda
+      const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (searchTerm) {
+        body = body.filter(row => row[0]?.toLowerCase().includes(searchTerm));
+      }
+
+      // Ordenar por apellido
       body.sort((a, b) => {
         const apellidoA = a[0]?.toLowerCase() || '';
         const apellidoB = b[0]?.toLowerCase() || '';
@@ -139,7 +147,7 @@
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.className = 'rowCheckbox';
-        checkbox.dataset.index = rowIndex + 1; // índice real considerando el header
+        checkbox.dataset.index = rowIndex + 1;
         tdCheck.appendChild(checkbox);
         tr.appendChild(tdCheck);
 
@@ -151,12 +159,10 @@
           const td = document.createElement('td');
           const input = document.createElement('input');
           input.value = cell.trim();
-
-          input.addEventListener('input', (e) => {
-            body[rowIndex][colIndex] = e.target.value;
-            updateTableData(header, body);
+          input.addEventListener('input', () => {
+            row[colIndex] = input.value.trim();
+            saveAndSort(false); // Guardar sin reordenar al teclear (solo actualizar datos)
           });
-
           td.appendChild(input);
           tr.appendChild(td);
         });
@@ -178,7 +184,7 @@
       if (tableData.length === 0) return;
       const newRow = new Array(tableData[0].length).fill('');
       tableData.push(newRow);
-      renderTable();
+      saveAndSort(); // Guardar y reordenar
     }
 
     function removeSelectedRows() {
@@ -190,14 +196,42 @@
         return;
       }
 
-      // Elimina las filas desde el final para no alterar los índices
       indexesToRemove.sort((a, b) => b - a);
 
       indexesToRemove.forEach(index => {
-        tableData.splice(index, 1); // recordá que index 0 es el header
+        tableData.splice(index, 1);
       });
 
-      renderTable();
+      saveAndSort(); // Actualizar
+    }
+
+    function saveAndSort(reRender = true) {
+      if (tableData.length <= 1) return;
+
+      const header = tableData[0];
+      const body = tableData.slice(1);
+
+      const inputs = document.querySelectorAll('tbody input');
+      let inputIndex = 0;
+
+      for (let i = 0; i < body.length; i++) {
+        for (let j = 0; j < body[i].length; j++) {
+          body[i][j] = inputs[inputIndex].value.trim();
+          inputIndex++;
+        }
+      }
+
+      body.sort((a, b) => {
+        const apellidoA = a[0]?.toLowerCase() || '';
+        const apellidoB = b[0]?.toLowerCase() || '';
+        return apellidoA.localeCompare(apellidoB);
+      });
+
+      tableData = [header, ...body];
+
+      if (reRender) {
+        renderTable();
+      }
     }
 
     // Modal funciones
@@ -210,6 +244,8 @@
     }
 
     function confirmDownload() {
+      saveAndSort(); // Asegurar todo ordenado antes de descargar
+
       const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
 
@@ -224,7 +260,6 @@
 
       closeModal();
     }
-    
   </script>
 
 </body>
