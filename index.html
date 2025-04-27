@@ -2,12 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web - Datos separados</title>
+  <title>Editor CSV Web - Numerado y Ordenado</title>
   <style>
     table, th, td {
       border: 1px solid black;
       border-collapse: collapse;
       padding: 5px;
+      text-align: center;
     }
     input[type="file"] {
       margin-bottom: 10px;
@@ -22,7 +23,7 @@
   </style>
 </head>
 <body>
-  <h1>Editor CSV Web - Cada dato en su caja</h1>
+  <h1>Editor CSV Web - Numerado y Ordenado</h1>
 
   <input type="file" id="csvFile" accept=".csv"><br>
 
@@ -44,7 +45,7 @@
       reader.onload = function (event) {
         const text = event.target.result;
         tableData = parseCSV(text);
-        renderTable(tableData);
+        renderTable();
       };
 
       reader.readAsText(file);
@@ -52,56 +53,95 @@
 
     function parseCSV(text) {
       const rows = text.trim().split('\n');
-      const data = rows.map(row => {
-        return row.split(';'); // Separa cada fila por ';'
-      });
+      const data = rows.map(row => row.split(';'));
       return data;
     }
 
-    function renderTable(data) {
+    function renderTable() {
       const container = document.getElementById('tableContainer');
       const table = document.createElement('table');
 
-      data.forEach((row, rowIndex) => {
+      container.innerHTML = '';
+
+      if (tableData.length === 0) return;
+
+      // Separar encabezado y datos
+      const header = tableData[0];
+      const body = tableData.slice(1);
+
+      // Ordenar por Apellido (columna 1)
+      body.sort((a, b) => {
+        const apellidoA = a[1]?.toLowerCase() || '';
+        const apellidoB = b[1]?.toLowerCase() || '';
+        return apellidoA.localeCompare(apellidoB);
+      });
+
+      // Crear encabezado con numeración vacía
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+
+      const thNum = document.createElement('th');
+      thNum.textContent = "#";
+      headRow.appendChild(thNum);
+
+      header.forEach(title => {
+        const th = document.createElement('th');
+        th.textContent = title.trim();
+        headRow.appendChild(th);
+      });
+
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      // Crear cuerpo de tabla
+      const tbody = document.createElement('tbody');
+
+      body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
+
+        const tdNum = document.createElement('td');
+        tdNum.textContent = rowIndex + 1; // Numeración visible
+        tr.appendChild(tdNum);
 
         row.forEach((cell, colIndex) => {
           const td = document.createElement('td');
           const input = document.createElement('input');
-          input.value = cell.trim(); // Elimina espacios innecesarios
+          input.value = cell.trim();
 
-          if (rowIndex === 0) {
-            input.readOnly = true;
-            input.style.backgroundColor = '#eee';
-            input.style.fontWeight = 'bold';
-          } else {
-            input.addEventListener('input', (e) => {
-              tableData[rowIndex][colIndex] = e.target.value;
-            });
-          }
+          input.addEventListener('input', (e) => {
+            body[rowIndex][colIndex] = e.target.value;
+            updateTableData(header, body);
+          });
 
           td.appendChild(input);
           tr.appendChild(td);
         });
 
-        table.appendChild(tr);
+        tbody.appendChild(tr);
       });
 
-      container.innerHTML = '';
+      table.appendChild(tbody);
       container.appendChild(table);
+
+      // Actualizar los datos combinando encabezado y cuerpo
+      updateTableData(header, body);
+    }
+
+    function updateTableData(header, body) {
+      tableData = [header, ...body];
     }
 
     function addRow() {
       if (tableData.length === 0) return;
       const newRow = new Array(tableData[0].length).fill('');
       tableData.push(newRow);
-      renderTable(tableData);
+      renderTable();
     }
 
     function removeLastRow() {
       if (tableData.length <= 1) return;
       tableData.pop();
-      renderTable(tableData);
+      renderTable();
     }
 
     function downloadCSV() {
