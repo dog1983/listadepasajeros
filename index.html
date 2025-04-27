@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web - Inputs por Celda</title>
+  <title>Editor CSV Web - Separador ;</title>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -13,7 +13,7 @@
       margin-bottom: 10px;
     }
     input {
-      width: 100px;
+      width: 120px;
       box-sizing: border-box;
     }
     button {
@@ -22,7 +22,7 @@
   </style>
 </head>
 <body>
-  <h1>Editor CSV Web</h1>
+  <h1>Editor CSV Web - Separador punto y coma (;)</h1>
   <input type="file" id="csvFile" accept=".csv"><br>
   <div>
     <button onclick="addRow()">Agregar fila</button>
@@ -51,7 +51,8 @@
     });
 
     function parseCSV(text) {
-      return text.trim().split('\n').map(row => row.split(','));
+      // Ahora separa por punto y coma (;)
+      return text.trim().split('\n').map(row => row.split(';'));
     }
 
     function renderTable(data) {
@@ -104,7 +105,8 @@
     }
 
     function downloadCSV() {
-      const csvContent = tableData.map(row => row.join(',')).join('\n');
+      // Guardar separando con punto y coma (;)
+      const csvContent = tableData.map(row => row.join(';')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
 
@@ -124,21 +126,20 @@
         tableData = JSON.parse(stored);
         renderTable(tableData);
       } else {
-        alert('No hay datos guardados en localStorage.');
+        alert('No hay datos guardados.');
       }
     }
 
     function clearStorage() {
-      const confirmed = confirm('¿Estás seguro de borrar los datos?');
+      const confirmed = confirm('¿Seguro que quieres borrar todo?');
       if (confirmed) {
         localStorage.removeItem('csvData');
         tableData = [];
         document.getElementById('tableContainer').innerHTML = '';
-        alert('Datos borrados.');
+        alert('Datos eliminados.');
       }
     }
 
-    // Evitar perder datos al cerrar
     window.addEventListener('beforeunload', function (e) {
       if (localStorage.getItem('csvData')) {
         e.preventDefault();
