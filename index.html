@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web - Separador ;</title>
+  <title>Editor CSV Web - Datos separados</title>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -22,15 +22,16 @@
   </style>
 </head>
 <body>
-  <h1>Editor CSV Web - Separador punto y coma (;)</h1>
+  <h1>Editor CSV Web - Cada dato en su caja</h1>
+
   <input type="file" id="csvFile" accept=".csv"><br>
+
   <div>
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeLastRow()">Eliminar última fila</button>
     <button onclick="downloadCSV()">Descargar CSV</button>
-    <button onclick="loadFromStorage()">Cargar desde localStorage</button>
-    <button onclick="clearStorage()">Borrar almacenamiento</button>
   </div>
+
   <div id="tableContainer"></div>
 
   <script>
@@ -43,7 +44,6 @@
       reader.onload = function (event) {
         const text = event.target.result;
         tableData = parseCSV(text);
-        saveToStorage();
         renderTable(tableData);
       };
 
@@ -51,8 +51,11 @@
     });
 
     function parseCSV(text) {
-      // Ahora separa por punto y coma (;)
-      return text.trim().split('\n').map(row => row.split(';'));
+      const rows = text.trim().split('\n');
+      const data = rows.map(row => {
+        return row.split(';'); // Separa cada fila por ';'
+      });
+      return data;
     }
 
     function renderTable(data) {
@@ -65,16 +68,15 @@
         row.forEach((cell, colIndex) => {
           const td = document.createElement('td');
           const input = document.createElement('input');
-          input.value = cell;
+          input.value = cell.trim(); // Elimina espacios innecesarios
 
           if (rowIndex === 0) {
             input.readOnly = true;
-            input.style.backgroundColor = '#f0f0f0';
+            input.style.backgroundColor = '#eee';
             input.style.fontWeight = 'bold';
           } else {
             input.addEventListener('input', (e) => {
               tableData[rowIndex][colIndex] = e.target.value;
-              saveToStorage();
             });
           }
 
@@ -93,67 +95,26 @@
       if (tableData.length === 0) return;
       const newRow = new Array(tableData[0].length).fill('');
       tableData.push(newRow);
-      saveToStorage();
       renderTable(tableData);
     }
 
     function removeLastRow() {
       if (tableData.length <= 1) return;
       tableData.pop();
-      saveToStorage();
       renderTable(tableData);
     }
 
     function downloadCSV() {
-      // Guardar separando con punto y coma (;)
       const csvContent = tableData.map(row => row.join(';')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
 
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'archivo_editado.csv';
+      a.download = 'datos_editados.csv';
       a.click();
     }
-
-    function saveToStorage() {
-      localStorage.setItem('csvData', JSON.stringify(tableData));
-    }
-
-    function loadFromStorage() {
-      const stored = localStorage.getItem('csvData');
-      if (stored) {
-        tableData = JSON.parse(stored);
-        renderTable(tableData);
-      } else {
-        alert('No hay datos guardados.');
-      }
-    }
-
-    function clearStorage() {
-      const confirmed = confirm('¿Seguro que quieres borrar todo?');
-      if (confirmed) {
-        localStorage.removeItem('csvData');
-        tableData = [];
-        document.getElementById('tableContainer').innerHTML = '';
-        alert('Datos eliminados.');
-      }
-    }
-
-    window.addEventListener('beforeunload', function (e) {
-      if (localStorage.getItem('csvData')) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    });
-
-    window.onload = () => {
-      const stored = localStorage.getItem('csvData');
-      if (stored) {
-        tableData = JSON.parse(stored);
-        renderTable(tableData);
-      }
-    };
   </script>
+
 </body>
 </html>
