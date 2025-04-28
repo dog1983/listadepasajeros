@@ -56,7 +56,6 @@
     <input type="file" id="csvFile" accept=".csv">
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
-    <button onclick="saveAndSort()">Guardar cambios y ordenar</button>
     <button onclick="openModal()">Guardar Como</button>
   </div>
 
@@ -122,13 +121,7 @@
       if (tableData.length === 0) return;
 
       const header = tableData[0];
-      let body = tableData.slice(1);
-
-      body.sort((a, b) => {
-        const apellidoA = a[0]?.toLowerCase() || '';
-        const apellidoB = b[0]?.toLowerCase() || '';
-        return apellidoA.localeCompare(apellidoB);
-      });
+      const body = tableData.slice(1);
 
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
@@ -151,9 +144,14 @@
           const td = document.createElement('td');
           const input = document.createElement('input');
           input.value = cell.trim();
+          
           input.addEventListener('input', (e) => {
             tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+            if (colIndex === 0) { // Si modificamos "apellido"
+              sortTableAndRender();
+            }
           });
+
           td.appendChild(input);
           tr.appendChild(td);
         });
@@ -177,7 +175,7 @@
       }
       const newRow = new Array(tableData[0].length).fill('');
       tableData.push(newRow);
-      saveAndSort();
+      renderTable();
     }
 
     function removeSelectedRows() {
@@ -194,10 +192,10 @@
         tableData.splice(index, 1);
       });
 
-      saveAndSort();
+      renderTable();
     }
 
-    function saveAndSort(reRender = true) {
+    function sortTableAndRender() {
       if (tableData.length <= 1) return;
       const header = tableData[0];
       const body = tableData.slice(1);
@@ -209,10 +207,7 @@
       });
 
       tableData = [header, ...body];
-
-      if (reRender) {
-        renderTable();
-      }
+      renderTable();
     }
 
     function openModal() {
@@ -224,8 +219,6 @@
     }
 
     function confirmDownload() {
-      saveAndSort();
-
       const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
 
