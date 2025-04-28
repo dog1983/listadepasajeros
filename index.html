@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web Mejorado con Validaciones</title>
+  <title>Editor CSV Web con Combobox</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -24,7 +24,7 @@
       padding: 8px;
       text-align: center;
     }
-    input[type="text"] {
+    input[type="text"], select {
       width: 100%;
       box-sizing: border-box;
     }
@@ -151,25 +151,41 @@
 
         row.forEach((cell, colIndex) => {
           const td = document.createElement('td');
-          const input = document.createElement('input');
-          input.value = cell.trim();
+          const columnName = header[colIndex];
 
-          input.addEventListener('input', (e) => {
-            const newValue = e.target.value.trim();
-            const columnName = header[colIndex];
+          if (validValues[columnName]) {
+            // Crear combo box
+            const select = document.createElement('select');
 
-            if (validValues[columnName]) {
-              if (!validValues[columnName].includes(newValue)) {
-                alert(`Valor inválido en columna "${columnName}". Opciones válidas: ${validValues[columnName].join(', ')}`);
-                e.target.value = '';
-                return;
+            validValues[columnName].forEach(optionValue => {
+              const option = document.createElement('option');
+              option.value = optionValue;
+              option.textContent = optionValue;
+              if (cell.trim() === optionValue) {
+                option.selected = true;
               }
-            }
+              select.appendChild(option);
+            });
 
-            tableData[rowIndex + 1][colIndex] = newValue;
-          });
+            select.addEventListener('change', (e) => {
+              tableData[rowIndex + 1][colIndex] = e.target.value;
+            });
 
-          td.appendChild(input);
+            td.appendChild(select);
+
+          } else {
+            // Input normal para otras columnas
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = cell.trim();
+
+            input.addEventListener('input', (e) => {
+              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+            });
+
+            td.appendChild(input);
+          }
+
           tr.appendChild(td);
         });
 
