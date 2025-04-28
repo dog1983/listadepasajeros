@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web Mejorado</title>
+  <title>Editor CSV Web Mejorado con Validaciones</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -89,6 +89,14 @@
       "ocupa_butaca"
     ];
 
+    const validValues = {
+      tipo_documento: ["DNI", "Pasaporte", "OTROS"],
+      sexo: ["F", "M"],
+      menor: ["0", "1"],
+      tripulante: ["0", "1"],
+      ocupa_butaca: ["0", "1"]
+    };
+
     window.onload = function() {
       if (tableData.length === 0) {
         tableData = [defaultHeader];
@@ -147,7 +155,18 @@
           input.value = cell.trim();
 
           input.addEventListener('input', (e) => {
-            tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+            const newValue = e.target.value.trim();
+            const columnName = header[colIndex];
+
+            if (validValues[columnName]) {
+              if (!validValues[columnName].includes(newValue)) {
+                alert(`Valor inválido en columna "${columnName}". Opciones válidas: ${validValues[columnName].join(', ')}`);
+                e.target.value = '';
+                return;
+              }
+            }
+
+            tableData[rowIndex + 1][colIndex] = newValue;
           });
 
           td.appendChild(input);
