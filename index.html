@@ -56,6 +56,7 @@
     <input type="file" id="csvFile" accept=".csv">
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
+    <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
     <button onclick="openModal()">Guardar Como</button>
   </div>
 
@@ -144,12 +145,9 @@
           const td = document.createElement('td');
           const input = document.createElement('input');
           input.value = cell.trim();
-          
+
           input.addEventListener('input', (e) => {
             tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-            if (colIndex === 0) { // Si modificamos "apellido"
-              sortTableAndRender();
-            }
           });
 
           td.appendChild(input);
