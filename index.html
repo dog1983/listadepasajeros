@@ -2,42 +2,75 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web con Combobox</title>
+  <title>Editor CSV Web con Combobox NO/SI</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #4a90e2;
     }
     #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
       margin-bottom: 20px;
     }
+    #controls input[type="file"],
+    #controls button {
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      background: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #controls button:hover {
+      background: #e6f7ff;
+    }
     #tableContainer {
-      margin-top: 20px;
       overflow-x: auto;
     }
     table {
       width: 100%;
       border-collapse: collapse;
+      background: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     th, td {
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       padding: 8px;
       text-align: center;
     }
-    input[type="text"], select {
+    th {
+      background: #f0f8ff;
+    }
+    tr:hover {
+      background: #f5fbff;
+    }
+    select, input[type="text"] {
       width: 100%;
       box-sizing: border-box;
+      padding: 4px;
+      border-radius: 3px;
+      border: 1px solid #ccc;
     }
-    button {
-      margin-right: 10px;
-      padding: 8px 12px;
+    input[type="checkbox"] {
+      transform: scale(1.2);
     }
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0,0,0,0.5);
       justify-content: center;
       align-items: center;
     }
@@ -45,12 +78,23 @@
       background: white;
       padding: 20px;
       border-radius: 5px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .modal-content input[type="text"] {
+      margin-top: 10px;
+      width: 90%;
+    }
+    .modal-content button {
+      margin: 10px 5px 0 5px;
+      padding: 6px 12px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Editor de CSV Web 🚀</h1>
+  <h1>Editor CSV Web 🚀</h1>
 
   <div id="controls">
     <input type="file" id="csvFile" accept=".csv">
@@ -67,7 +111,7 @@
     <div class="modal-content">
       <h3>Nombre del archivo</h3>
       <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
-      <br><br>
+      <br>
       <button onclick="confirmDownload()">Aceptar</button>
       <button onclick="closeModal()">Cancelar</button>
     </div>
@@ -89,100 +133,98 @@
       "ocupa_butaca"
     ];
 
+    // Combobox genéricos para otras columnas
     const validValues = {
       tipo_documento: ["DNI", "Pasaporte", "OTROS"],
       sexo: ["F", "M"],
-      menor: ["0", "1"],
-      tripulante: ["0", "1"],
-      ocupa_butaca: ["0", "1"]
+      tripulante: ["0", "1"]
     };
 
-    window.onload = function() {
+    window.onload = () => {
       if (tableData.length === 0) {
         tableData = [defaultHeader];
         renderTable();
       }
     };
 
-    document.getElementById('csvFile').addEventListener('change', function (e) {
+    document.getElementById('csvFile').addEventListener('change', e => {
       const file = e.target.files[0];
       const reader = new FileReader();
-
-      reader.onload = function (event) {
-        const text = event.target.result;
-        tableData = parseCSV(text);
+      reader.onload = ev => {
+        tableData = parseCSV(ev.target.result);
         renderTable();
       };
-
       reader.readAsText(file);
     });
 
     function parseCSV(text) {
-      const rows = text.trim().split('\n');
-      return rows.map(row => row.split(';'));
+      return text.trim().split('\n').map(line => line.split(';'));
     }
 
     function renderTable() {
       const container = document.getElementById('tableContainer');
-      const table = document.createElement('table');
       container.innerHTML = '';
-
-      if (tableData.length === 0) return;
+      if (!tableData.length) return;
 
       const header = tableData[0];
       const body = tableData.slice(1);
 
+      // Cabecera
+      const table = document.createElement('table');
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
-
       headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` +
-        header.map(title => `<th>${title.trim()}</th>`).join('');
-
+        header.map(h => `<th>${h}</th>`).join('');
       thead.appendChild(headRow);
       table.appendChild(thead);
 
+      // Filas
       const tbody = document.createElement('tbody');
-
-      body.forEach((row, rowIndex) => {
+      body.forEach((row, i) => {
         const tr = document.createElement('tr');
+        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${i+1}"></td>`;
+        tr.innerHTML += `<td>${i+1}</td>`;
 
-        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}"></td>`;
-        tr.innerHTML += `<td>${rowIndex + 1}</td>`;
-
-        row.forEach((cell, colIndex) => {
+        row.forEach((cell, j) => {
           const td = document.createElement('td');
-          const columnName = header[colIndex];
+          const colName = header[j];
 
-          if (validValues[columnName]) {
-            // Crear combo box
+          // Columnas "menor" y "ocupa_butaca" → combobox NO/SI
+          if (colName === 'menor' || colName === 'ocupa_butaca') {
             const select = document.createElement('select');
-
-            validValues[columnName].forEach(optionValue => {
-              const option = document.createElement('option');
-              option.value = optionValue;
-              option.textContent = optionValue;
-              if (cell.trim() === optionValue) {
-                option.selected = true;
-              }
-              select.appendChild(option);
+            [{v:'0',t:'NO'},{v:'1',t:'SI'}].forEach(opt=>{
+              const o = document.createElement('option');
+              o.value = opt.v; o.textContent = opt.t;
+              if (cell === opt.v) o.selected = true;
+              select.appendChild(o);
             });
-
-            select.addEventListener('change', (e) => {
-              tableData[rowIndex + 1][colIndex] = e.target.value;
+            select.addEventListener('change', e => {
+              tableData[i+1][j] = e.target.value;
             });
-
             td.appendChild(select);
 
+          // Otras columnas con validValues → combobox genérico
+          } else if (validValues[colName]) {
+            const select = document.createElement('select');
+            validValues[colName].forEach(val => {
+              const o = document.createElement('option');
+              o.value = val; o.textContent = val;
+              if (cell === val) o.selected = true;
+              select.appendChild(o);
+            });
+            select.addEventListener('change', e => {
+              tableData[i+1][j] = e.target.value;
+            });
+            td.appendChild(select);
+
+          // Resto → input de texto
           } else {
-            // Input normal para otras columnas
             const input = document.createElement('input');
             input.type = 'text';
-            input.value = cell.trim();
-
-            input.addEventListener('input', (e) => {
-              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+            input.value = cell;
+            input.addEventListener('input', e => {
+              tableData[i+1][j] = e.target.value;
             });
-
             td.appendChild(input);
           }
 
@@ -194,76 +236,44 @@
 
       table.appendChild(tbody);
       container.appendChild(table);
-
-      updateTableData(header, body);
-    }
-
-    function updateTableData(header, body) {
-      tableData = [header, ...body];
     }
 
     function addRow() {
-      if (tableData.length === 0) {
-        tableData = [defaultHeader];
-      }
-      const newRow = new Array(tableData[0].length).fill('');
-      tableData.push(newRow);
+      if (!tableData.length) tableData = [defaultHeader];
+      tableData.push(new Array(tableData[0].length).fill(''));
       renderTable();
     }
 
     function removeSelectedRows() {
-      const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-      const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-
-      if (indexesToRemove.length === 0) {
-        alert('No hay filas seleccionadas para eliminar.');
-        return;
-      }
-
-      indexesToRemove.sort((a, b) => b - a);
-      indexesToRemove.forEach(index => {
-        tableData.splice(index, 1);
-      });
-
+      const toRemove = Array.from(document.querySelectorAll('.rowCheckbox:checked'))
+        .map(cb => parseInt(cb.dataset.index))
+        .sort((a,b)=>b-a);
+      if (!toRemove.length) return alert('No hay filas seleccionadas.');
+      toRemove.forEach(idx => tableData.splice(idx,1));
       renderTable();
     }
 
     function sortTableAndRender() {
       if (tableData.length <= 1) return;
-      const header = tableData[0];
-      const body = tableData.slice(1);
-
-      body.sort((a, b) => {
-        const apellidoA = a[0]?.toLowerCase() || '';
-        const apellidoB = b[0]?.toLowerCase() || '';
-        return apellidoA.localeCompare(apellidoB);
-      });
-
-      tableData = [header, ...body];
+      const [hdr, ...body] = tableData;
+      body.sort((a,b)=> a[0].localeCompare(b[0]));
+      tableData = [hdr, ...body];
       renderTable();
     }
 
     function openModal() {
       document.getElementById('modal').style.display = 'flex';
     }
-
     function closeModal() {
       document.getElementById('modal').style.display = 'none';
     }
-
     function confirmDownload() {
-      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
-      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-
-      const csvContent = tableData.map(row => row.join(';')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const name = document.getElementById('fileNameInputModal').value.trim() || 'datos_editados';
+      const csv = tableData.map(r=>r.join(';')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-
       const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-
+      a.href = url; a.download = name + '.csv'; a.click();
       closeModal();
     }
   </script>
