@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web con Combobox NO/SI</title>
+  <title>Editor CSV Web 🚀</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -136,9 +136,11 @@
     // Combobox genéricos para otras columnas
     const validValues = {
       tipo_documento: ["DNI", "Pasaporte", "OTROS"],
-      sexo: ["F", "M"],
-      tripulante: ["0", "1"]
+      sexo: ["F", "M"]
     };
+
+    // Columnas que mostrarán SI/NO en combo
+    const siNoColumns = ["menor", "tripulante", "ocupa_butaca"];
 
     window.onload = () => {
       if (tableData.length === 0) {
@@ -189,8 +191,7 @@
           const td = document.createElement('td');
           const colName = header[j];
 
-          // Columnas "menor" y "ocupa_butaca" → combobox NO/SI
-          if (colName === 'menor' || colName === 'ocupa_butaca') {
+          if (siNoColumns.includes(colName)) {
             const select = document.createElement('select');
             [{v:'0',t:'NO'},{v:'1',t:'SI'}].forEach(opt=>{
               const o = document.createElement('option');
@@ -203,7 +204,6 @@
             });
             td.appendChild(select);
 
-          // Otras columnas con validValues → combobox genérico
           } else if (validValues[colName]) {
             const select = document.createElement('select');
             validValues[colName].forEach(val => {
@@ -217,7 +217,6 @@
             });
             td.appendChild(select);
 
-          // Resto → input de texto
           } else {
             const input = document.createElement('input');
             input.type = 'text';
