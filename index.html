@@ -133,13 +133,19 @@
       "ocupa_butaca"
     ];
 
-    // Combobox genéricos para otras columnas
+    const defaultValuesByColumn = {
+      tipo_documento: "DNI",
+      sexo: "F",
+      menor: "0",         // 0 = NO
+      tripulante: "0",    // 0 = NO
+      ocupa_butaca: "1"   // 1 = SI
+    };
+
     const validValues = {
       tipo_documento: ["DNI", "Pasaporte", "OTROS"],
       sexo: ["F", "M"]
     };
 
-    // Columnas que mostrarán SI/NO en combo
     const siNoColumns = ["menor", "tripulante", "ocupa_butaca"];
 
     window.onload = () => {
@@ -171,7 +177,6 @@
       const header = tableData[0];
       const body = tableData.slice(1);
 
-      // Cabecera
       const table = document.createElement('table');
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
@@ -180,7 +185,6 @@
       thead.appendChild(headRow);
       table.appendChild(thead);
 
-      // Filas
       const tbody = document.createElement('tbody');
       body.forEach((row, i) => {
         const tr = document.createElement('tr');
@@ -239,7 +243,8 @@
 
     function addRow() {
       if (!tableData.length) tableData = [defaultHeader];
-      tableData.push(new Array(tableData[0].length).fill(''));
+      const newRow = tableData[0].map(col => defaultValuesByColumn[col] ?? '');
+      tableData.push(newRow);
       renderTable();
     }
 
