@@ -2,114 +2,49 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web Mejorado</title>
+  <title>Editor CSV Web con Combobox</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
       margin: 20px;
-      background-color: #f4f6f8;
-      color: #333;
     }
-
-    h1 {
-      text-align: center;
-      color: #4a90e2;
-    }
-
     #controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
       margin-bottom: 20px;
-      gap: 10px;
     }
-
-    input[type="file"], input[type="text"], button {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 14px;
+    #tableContainer {
+      margin-top: 20px;
+      overflow-x: auto;
     }
-
-    input[type="text"] {
-      width: 200px;
-    }
-
-    button {
-      background-color: #4a90e2;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    button:hover {
-      background-color: #357ABD;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      margin-top: 10px;
     }
-
     th, td {
+      border: 1px solid #ccc;
       padding: 8px;
-      border-bottom: 1px solid #ddd;
       text-align: center;
     }
-
-    th {
-      background-color: #e6f0fa;
+    input[type="text"], select {
+      width: 100%;
+      box-sizing: border-box;
     }
-
-    tr:hover {
-      background-color: #f1f9ff;
+    button {
+      margin-right: 10px;
+      padding: 8px 12px;
     }
-
-    input[type="checkbox"] {
-      transform: scale(1.2);
-      margin-top: 5px;
-    }
-
-    input[type="text"]:not(#fileNameInputModal) {
-      width: 100px;
-    }
-
-    /* Modal */
     .modal {
       display: none;
       position: fixed;
-      z-index: 1;
-      left: 0; top: 0;
+      top: 0; left: 0;
       width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       justify-content: center;
       align-items: center;
     }
-
     .modal-content {
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      width: 300px;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    .modal-content input {
-      width: 90%;
-      padding: 8px;
-      margin-top: 10px;
+      background: white;
+      padding: 20px;
       border-radius: 5px;
-    }
-
-    .modal-content button {
-      margin-top: 10px;
-      width: 45%;
     }
   </style>
 </head>
@@ -121,8 +56,8 @@
     <input type="file" id="csvFile" accept=".csv">
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
-    <button onclick="saveAndSort()">Guardar cambios y ordenar</button>
-    <button onclick="openModal()">Descargar CSV</button>
+    <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
+    <button onclick="openModal()">Guardar Como</button>
   </div>
 
   <div id="tableContainer"></div>
@@ -132,7 +67,7 @@
     <div class="modal-content">
       <h3>Nombre del archivo</h3>
       <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
-      <br>
+      <br><br>
       <button onclick="confirmDownload()">Aceptar</button>
       <button onclick="closeModal()">Cancelar</button>
     </div>
@@ -140,6 +75,34 @@
 
   <script>
     let tableData = [];
+
+    const defaultHeader = [
+      "apellido",
+      "nombre",
+      "tipo_documento",
+      "descripcion_documento",
+      "numero_documento",
+      "sexo",
+      "menor",
+      "nacionalidad",
+      "tripulante",
+      "ocupa_butaca"
+    ];
+
+    const validValues = {
+      tipo_documento: ["DNI", "Pasaporte", "OTROS"],
+      sexo: ["F", "M"],
+      menor: ["0", "1"],
+      tripulante: ["0", "1"],
+      ocupa_butaca: ["0", "1"]
+    };
+
+    window.onload = function() {
+      if (tableData.length === 0) {
+        tableData = [defaultHeader];
+        renderTable();
+      }
+    };
 
     document.getElementById('csvFile').addEventListener('change', function (e) {
       const file = e.target.files[0];
@@ -167,13 +130,7 @@
       if (tableData.length === 0) return;
 
       const header = tableData[0];
-      let body = tableData.slice(1);
-
-      body.sort((a, b) => {
-        const apellidoA = a[0]?.toLowerCase() || '';
-        const apellidoB = b[0]?.toLowerCase() || '';
-        return apellidoA.localeCompare(apellidoB);
-      });
+      const body = tableData.slice(1);
 
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
@@ -194,33 +151,41 @@
 
         row.forEach((cell, colIndex) => {
           const td = document.createElement('td');
-          const input = document.createElement('input');
+          const columnName = header[colIndex];
 
-          const isMenorColumn = header[colIndex].toLowerCase() === 'menor';
+          if (validValues[columnName]) {
+            // Crear combo box
+            const select = document.createElement('select');
 
-          if (isMenorColumn) {
-            input.value = (cell.trim() === '1') ? 'SI' : 'NO';
+            validValues[columnName].forEach(optionValue => {
+              const option = document.createElement('option');
+              option.value = optionValue;
+              option.textContent = optionValue;
+              if (cell.trim() === optionValue) {
+                option.selected = true;
+              }
+              select.appendChild(option);
+            });
+
+            select.addEventListener('change', (e) => {
+              tableData[rowIndex + 1][colIndex] = e.target.value;
+            });
+
+            td.appendChild(select);
+
           } else {
+            // Input normal para otras columnas
+            const input = document.createElement('input');
+            input.type = 'text';
             input.value = cell.trim();
+
+            input.addEventListener('input', (e) => {
+              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+            });
+
+            td.appendChild(input);
           }
 
-          input.addEventListener('input', (e) => {
-            if (isMenorColumn) {
-              const value = e.target.value.trim().toUpperCase();
-              if (value === 'SI') {
-                tableData[rowIndex + 1][colIndex] = '1';
-              } else if (value === 'NO') {
-                tableData[rowIndex + 1][colIndex] = '0';
-              } else {
-                alert('Por favor ingrese solo "SI" o "NO" en la columna menor.');
-                e.target.value = (tableData[rowIndex + 1][colIndex] === '1') ? 'SI' : 'NO';
-              }
-            } else {
-              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-            }
-          });
-
-          td.appendChild(input);
           tr.appendChild(td);
         });
 
@@ -238,10 +203,12 @@
     }
 
     function addRow() {
-      if (tableData.length === 0) return;
+      if (tableData.length === 0) {
+        tableData = [defaultHeader];
+      }
       const newRow = new Array(tableData[0].length).fill('');
       tableData.push(newRow);
-      saveAndSort();
+      renderTable();
     }
 
     function removeSelectedRows() {
@@ -258,10 +225,10 @@
         tableData.splice(index, 1);
       });
 
-      saveAndSort();
+      renderTable();
     }
 
-    function saveAndSort(reRender = true) {
+    function sortTableAndRender() {
       if (tableData.length <= 1) return;
       const header = tableData[0];
       const body = tableData.slice(1);
@@ -273,10 +240,7 @@
       });
 
       tableData = [header, ...body];
-
-      if (reRender) {
-        renderTable();
-      }
+      renderTable();
     }
 
     function openModal() {
@@ -288,8 +252,6 @@
     }
 
     function confirmDownload() {
-      saveAndSort();
-
       const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
 
