@@ -2,296 +2,588 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor CSV Web</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+    :root {
+      --primary-color: #4285f4;
+      --error-color: #ea4335;
+      --warning-color: #fbbc05;
+      --success-color: #34a853;
+      --border-color: #ccc;
+      --text-color: #333;
+      --light-gray: #f5f5f5;
     }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 20px;
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    header {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      color: var(--primary-color);
+      margin: 0;
+    }
+
     #controls {
       margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
     }
+
+    #searchInput {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      flex-grow: 1;
+      max-width: 300px;
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-weight: 500;
+    }
+
+    button:hover {
+      background-color: #3367d6;
+    }
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
     #tableContainer {
       margin-top: 20px;
       overflow-x: auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 4px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
+      min-width: 600px;
     }
+
     th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      text-align: left;
     }
+
+    th {
+      background-color: var(--light-gray);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
     input[type="text"], select {
       width: 100%;
       box-sizing: border-box;
+      padding: 6px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
     }
-    button {
-      margin-right: 10px;
-      padding: 8px 12px;
+
+    select {
+      cursor: pointer;
     }
+
     .modal {
       display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0, 0, 0, 0.5);
       justify-content: center;
       align-items: center;
+      z-index: 1000;
     }
+
     .modal-content {
       background: white;
-      padding: 20px;
-      border-radius: 5px;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
+
+    .modal h3 {
+      margin-top: 0;
+      color: var(--primary-color);
+    }
+
     .invalid-row {
-      background-color: #fdd;
+      background-color: #ffebee !important;
+      border-left: 3px solid var(--error-color);
+    }
+
+    .warning-message {
+      padding: 12px;
+      margin: 15px 0;
+      background-color: #fff8e1;
+      border-left: 4px solid var(--warning-color);
+      color: #5c3b00;
+      border-radius: 4px;
+      width: 100%;
+    }
+
+    .success-message {
+      padding: 12px;
+      margin: 15px 0;
+      background-color: #e6f4ea;
+      border-left: 4px solid var(--success-color);
+      color: #0d652d;
+      border-radius: 4px;
+      width: 100%;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        margin: 10px;
+      }
+
+      #controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      #searchInput {
+        max-width: 100%;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .button-group button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
 
-  <h1>Editor de CSV Web 🚀</h1>
+  <header>
+    <h1>Editor de CSV Web 🚀</h1>
+  </header>
 
-  <div id="controls">
-    <input type="file" id="csvFile" accept=".csv">
-    <button onclick="addRow()">Agregar fila</button>
-    <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
-    <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
-    <button onclick="openModal()" id="saveBtn">Guardar Como</button>
-  </div>
+  <main>
+    <section id="controls">
+      <input type="text" id="searchInput" placeholder="Buscar en los datos...">
+      <input type="file" id="csvFile" accept=".csv">
+      <button onclick="editor.addRow()">Agregar fila</button>
+      <button onclick="editor.removeSelectedRows()">Eliminar filas seleccionadas</button>
+      <button onclick="editor.sortTableAndRender()">Ordenar por Apellido</button>
+      <button onclick="editor.openModal()" id="saveBtn">Guardar Como</button>
+    </section>
 
-  <div id="tableContainer"></div>
+    <div id="messages"></div>
+
+    <section id="tableContainer" aria-live="polite" aria-atomic="true"></section>
+  </main>
 
   <!-- Modal para nombre del archivo -->
-  <div id="modal" class="modal">
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true">
     <div class="modal-content">
-      <h3>Nombre del archivo</h3>
+      <h3 id="modalTitle">Nombre del archivo</h3>
       <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
-      <br><br>
-      <button onclick="confirmDownload()">Aceptar</button>
-      <button onclick="closeModal()">Cancelar</button>
+      <div class="button-group">
+        <button onclick="editor.confirmDownload()">Aceptar</button>
+        <button onclick="editor.closeModal()" class="secondary">Cancelar</button>
+      </div>
     </div>
   </div>
 
   <script>
-    let tableData = [];
+    class CSVEditor {
+      constructor() {
+        this.tableData = [];
+        this.defaultHeader = [
+          "apellido",
+          "nombre",
+          "tipo_documento",
+          "descripcion_documento",
+          "numero_documento",
+          "sexo",
+          "menor",
+          "nacionalidad",
+          "tripulante",
+          "ocupa_butaca"
+        ];
 
-    const defaultHeader = [
-      "apellido",
-      "nombre",
-      "tipo_documento",
-      "descripcion_documento",
-      "numero_documento",
-      "sexo",
-      "menor",
-      "nacionalidad",
-      "tripulante",
-      "ocupa_butaca"
-    ];
+        this.validValues = {
+          tipo_documento: ["DNI", "Pasaporte", "OTROS"],
+          sexo: ["F", "M"],
+          menor: ["0", "1"],
+          tripulante: ["0", "1"],
+          ocupa_butaca: ["0", "1"]
+        };
 
-    const validValues = {
-      tipo_documento: ["DNI", "Pasaporte", "OTROS"],
-      sexo: ["F", "M"],
-      menor: ["0", "1"],
-      tripulante: ["0", "1"],
-      ocupa_butaca: ["0", "1"]
-    };
+        this.defaults = {
+          tipo_documento: "DNI",
+          sexo: "F",
+          menor: "0",
+          tripulante: "0",
+          ocupa_butaca: "1"
+        };
 
-    const defaults = {
-      tipo_documento: "DNI",
-      sexo: "F",
-      menor: "0",
-      tripulante: "0",
-      ocupa_butaca: "1"
-    };
-
-    window.onload = function () {
-      if (tableData.length === 0) {
-        tableData = [defaultHeader];
-        renderTable();
+        this.init();
       }
-    };
 
-    document.getElementById('csvFile').addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
+      init() {
+        document.getElementById('csvFile').addEventListener('change', this.handleFileUpload.bind(this));
+        this.addSearchFunctionality();
+        
+        if (this.tableData.length === 0) {
+          this.tableData = [this.defaultHeader];
+          this.renderTable();
+        }
+      }
 
-      reader.onload = function (event) {
-        const text = event.target.result;
-        tableData = parseCSV(text);
-        renderTable();
-      };
+      handleFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-      reader.readAsText(file);
-    });
-
-    function parseCSV(text) {
-      const rows = text.trim().split('\n');
-      return rows.map(row => row.split(';'));
-    }
-
-    function renderTable() {
-      const container = document.getElementById('tableContainer');
-      const table = document.createElement('table');
-      container.innerHTML = '';
-
-      if (tableData.length === 0) return;
-
-      const header = tableData[0];
-      const body = tableData.slice(1);
-
-      const thead = document.createElement('thead');
-      const headRow = document.createElement('tr');
-
-      headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` +
-        header.map((title, i) => i === 3 ? '' : `<th>${title.trim()}</th>`).join('');
-
-      thead.appendChild(headRow);
-      table.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-
-      const seenDocuments = new Set();
-      let duplicateIndexes = new Set();
-
-      body.forEach((row, rowIndex) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}"></td>`;
-        tr.innerHTML += `<td>${rowIndex + 1}</td>`;
-
-        row.forEach((cell, colIndex) => {
-          if (colIndex === 3) return; // ocultar descripcion_documento
-
-          const td = document.createElement('td');
-          const columnName = header[colIndex];
-
-          if (validValues[columnName]) {
-            const select = document.createElement('select');
-
-            if (["tripulante", "ocupa_butaca", "menor"].includes(columnName)) {
-              ["0", "1"].forEach(optionValue => {
-                const option = document.createElement('option');
-                option.value = optionValue;
-                option.textContent = optionValue === "1" ? "SI" : "NO";
-                if (cell.trim() === optionValue) option.selected = true;
-                select.appendChild(option);
-              });
-            } else {
-              validValues[columnName].forEach(optionValue => {
-                const option = document.createElement('option');
-                option.value = optionValue;
-                option.textContent = optionValue;
-                if (cell.trim().toUpperCase() === optionValue.toUpperCase()) option.selected = true;
-                select.appendChild(option);
-              });
-            }
-
-            select.addEventListener('change', e => {
-              tableData[rowIndex + 1][colIndex] = e.target.value;
-            });
-
-            td.appendChild(select);
-          } else {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = cell.trim();
-
-            if (columnName === 'numero_documento') {
-              input.addEventListener('blur', e => {
-                tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-                renderTable();
-              });
-            } else {
-              input.addEventListener('input', e => {
-                tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-              });
-            }
-
-            td.appendChild(input);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const text = event.target.result;
+            this.tableData = this.parseCSV(text);
+            this.renderTable();
+            this.showMessage('Archivo cargado correctamente', 'success');
+          } catch (error) {
+            this.showMessage('Error al procesar el archivo CSV: ' + error.message, 'error');
           }
+        };
+        reader.onerror = () => {
+          this.showMessage('Error al leer el archivo', 'error');
+        };
+        reader.readAsText(file);
+      }
 
-          tr.appendChild(td);
-        });
+      parseCSV(text) {
+        const rows = text.trim().split('\n');
+        return rows.map(row => row.split(';').map(cell => cell.trim()));
+      }
 
-        const docNum = row[4].trim();
-        if (seenDocuments.has(docNum)) {
-          tr.classList.add('invalid-row');
-          duplicateIndexes.add(rowIndex + 1);
-        } else {
-          seenDocuments.add(docNum);
+      renderTable() {
+        const container = document.getElementById('tableContainer');
+        const fragment = document.createDocumentFragment();
+        const table = document.createElement('table');
+        
+        if (this.tableData.length === 0) {
+          container.innerHTML = '';
+          return;
         }
 
-        tbody.appendChild(tr);
-      });
+        const header = this.tableData[0];
+        const body = this.tableData.slice(1);
 
-      document.getElementById('saveBtn').disabled = duplicateIndexes.size > 0;
+        // Crear encabezado
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        headRow.innerHTML = `
+          <th><span class="sr-only">Seleccionar</span></th>
+          <th><span class="sr-only">Número</span></th>
+          ${header.map((title, i) => i === 3 ? '' : `<th scope="col">${this.sanitizeInput(title)}</th>`).join('')}
+        `;
+        thead.appendChild(headRow);
+        table.appendChild(thead);
 
-      table.appendChild(tbody);
-      container.appendChild(table);
+        // Crear cuerpo de la tabla
+        const tbody = document.createElement('tbody');
+        const validation = this.validateData(header, body);
 
-      updateTableData(header, body);
-    }
+        body.forEach((row, rowIndex) => {
+          const tr = document.createElement('tr');
+          if (validation.duplicates.has(rowIndex + 1)) {
+            tr.classList.add('invalid-row');
+          }
 
-    function updateTableData(header, body) {
-      tableData = [header, ...body];
-    }
+          tr.innerHTML += `
+            <td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" 
+                 aria-label="Seleccionar fila ${rowIndex + 1}"></td>
+            <td>${rowIndex + 1}</td>
+          `;
 
-    function addRow() {
-      if (tableData.length === 0) {
-        tableData = [defaultHeader];
+          row.forEach((cell, colIndex) => {
+            if (colIndex === 3) return; // Ocultar descripcion_documento
+
+            const td = document.createElement('td');
+            const columnName = header[colIndex];
+            const cellValue = this.sanitizeInput(cell);
+
+            if (this.validValues[columnName]) {
+              const select = document.createElement('select');
+              select.setAttribute('aria-label', columnName);
+
+              if (["tripulante", "ocupa_butaca", "menor"].includes(columnName)) {
+                ["0", "1"].forEach(optionValue => {
+                  const option = document.createElement('option');
+                  option.value = optionValue;
+                  option.textContent = optionValue === "1" ? "SI" : "NO";
+                  if (cell === optionValue) option.selected = true;
+                  select.appendChild(option);
+                });
+              } else {
+                this.validValues[columnName].forEach(optionValue => {
+                  const option = document.createElement('option');
+                  option.value = optionValue;
+                  option.textContent = optionValue;
+                  if (cell.toUpperCase() === optionValue.toUpperCase()) option.selected = true;
+                  select.appendChild(option);
+                });
+              }
+
+              select.addEventListener('change', e => {
+                this.tableData[rowIndex + 1][colIndex] = e.target.value;
+              });
+
+              td.appendChild(select);
+            } else {
+              const input = document.createElement('input');
+              input.type = 'text';
+              input.value = cellValue;
+              input.setAttribute('aria-label', columnName);
+
+              if (columnName === 'numero_documento') {
+                input.addEventListener('blur', this.debounce(e => {
+                  this.tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+                  this.renderTable();
+                }, 300));
+              } else {
+                input.addEventListener('input', this.debounce(e => {
+                  this.tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+                }, 300));
+              }
+
+              td.appendChild(input);
+            }
+
+            tr.appendChild(td);
+          });
+
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        fragment.appendChild(table);
+        container.innerHTML = '';
+        container.appendChild(fragment);
+
+        document.getElementById('saveBtn').disabled = validation.duplicates.size > 0;
+        
+        if (validation.duplicates.size > 0) {
+          this.showMessage(`Advertencia: Hay ${validation.duplicates.size} números de documento duplicados. 
+                          Por favor corrija antes de guardar.`, 'warning');
+        }
       }
-      const newRow = defaultHeader.map(col => defaults[col] || '');
-      tableData.push(newRow);
-      renderTable();
-    }
 
-    function removeSelectedRows() {
-      const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-      const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-      if (indexesToRemove.length === 0) {
-        alert('No hay filas seleccionadas para eliminar.');
-        return;
+      validateData(header, body) {
+        const seenDocuments = new Map();
+        const duplicateIndexes = new Set();
+
+        body.forEach((row, rowIndex) => {
+          const docNum = row[4]?.trim();
+          if (!docNum) return;
+
+          if (seenDocuments.has(docNum)) {
+            duplicateIndexes.add(rowIndex + 1);
+            seenDocuments.get(docNum).push(rowIndex + 1);
+          } else {
+            seenDocuments.set(docNum, [rowIndex + 1]);
+          }
+        });
+
+        return { duplicates: duplicateIndexes, allDuplicates: seenDocuments };
       }
-      indexesToRemove.sort((a, b) => b - a);
-      indexesToRemove.forEach(index => {
-        tableData.splice(index, 1);
-      });
-      renderTable();
+
+      debounce(func, timeout = 300) {
+        let timer;
+        return (...args) => {
+          clearTimeout(timer);
+          timer = setTimeout(() => { func.apply(this, args); }, timeout);
+        };
+      }
+
+      addRow() {
+        if (this.tableData.length === 0) {
+          this.tableData = [this.defaultHeader];
+        }
+        const newRow = this.defaultHeader.map(col => this.defaults[col] || '');
+        this.tableData.push(newRow);
+        this.renderTable();
+        this.showMessage('Nueva fila agregada', 'success');
+      }
+
+      removeSelectedRows() {
+        const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
+        const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+        
+        if (indexesToRemove.length === 0) {
+          this.showMessage('No hay filas seleccionadas para eliminar.', 'warning');
+          return;
+        }
+        
+        indexesToRemove.sort((a, b) => b - a);
+        indexesToRemove.forEach(index => {
+          this.tableData.splice(index, 1);
+        });
+        
+        this.renderTable();
+        this.showMessage(`${indexesToRemove.length} fila(s) eliminada(s)`, 'success');
+      }
+
+      sortTableAndRender() {
+        if (this.tableData.length <= 1) return;
+        
+        const header = this.tableData[0];
+        const body = this.tableData.slice(1);
+        
+        body.sort((a, b) => (a[0]?.toLowerCase() || '').localeCompare(b[0]?.toLowerCase() || ''));
+        this.tableData = [header, ...body];
+        
+        this.renderTable();
+        this.showMessage('Tabla ordenada por apellido', 'success');
+      }
+
+      openModal() {
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('modal').setAttribute('aria-hidden', 'false');
+        document.getElementById('fileNameInputModal').focus();
+      }
+
+      closeModal() {
+        document.getElementById('modal').style.display = 'none';
+        document.getElementById('modal').setAttribute('aria-hidden', 'true');
+        document.getElementById('fileNameInputModal').value = '';
+      }
+
+      confirmDownload() {
+        const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
+        const fileName = fileNameInput ? `${fileNameInput}.csv` : 'datos_editados.csv';
+        
+        try {
+          const csvContent = this.tableData.map(row => row.join(';')).join('\n');
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          
+          this.closeModal();
+          this.showMessage(`Archivo ${fileName} descargado correctamente`, 'success');
+        } catch (error) {
+          this.showMessage('Error al generar el archivo CSV: ' + error.message, 'error');
+        }
+      }
+
+      showMessage(text, type = 'info') {
+        const messagesDiv = document.getElementById('messages');
+        const message = document.createElement('div');
+        
+        message.className = `${type}-message`;
+        message.textContent = text;
+        message.setAttribute('role', 'alert');
+        
+        messagesDiv.innerHTML = '';
+        messagesDiv.appendChild(message);
+        
+        if (type !== 'error') {
+          setTimeout(() => {
+            message.style.opacity = '0';
+            setTimeout(() => message.remove(), 500);
+          }, 5000);
+        }
+      }
+
+      sanitizeInput(input) {
+        const div = document.createElement('div');
+        div.textContent = input;
+        return div.innerHTML;
+      }
+
+      addSearchFunctionality() {
+        const searchInput = document.getElementById('searchInput');
+        
+        searchInput.addEventListener('input', this.debounce(e => {
+          const searchTerm = e.target.value.toLowerCase();
+          
+          if (!searchTerm) {
+            this.renderTable();
+            return;
+          }
+          
+          const filteredData = [
+            this.tableData[0],
+            ...this.tableData.slice(1).filter(row => 
+              row.some(cell => cell.toLowerCase().includes(searchTerm))
+          ];
+          
+          this.renderFilteredTable(filteredData);
+        }, 300));
+      }
+
+      renderFilteredTable(filteredData) {
+        const originalData = this.tableData;
+        this.tableData = filteredData;
+        this.renderTable();
+        this.tableData = originalData;
+      }
     }
 
-    function sortTableAndRender() {
-      if (tableData.length <= 1) return;
-      const header = tableData[0];
-      const body = tableData.slice(1);
-      body.sort((a, b) => (a[0]?.toLowerCase() || '').localeCompare(b[0]?.toLowerCase() || ''));
-      tableData = [header, ...body];
-      renderTable();
-    }
-
-    function openModal() {
-      document.getElementById('modal').style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('modal').style.display = 'none';
-    }
-
-    function confirmDownload() {
-      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
-      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-      const csvContent = tableData.map(row => row.join(';')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      closeModal();
-    }
+    // Inicializar el editor cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+      window.editor = new CSVEditor();
+    });
   </script>
-
 </body>
 </html>
