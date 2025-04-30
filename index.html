@@ -170,15 +170,24 @@
 
           if (validValues[columnName]) {
             const select = document.createElement('select');
-            const isBinary = ["tripulante", "ocupa_butaca", "menor"].includes(columnName);
 
-            ["0", "1"].forEach(optionValue => {
-              const option = document.createElement('option');
-              option.value = optionValue;
-              option.textContent = isBinary ? (optionValue === "1" ? "SI" : "NO") : optionValue;
-              if (cell.trim() === optionValue) option.selected = true;
-              select.appendChild(option);
-            });
+            if (["tripulante", "ocupa_butaca", "menor"].includes(columnName)) {
+              ["0", "1"].forEach(optionValue => {
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue === "1" ? "SI" : "NO";
+                if (cell.trim() === optionValue) option.selected = true;
+                select.appendChild(option);
+              });
+            } else {
+              validValues[columnName].forEach(optionValue => {
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue;
+                if (cell.trim().toUpperCase() === optionValue.toUpperCase()) option.selected = true;
+                select.appendChild(option);
+              });
+            }
 
             select.addEventListener('change', e => {
               tableData[rowIndex + 1][colIndex] = e.target.value;
