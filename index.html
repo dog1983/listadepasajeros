@@ -120,16 +120,10 @@
       const reader = new FileReader();
 
       reader.onload = function (event) {
-  let rows = event.target.result.trim().split('\n').map(r => r.split(';'));
-  const lowerHeaders = rows[0].map(h => h.trim().toLowerCase());
-  if (!lowerHeaders.includes("ocupa_butaca")) {
-    rows[0].push("ocupa_butaca");
-    for (let i = 1; i < rows.length; i++) rows[i].push(defaults.ocupa_butaca);
-  }
-  csvData = rows;
-  renderTable();
-};
-
+        const text = event.target.result;
+        tableData = parseCSV(text);
+        renderTable();
+      };
 
       reader.readAsText(file);
     });
