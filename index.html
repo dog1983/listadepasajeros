@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Editor CSV Web con Validaciones</title>
+  <title>Editor CSV Web</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -46,12 +46,8 @@
       padding: 20px;
       border-radius: 5px;
     }
-    .error-row {
-      background-color: #ffcccc !important;
-    }
-    #saveButton:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .invalid-row {
+      background-color: #fdd;
     }
   </style>
 </head>
@@ -64,11 +60,12 @@
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
     <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
-    <button id="saveButton" onclick="openModal()">Guardar Como</button>
+    <button onclick="openModal()" id="saveBtn">Guardar Como</button>
   </div>
 
   <div id="tableContainer"></div>
 
+  <!-- Modal para nombre del archivo -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <h3>Nombre del archivo</h3>
@@ -103,7 +100,15 @@
       ocupa_butaca: ["0", "1"]
     };
 
-    window.onload = function() {
+    const defaults = {
+      tipo_documento: "DNI",
+      sexo: "F",
+      menor: "0",
+      tripulante: "0",
+      ocupa_butaca: "1"
+    };
+
+    window.onload = function () {
       if (tableData.length === 0) {
         tableData = [defaultHeader];
         renderTable();
@@ -138,80 +143,86 @@
       const header = tableData[0];
       const body = tableData.slice(1);
 
-      const numeroDocIndex = header.indexOf("numero_documento");
-
-      const docMap = {};
-      const duplicateRows = new Set();
-      body.forEach((row, idx) => {
-        const doc = row[numeroDocIndex];
-        if (doc && docMap[doc]) {
-          duplicateRows.add(idx);
-          duplicateRows.add(docMap[doc]);
-        } else {
-          docMap[doc] = idx;
-        }
-      });
-
-      document.getElementById('saveButton').disabled = duplicateRows.size > 0;
-
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
 
       headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` +
-        header.map(title => title === "descripcion_documento" ? '' : `<th>${title}</th>`).join('');
+        header.map((title, i) => i === 3 ? '' : `<th>${title.trim()}</th>`).join('');
 
       thead.appendChild(headRow);
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
 
+      const seenDocuments = new Set();
+      let duplicateIndexes = new Set();
+
       body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
-        if (duplicateRows.has(rowIndex)) tr.classList.add('error-row');
-
         tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}"></td>`;
         tr.innerHTML += `<td>${rowIndex + 1}</td>`;
 
         row.forEach((cell, colIndex) => {
-          if (header[colIndex] === "descripcion_documento") return;
+          if (colIndex === 3) return; // ocultar descripcion_documento
+
           const td = document.createElement('td');
           const columnName = header[colIndex];
 
           if (validValues[columnName]) {
             const select = document.createElement('select');
-            validValues[columnName].forEach(optionValue => {
+            const isBinary = ["tripulante", "ocupa_butaca", "menor"].includes(columnName);
+
+            ["0", "1"].forEach(optionValue => {
               const option = document.createElement('option');
               option.value = optionValue;
-              option.textContent = optionValue === "1" ? "SI" : optionValue === "0" ? "NO" : optionValue;
-              if (cell === optionValue) option.selected = true;
+              option.textContent = isBinary ? (optionValue === "1" ? "SI" : "NO") : optionValue;
+              if (cell.trim() === optionValue) option.selected = true;
               select.appendChild(option);
             });
 
             select.addEventListener('change', e => {
               tableData[rowIndex + 1][colIndex] = e.target.value;
-              renderTable();
             });
 
             td.appendChild(select);
           } else {
             const input = document.createElement('input');
             input.type = 'text';
-            input.value = cell;
-            input.addEventListener('input', e => {
-              const value = e.target.value.trim();
-              tableData[rowIndex + 1][colIndex] = value;
-              renderTable();
-            });
+            input.value = cell.trim();
+
+            if (columnName === 'numero_documento') {
+              input.addEventListener('blur', e => {
+                tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+                renderTable();
+              });
+            } else {
+              input.addEventListener('input', e => {
+                tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+              });
+            }
+
             td.appendChild(input);
           }
+
           tr.appendChild(td);
         });
+
+        const docNum = row[4].trim();
+        if (seenDocuments.has(docNum)) {
+          tr.classList.add('invalid-row');
+          duplicateIndexes.add(rowIndex + 1);
+        } else {
+          seenDocuments.add(docNum);
+        }
 
         tbody.appendChild(tr);
       });
 
+      document.getElementById('saveBtn').disabled = duplicateIndexes.size > 0;
+
       table.appendChild(tbody);
       container.appendChild(table);
+
       updateTableData(header, body);
     }
 
@@ -223,13 +234,7 @@
       if (tableData.length === 0) {
         tableData = [defaultHeader];
       }
-      const newRow = defaultHeader.map(col => {
-        if (col === "tipo_documento") return "DNI";
-        if (col === "sexo") return "F";
-        if (col === "menor" || col === "tripulante") return "0";
-        if (col === "ocupa_butaca") return "1";
-        return "";
-      });
+      const newRow = defaultHeader.map(col => defaults[col] || '');
       tableData.push(newRow);
       renderTable();
     }
@@ -237,8 +242,14 @@
     function removeSelectedRows() {
       const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
       const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-      if (indexesToRemove.length === 0) return alert('No hay filas seleccionadas para eliminar.');
-      indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
+      if (indexesToRemove.length === 0) {
+        alert('No hay filas seleccionadas para eliminar.');
+        return;
+      }
+      indexesToRemove.sort((a, b) => b - a);
+      indexesToRemove.forEach(index => {
+        tableData.splice(index, 1);
+      });
       renderTable();
     }
 
