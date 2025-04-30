@@ -1,234 +1,277 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Editor CSV Web con Combobox</title>
+  <meta charset="UTF-8">
+  <title>Editor CSV Web con Validaciones</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    #controls { margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    input[type="text"], select { width: 100%; box-sizing: border-box; }
-    button { margin-right: 10px; padding: 8px 12px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #controls {
+      margin-bottom: 20px;
+    }
+    #tableContainer {
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    input[type="text"], select {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      margin-right: 10px;
+      padding: 8px 12px;
+    }
     .modal {
-      display: none; position: fixed; top: 0; left: 0;
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
       width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.5);
-      justify-content: center; align-items: center;
+      justify-content: center;
+      align-items: center;
     }
     .modal-content {
-      background: white; padding: 20px; border-radius: 5px;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+    }
+    .error-row {
+      background-color: #ffcccc !important;
+    }
+    #saveButton:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
 
-<h1>Editor de CSV Web 🚀</h1>
+  <h1>Editor de CSV Web 🚀</h1>
 
-<div id="controls">
-  <input type="file" id="csvFile" accept=".csv">
-  <button onclick="addRow()">Agregar fila</button>
-  <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
-  <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
-  <button onclick="openModal()">Guardar Como</button>
-</div>
-
-<div id="tableContainer"></div>
-
-<!-- Modal para nombre del archivo -->
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <h3>Nombre del archivo</h3>
-    <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
-    <br><br>
-    <button onclick="confirmDownload()">Aceptar</button>
-    <button onclick="closeModal()">Cancelar</button>
+  <div id="controls">
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="addRow()">Agregar fila</button>
+    <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
+    <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
+    <button id="saveButton" onclick="openModal()">Guardar Como</button>
   </div>
-</div>
 
-<script>
-  let tableData = [];
+  <div id="tableContainer"></div>
 
-  const defaultHeader = [
-    "apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento",
-    "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca"
-  ];
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3>Nombre del archivo</h3>
+      <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
+      <br><br>
+      <button onclick="confirmDownload()">Aceptar</button>
+      <button onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
 
-  const validValues = {
-    tipo_documento: ["DNI", "Pasaporte", "OTROS"],
-    sexo: ["F", "M"],
-    menor: ["0", "1"],
-    tripulante: ["0", "1"],
-    ocupa_butaca: ["0", "1"]
-  };
+  <script>
+    let tableData = [];
 
-  const siNoColumns = ["menor", "tripulante", "ocupa_butaca"];
+    const defaultHeader = [
+      "apellido",
+      "nombre",
+      "tipo_documento",
+      "descripcion_documento",
+      "numero_documento",
+      "sexo",
+      "menor",
+      "nacionalidad",
+      "tripulante",
+      "ocupa_butaca"
+    ];
 
-  window.onload = () => {
-    if (tableData.length === 0) {
-      tableData = [defaultHeader];
-      renderTable();
-    }
-  };
-
-  document.getElementById('csvFile').addEventListener('change', function (e) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      const text = event.target.result;
-      tableData = parseCSV(text);
-      renderTable();
+    const validValues = {
+      tipo_documento: ["DNI", "Pasaporte", "OTROS"],
+      sexo: ["F", "M"],
+      menor: ["0", "1"],
+      tripulante: ["0", "1"],
+      ocupa_butaca: ["0", "1"]
     };
-    reader.readAsText(file);
-  });
 
-  function parseCSV(text) {
-    const rows = text.trim().split('\n');
-    return rows.map(row => row.split(';'));
-  }
+    window.onload = function() {
+      if (tableData.length === 0) {
+        tableData = [defaultHeader];
+        renderTable();
+      }
+    };
 
-  function renderTable() {
-    const container = document.getElementById('tableContainer');
-    container.innerHTML = '';
-    if (!tableData.length) return;
+    document.getElementById('csvFile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
 
-    const header = tableData[0];
-    const body = tableData.slice(1);
-    const hiddenIndex = header.indexOf("descripcion_documento");
+      reader.onload = function (event) {
+        const text = event.target.result;
+        tableData = parseCSV(text);
+        renderTable();
+      };
 
-    const table = document.createElement('table');
-    const thead = document.createElement('thead');
-    const headRow = document.createElement('tr');
+      reader.readAsText(file);
+    });
 
-    headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` +
-      header.map((h, i) => i === hiddenIndex ? '' : `<th>${h}</th>`).join('');
-    thead.appendChild(headRow);
-    table.appendChild(thead);
+    function parseCSV(text) {
+      const rows = text.trim().split('\n');
+      return rows.map(row => row.split(';'));
+    }
 
-    const tbody = document.createElement('tbody');
+    function renderTable() {
+      const container = document.getElementById('tableContainer');
+      const table = document.createElement('table');
+      container.innerHTML = '';
 
-    body.forEach((row, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${i + 1}"></td>`;
-      tr.innerHTML += `<td>${i + 1}</td>`;
+      if (tableData.length === 0) return;
 
-      row.forEach((cell, j) => {
-        if (j === hiddenIndex) return;
+      const header = tableData[0];
+      const body = tableData.slice(1);
 
-        const td = document.createElement('td');
-        const colName = header[j];
+      const numeroDocIndex = header.indexOf("numero_documento");
 
-        if (siNoColumns.includes(colName)) {
-          const select = document.createElement('select');
-          [{ v: '0', t: 'NO' }, { v: '1', t: 'SI' }].forEach(opt => {
-            const o = document.createElement('option');
-            o.value = opt.v;
-            o.textContent = opt.t;
-            if (cell === opt.v) o.selected = true;
-            select.appendChild(o);
-          });
-          select.addEventListener('change', e => {
-            tableData[i + 1][j] = e.target.value;
-          });
-          td.appendChild(select);
-
-        } else if (validValues[colName]) {
-          const select = document.createElement('select');
-          validValues[colName].forEach(val => {
-            const o = document.createElement('option');
-            o.value = val;
-            o.textContent = val;
-            if (cell === val) o.selected = true;
-            select.appendChild(o);
-          });
-          select.addEventListener('change', e => {
-            tableData[i + 1][j] = e.target.value;
-          });
-          td.appendChild(select);
-
+      const docMap = {};
+      const duplicateRows = new Set();
+      body.forEach((row, idx) => {
+        const doc = row[numeroDocIndex];
+        if (doc && docMap[doc]) {
+          duplicateRows.add(idx);
+          duplicateRows.add(docMap[doc]);
         } else {
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.value = cell;
-          input.addEventListener('input', e => {
-            tableData[i + 1][j] = e.target.value;
-          });
-          td.appendChild(input);
+          docMap[doc] = idx;
         }
-
-        tr.appendChild(td);
       });
 
-      tbody.appendChild(tr);
-    });
+      document.getElementById('saveButton').disabled = duplicateRows.size > 0;
 
-    table.appendChild(tbody);
-    container.appendChild(table);
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
 
-    tableData = [header, ...body];
-  }
+      headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` +
+        header.map(title => title === "descripcion_documento" ? '' : `<th>${title}</th>`).join('');
 
-  function addRow() {
-    if (tableData.length === 0) {
-      tableData = [defaultHeader];
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+
+      body.forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+        if (duplicateRows.has(rowIndex)) tr.classList.add('error-row');
+
+        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}"></td>`;
+        tr.innerHTML += `<td>${rowIndex + 1}</td>`;
+
+        row.forEach((cell, colIndex) => {
+          if (header[colIndex] === "descripcion_documento") return;
+          const td = document.createElement('td');
+          const columnName = header[colIndex];
+
+          if (validValues[columnName]) {
+            const select = document.createElement('select');
+            validValues[columnName].forEach(optionValue => {
+              const option = document.createElement('option');
+              option.value = optionValue;
+              option.textContent = optionValue === "1" ? "SI" : optionValue === "0" ? "NO" : optionValue;
+              if (cell === optionValue) option.selected = true;
+              select.appendChild(option);
+            });
+
+            select.addEventListener('change', e => {
+              tableData[rowIndex + 1][colIndex] = e.target.value;
+              renderTable();
+            });
+
+            td.appendChild(select);
+          } else {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = cell;
+            input.addEventListener('input', e => {
+              const value = e.target.value.trim();
+              tableData[rowIndex + 1][colIndex] = value;
+              renderTable();
+            });
+            td.appendChild(input);
+          }
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      container.appendChild(table);
+      updateTableData(header, body);
     }
 
-    const newRow = defaultHeader.map(col => {
-      if (col === "tipo_documento") return "DNI";
-      if (col === "sexo") return "F";
-      if (col === "menor" || col === "tripulante") return "0";
-      if (col === "ocupa_butaca") return "1";
-      return "";
-    });
-
-    tableData.push(newRow);
-    renderTable();
-  }
-
-  function removeSelectedRows() {
-    const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-    const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-    if (indexesToRemove.length === 0) {
-      alert('No hay filas seleccionadas para eliminar.');
-      return;
+    function updateTableData(header, body) {
+      tableData = [header, ...body];
     }
-    indexesToRemove.sort((a, b) => b - a);
-    indexesToRemove.forEach(index => tableData.splice(index, 1));
-    renderTable();
-  }
 
-  function sortTableAndRender() {
-    if (tableData.length <= 1) return;
-    const header = tableData[0];
-    const body = tableData.slice(1);
-    body.sort((a, b) => (a[0]?.toLowerCase() || '').localeCompare(b[0]?.toLowerCase() || ''));
-    tableData = [header, ...body];
-    renderTable();
-  }
+    function addRow() {
+      if (tableData.length === 0) {
+        tableData = [defaultHeader];
+      }
+      const newRow = defaultHeader.map(col => {
+        if (col === "tipo_documento") return "DNI";
+        if (col === "sexo") return "F";
+        if (col === "menor" || col === "tripulante") return "0";
+        if (col === "ocupa_butaca") return "1";
+        return "";
+      });
+      tableData.push(newRow);
+      renderTable();
+    }
 
-  function openModal() {
-    document.getElementById('modal').style.display = 'flex';
-  }
+    function removeSelectedRows() {
+      const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
+      const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+      if (indexesToRemove.length === 0) return alert('No hay filas seleccionadas para eliminar.');
+      indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
+      renderTable();
+    }
 
-  function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-  }
+    function sortTableAndRender() {
+      if (tableData.length <= 1) return;
+      const header = tableData[0];
+      const body = tableData.slice(1);
+      body.sort((a, b) => (a[0]?.toLowerCase() || '').localeCompare(b[0]?.toLowerCase() || ''));
+      tableData = [header, ...body];
+      renderTable();
+    }
 
-  function confirmDownload() {
-    const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
-    const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-    const csvContent = tableData.map(row => row.join(';')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    function openModal() {
+      document.getElementById('modal').style.display = 'flex';
+    }
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
 
-    closeModal();
-  }
-</script>
+    function confirmDownload() {
+      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
+      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+      const csvContent = tableData.map(row => row.join(';')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      closeModal();
+    }
+  </script>
 
 </body>
 </html>
