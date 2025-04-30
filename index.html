@@ -201,7 +201,24 @@
 
             if (columnName === 'numero_documento') {
               input.addEventListener('blur', e => {
-                tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+                const tipoDoc = tableData[rowIndex + 1][2]; // tipo_documento
+                const value = e.target.value.trim();
+
+                let isValid = true;
+                if (tipoDoc === 'DNI') {
+                  isValid = /^\d{7,8}$/.test(value);
+                } else {
+                  isValid = /^.{5,100}$/.test(value);
+                }
+
+                if (!isValid) {
+                  alert('El número de documento no es válido según el tipo de documento.');
+                  input.style.border = '2px solid red';
+                } else {
+                  input.style.border = '';
+                }
+
+                tableData[rowIndex + 1][colIndex] = value;
                 renderTable();
               });
             } else {
@@ -282,7 +299,17 @@
     function confirmDownload() {
       const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-      const csvContent = tableData.map(row => row.join(';')).join('\n');
+      const processedData = tableData.map((row, rowIndex) => {
+        if (rowIndex === 0) return row;
+        return row.map((cell, colIndex) => {
+          const headerName = tableData[0][colIndex];
+          if (["tripulante", "ocupa_butaca", "menor"].includes(headerName)) {
+            return cell === "1" || cell.toUpperCase() === "SI" ? "1" : "0";
+          }
+          return cell;
+        }).filter((_, colIndex) => colIndex !== 3);
+      });
+      const csvContent = processedData.map(row => row.join(';')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
