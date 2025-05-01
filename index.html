@@ -130,23 +130,37 @@
       return rows.map(row => row.split(';'));
     }
 
-    function isRowValid(row, header) {
+    function isRowValid(row) {
+      return getValidationError(row) === "";
+    }
+
+    function getValidationError(row) {
       const tipoDoc = row[2]?.trim().toUpperCase();
       const numeroDoc = row[4]?.trim();
       const apellido = row[0]?.trim();
       const nombre = row[1]?.trim();
 
-      const isTextoValido = val => val.length > 0 && val.length <= 100;
-
-      if (!isTextoValido(apellido) || !isTextoValido(nombre)) return false;
-
-      if (tipoDoc === "DNI") {
-        return /^\d{7,8}$/.test(numeroDoc);
-      } else if (tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") {
-        return numeroDoc.length >= 5 && numeroDoc.length <= 100;
+      if (!apellido || apellido.length > 100) {
+        return "Apellido requerido (máximo 100 caracteres)";
       }
 
-      return false;
+      if (!nombre || nombre.length > 100) {
+        return "Nombre requerido (máximo 100 caracteres)";
+      }
+
+      if (tipoDoc === "DNI") {
+        if (!/^\d{7,8}$/.test(numeroDoc)) {
+          return "DNI debe contener solo números (7 a 8 dígitos)";
+        }
+      } else if (tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") {
+        if (numeroDoc.length < 5 || numeroDoc.length > 100) {
+          return "Número de documento debe tener entre 5 y 100 caracteres";
+        }
+      } else {
+        return "Tipo de documento inválido";
+      }
+
+      return "";
     }
 
     function renderTable() {
@@ -219,14 +233,14 @@
         });
 
         const docNum = row[4].trim();
-        if (seenDocuments.has(docNum)) {
-          invalidIndexes.add(rowIndex + 1);
-        } else {
-          seenDocuments.add(docNum);
-        }
+        const isDuplicate = seenDocuments.has(docNum);
+        const errorMessage = getValidationError(row);
 
-        if (invalidIndexes.has(rowIndex + 1) || !isRowValid(row, header)) {
+        if (!isDuplicate) seenDocuments.add(docNum);
+
+        if (isDuplicate || errorMessage) {
           tr.classList.add('invalid-row');
+          tr.title = isDuplicate ? "Número de documento duplicado" : errorMessage;
           invalidIndexes.add(rowIndex + 1);
         }
 
