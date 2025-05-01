@@ -146,7 +146,7 @@
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
 
-      headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` +
+      headRow.innerHTML = `<th>Sel</th><th>#</th>` +
         header.map((title, i) => i === 3 ? '' : `<th>${title.trim()}</th>`).join('');
 
       thead.appendChild(headRow);
