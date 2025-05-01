@@ -11,10 +11,6 @@
     #controls {
       margin-bottom: 20px;
     }
-    #tableContainer {
-      margin-top: 20px;
-      overflow-x: auto;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -49,23 +45,25 @@
     .invalid-row {
       background-color: #fdd;
     }
+    .hidden-col {
+      display: none;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Editor de CSV Web 🚀</h1>
+  <h1>Editor de CSV Web</h1>
 
   <div id="controls">
     <input type="file" id="csvFile" accept=".csv">
     <button onclick="addRow()">Agregar fila</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
-    <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
-    <button onclick="openModal()" id="saveBtn">Guardar Como</button>
+    <button onclick="sortTable()">Ordenar por Apellido</button>
+    <button onclick="openModal()">Guardar Como</button>
   </div>
 
   <div id="tableContainer"></div>
 
-  <!-- Modal para nombre del archivo -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <h3>Nombre del archivo</h3>
@@ -77,201 +75,131 @@
   </div>
 
   <script>
-    let tableData = [];
+    const defaultHeader = ["apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento", "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca"];
+    const validValues = { tipo_documento: ["DNI", "Pasaporte", "OTROS"], sexo: ["F", "M"], menor: ["0", "1"], tripulante: ["0", "1"], ocupa_butaca: ["0", "1"] };
+    const defaults = { tipo_documento: "DNI", sexo: "F", menor: "0", tripulante: "0", ocupa_butaca: "1" };
 
-    const defaultHeader = [
-      "apellido",
-      "nombre",
-      "tipo_documento",
-      "descripcion_documento",
-      "numero_documento",
-      "sexo",
-      "menor",
-      "nacionalidad",
-      "tripulante",
-      "ocupa_butaca"
-    ];
-
-    const validValues = {
-      tipo_documento: ["DNI", "Pasaporte", "OTROS"],
-      sexo: ["F", "M"],
-      menor: ["0", "1"],
-      tripulante: ["0", "1"],
-      ocupa_butaca: ["0", "1"]
-    };
-
-    const defaults = {
-      tipo_documento: "DNI",
-      sexo: "F",
-      menor: "0",
-      tripulante: "0",
-      ocupa_butaca: "1"
-    };
-
-    window.onload = function () {
-      if (tableData.length === 0) {
-        tableData = [defaultHeader];
-        renderTable();
-      }
-    };
+    let csvData = [];
+    let invalidRows = new Set();
 
     document.getElementById('csvFile').addEventListener('change', function (e) {
       const file = e.target.files[0];
       const reader = new FileReader();
-
       reader.onload = function (event) {
-        const text = event.target.result;
-        tableData = parseCSV(text);
+        let rows = event.target.result.trim().split('\n').map(r => r.split(';'));
+        const lowerHeaders = rows[0].map(h => h.trim().toLowerCase());
+        if (!lowerHeaders.includes("ocupa_butaca")) {
+          rows[0].push("ocupa_butaca");
+          for (let i = 1; i < rows.length; i++) rows[i].push(defaults.ocupa_butaca);
+        }
+        csvData = rows;
         renderTable();
       };
-
       reader.readAsText(file);
     });
 
-    function parseCSV(text) {
-      const rows = text.trim().split('\n');
-      return rows.map(row => row.split(';'));
-    }
-
     function renderTable() {
       const container = document.getElementById('tableContainer');
-      const table = document.createElement('table');
       container.innerHTML = '';
-
-      if (tableData.length === 0) return;
-
-      const header = tableData[0];
-      const body = tableData.slice(1);
+      const table = document.createElement('table');
+      const header = csvData[0];
+      const body = csvData.slice(1);
+      const numeroDocs = new Set();
+      invalidRows.clear();
 
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
-
-      headRow.innerHTML = `<th>Sel</th><th>#</th>` +
-        header.map((title, i) => i === 3 ? '' : `<th>${title.trim()}</th>`).join('');
-
+      headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` + header.map(h => `<th${h === 'descripcion_documento' ? ' class="hidden-col"' : ''}>${h}</th>`).join('');
       thead.appendChild(headRow);
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-
-      const seenDocuments = new Set();
-      let duplicateIndexes = new Set();
-
       body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
-        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}"></td>`;
+        tr.innerHTML += `<td><input type='checkbox' class='rowCheckbox' data-index='${rowIndex + 1}'></td>`;
         tr.innerHTML += `<td>${rowIndex + 1}</td>`;
 
+        if (numeroDocs.has(row[4])) invalidRows.add(rowIndex + 1);
+        numeroDocs.add(row[4]);
+
         row.forEach((cell, colIndex) => {
-          if (colIndex === 3) return; // ocultar descripcion_documento
-
+          const colName = header[colIndex];
           const td = document.createElement('td');
-          const columnName = header[colIndex];
+          if (colName === 'descripcion_documento') td.classList.add('hidden-col');
 
-          if (validValues[columnName]) {
-            const select = document.createElement('select');
-
-            if (["tripulante", "ocupa_butaca", "menor"].includes(columnName)) {
-              ["0", "1"].forEach(optionValue => {
-                const option = document.createElement('option');
-                option.value = optionValue;
-                option.textContent = optionValue === "1" ? "SI" : "NO";
-                if (cell.trim() === optionValue) option.selected = true;
-                select.appendChild(option);
-              });
-            } else {
-              validValues[columnName].forEach(optionValue => {
-                const option = document.createElement('option');
-                option.value = optionValue;
-                option.textContent = optionValue;
-                if (cell.trim().toUpperCase() === optionValue.toUpperCase()) option.selected = true;
-                select.appendChild(option);
-              });
-            }
-
-            select.addEventListener('change', e => {
-              tableData[rowIndex + 1][colIndex] = e.target.value;
+          if (["menor", "tripulante", "ocupa_butaca"].includes(colName)) {
+            const sel = document.createElement('select');
+            ["NO", "SI"].forEach((txt, i) => {
+              const opt = new Option(txt, i);
+              if (cell === String(i)) opt.selected = true;
+              sel.add(opt);
             });
-
-            td.appendChild(select);
+            sel.onchange = e => csvData[rowIndex + 1][colIndex] = e.target.value;
+            td.appendChild(sel);
+          } else if (validValues[colName]) {
+            const sel = document.createElement('select');
+            validValues[colName].forEach(optVal => {
+              const opt = new Option(optVal, optVal);
+              if (cell === optVal) opt.selected = true;
+              sel.add(opt);
+            });
+            sel.onchange = e => csvData[rowIndex + 1][colIndex] = e.target.value;
+            td.appendChild(sel);
           } else {
             const input = document.createElement('input');
             input.type = 'text';
-            input.value = cell.trim();
-
-            if (columnName === 'numero_documento') {
-              input.addEventListener('blur', e => {
-                tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-                renderTable();
-              });
-            } else {
-              input.addEventListener('input', e => {
-                tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-              });
-            }
-
+            input.value = cell;
+            input.onblur = () => {
+              const value = input.value.trim();
+              csvData[rowIndex + 1][colIndex] = value;
+              if (colName === 'numero_documento') {
+                const count = csvData.map(r => r[4]).filter(v => v === value).length;
+                const tipo = csvData[rowIndex + 1][2];
+                const dniOk = tipo === "DNI" && /^\d{7,8}$/.test(value);
+                const otrosOk = ["Pasaporte", "OTROS"].includes(tipo) && value.length >= 5 && value.length <= 100;
+                if (count > 1 || (tipo === "DNI" && !dniOk) || (["Pasaporte", "OTROS"].includes(tipo) && !otrosOk)) {
+                  invalidRows.add(rowIndex + 1);
+                  tr.classList.add('invalid-row');
+                } else {
+                  invalidRows.delete(rowIndex + 1);
+                  tr.classList.remove('invalid-row');
+                }
+              }
+            };
             td.appendChild(input);
           }
-
           tr.appendChild(td);
         });
-
-        const docNum = row[4].trim();
-        if (seenDocuments.has(docNum)) {
-          tr.classList.add('invalid-row');
-          duplicateIndexes.add(rowIndex + 1);
-        } else {
-          seenDocuments.add(docNum);
-        }
-
+        if (invalidRows.has(rowIndex + 1)) tr.classList.add('invalid-row');
         tbody.appendChild(tr);
       });
-
-      document.getElementById('saveBtn').disabled = duplicateIndexes.size > 0;
-
       table.appendChild(tbody);
       container.appendChild(table);
-
-      updateTableData(header, body);
-    }
-
-    function updateTableData(header, body) {
-      tableData = [header, ...body];
     }
 
     function addRow() {
-      if (tableData.length === 0) {
-        tableData = [defaultHeader];
-      }
       const newRow = defaultHeader.map(col => defaults[col] || '');
-      tableData.push(newRow);
+      csvData.push(newRow);
       renderTable();
     }
 
     function removeSelectedRows() {
       const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-      const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-      if (indexesToRemove.length === 0) {
-        alert('No hay filas seleccionadas para eliminar.');
-        return;
-      }
-      indexesToRemove.sort((a, b) => b - a);
-      indexesToRemove.forEach(index => {
-        tableData.splice(index, 1);
-      });
+      const indices = [...checkboxes].map(cb => parseInt(cb.dataset.index)).sort((a, b) => b - a);
+      for (let i of indices) csvData.splice(i, 1);
       renderTable();
     }
 
-    function sortTableAndRender() {
-      if (tableData.length <= 1) return;
-      const header = tableData[0];
-      const body = tableData.slice(1);
-      body.sort((a, b) => (a[0]?.toLowerCase() || '').localeCompare(b[0]?.toLowerCase() || ''));
-      tableData = [header, ...body];
+    function sortTable() {
+      csvData = [csvData[0], ...csvData.slice(1).sort((a, b) => a[0].localeCompare(b[0]))];
       renderTable();
     }
 
     function openModal() {
+      if (invalidRows.size > 0) {
+        alert("Corrige los errores antes de guardar. Hay campos duplicados o inválidos.");
+        return;
+      }
       document.getElementById('modal').style.display = 'flex';
     }
 
@@ -282,7 +210,7 @@
     function confirmDownload() {
       const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-      const csvContent = tableData.map(row => row.join(';')).join('\n');
+      const csvContent = csvData.map(row => row.join(';')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -292,6 +220,5 @@
       closeModal();
     }
   </script>
-
 </body>
 </html>
