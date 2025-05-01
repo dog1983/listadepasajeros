@@ -223,8 +223,14 @@
             input.value = cell.trim();
 
             input.addEventListener('input', e => {
-              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-            });
+            tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+             });
+
+             input.addEventListener('blur', e => {
+               tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+              renderTable(); // Ejecuta validación al salir del campo
+             });
+
 
             td.appendChild(input);
           }
