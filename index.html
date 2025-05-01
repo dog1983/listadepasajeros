@@ -48,6 +48,12 @@
     .hidden-col {
       display: none;
     }
+    thead th {
+      position: sticky;
+      top: 0;
+      background-color: #f4f4f4;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
@@ -91,6 +97,17 @@
         if (!lowerHeaders.includes("ocupa_butaca")) {
           rows[0].push("ocupa_butaca");
           for (let i = 1; i < rows.length; i++) rows[i].push(defaults.ocupa_butaca);
+        }
+        const ocupaIdx = rows[0].indexOf("ocupa_butaca");
+        const tripulanteIdx = rows[0].indexOf("tripulante");
+        for (let i = 1; i < rows.length; i++) {
+          if (rows[i][ocupaIdx] === "1") rows[i][ocupaIdx] = "1";
+          else if (rows[i][ocupaIdx] === "0") rows[i][ocupaIdx] = "0";
+          else rows[i][ocupaIdx] = defaults.ocupa_butaca;
+
+          if (rows[i][tripulanteIdx] === "1") rows[i][tripulanteIdx] = "1";
+          else if (rows[i][tripulanteIdx] === "0") rows[i][tripulanteIdx] = "0";
+          else rows[i][tripulanteIdx] = defaults.tripulante;
         }
         csvData = rows;
         renderTable();
