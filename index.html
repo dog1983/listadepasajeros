@@ -57,7 +57,7 @@
 
   <div id="controls">
     <input type="file" id="csvFile" accept=".csv">
-    <button onclick="addRow()">Agregar fila</button>
+    <button onclick="addRow()">Agregar Pasajeros</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
     <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
     <button onclick="openModal()" id="saveBtn">Guardar Como</button>
@@ -178,7 +178,7 @@
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
 
-      headRow.innerHTML = `<th>Seleccionar</th><th>#</th>` +
+      headRow.innerHTML = `<th>Sel</th><th>#</th>` +
         header.map((title, i) => i === 3 ? '' : `<th>${title.trim()}</th>`).join('');
 
       thead.appendChild(headRow);
