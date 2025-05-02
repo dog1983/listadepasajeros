@@ -222,7 +222,7 @@
             options.forEach(value => {
               const option = document.createElement('option');
               option.value = value;
-              option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) && (value === "0" || value === "1")
+              option.textContent = ["tripulante", "ocupa_butaca", "menor","tripulante"].includes(columnName) && (value === "0" || value === "1")
                 ? (value === "1" ? "SI" : "NO")
                 : value;
               if (cell.trim().toUpperCase() === value.toUpperCase()) option.selected = true;
