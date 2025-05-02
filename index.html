@@ -88,7 +88,8 @@
       "menor",
       "nacionalidad",
       "tripulante",
-      "ocupa_butaca"
+      "ocupa_butaca",
+      "observaciones"
     ];
 
     const validValues = {
@@ -106,7 +107,8 @@
       menor: "0",
       nacionalidad: "Argentina",
       tripulante: "0",
-      ocupa_butaca: "1"
+      ocupa_butaca: "1",
+      observaciones: ""
     };
 
     window.onload = function () {
@@ -128,10 +130,24 @@
     });
 
     function parseCSV(text) {
-      const rows = text.trim().split('\n');
-      return rows.map(row => row.split(';'));
-    }
+  const rows = text.trim().split('\n').map(row => row.split(';'));
+  let header = rows[0];
+  const body = rows.slice(1);
 
+  const requiredColumns = [
+    { name: 'ocupa_butaca', defaultValue: '1' },
+    { name: 'observaciones', defaultValue: '' }
+  ];
+
+  requiredColumns.forEach(col => {
+    if (!header.includes(col.name)) {
+      header.push(col.name);
+      body.forEach(row => row.push(col.defaultValue));
+    }
+  });
+
+  return [header, ...body];
+}
     function isRowValid(row) {
       return getValidationError(row) === "";
     }
