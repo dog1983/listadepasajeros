@@ -216,26 +216,32 @@
           const columnName = header[colIndex];
 
           if (validValues[columnName]) {
-            const select = document.createElement('select');
-            const options = validValues[columnName];
+  const select = document.createElement('select');
+  const options = validValues[columnName];
+  const cellValue = cell.trim().toUpperCase();
 
-            options.forEach(value => {
-              const option = document.createElement('option');
-              option.value = value;
-              option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) && (value === "0" || value === "1")
-                ? (value === "1" ? "SI" : "NO")
-                : value;
-              if (cell.trim().toUpperCase() === value.toUpperCase()) option.selected = true;
-              select.appendChild(option);
-            });
+  options.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
 
-            select.addEventListener('change', e => {
-              tableData[rowIndex + 1][colIndex] = e.target.value;
-              renderTable();
-            });
+    const isBooleanOption = ["tripulante", "ocupa_butaca", "menor"].includes(columnName);
+    option.textContent = isBooleanOption ? (value === "1" ? "SI" : "NO") : value;
 
-            td.appendChild(select);
-          } else {
+    if (cellValue === value.toUpperCase()) {
+      option.selected = true;
+    }
+
+    select.appendChild(option);
+  });
+
+  select.addEventListener('change', e => {
+    tableData[rowIndex + 1][colIndex] = e.target.value;
+    renderTable();
+  });
+
+  td.appendChild(select);
+}
+ else {
             const input = document.createElement('input');
             input.type = 'text';
             input.value = cell.trim();
