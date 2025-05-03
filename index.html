@@ -31,6 +31,7 @@
     button {
       margin-right: 10px;
       padding: 8px 12px;
+      cursor: pointer;
     }
     .modal {
       display: none;
@@ -40,6 +41,7 @@
       background: rgba(0, 0, 0, 0.5);
       justify-content: center;
       align-items: center;
+      z-index: 100;
     }
     .modal-content {
       background: white;
@@ -71,6 +73,49 @@
       outline: 2px solid #3f51b5;
       box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.3);
     }
+    /* Estilos para el formulario vertical */
+    .form-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .form-content {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .form-actions {
+      margin-top: 20px;
+      text-align: right;
+    }
+    .required-field::after {
+      content: " *";
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -79,21 +124,82 @@
 
   <div id="controls">
     <input type="file" id="csvFile" accept=".csv">
-    <button onclick="addRow()">Agregar Pasajeros</button>
+    <button onclick="openAddPassengerModal()">Agregar Pasajeros</button>
     <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
     <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
-    <button onclick="openModal()" id="saveBtn">Guardar Como</button>
+    <button onclick="openSaveModal()" id="saveBtn">Guardar Como</button>
   </div>
 
   <div id="tableContainer"></div>
 
-  <div id="modal" class="modal">
+  <!-- Modal para guardar -->
+  <div id="saveModal" class="modal">
     <div class="modal-content">
       <h3>Nombre del archivo</h3>
       <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
       <br><br>
       <button onclick="confirmDownload()">Aceptar</button>
-      <button onclick="closeModal()">Cancelar</button>
+      <button onclick="closeSaveModal()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Modal para agregar pasajeros -->
+  <div id="addPassengerModal" class="form-modal">
+    <div class="form-content">
+      <h2>Agregar Nuevo Pasajero</h2>
+      <form id="passengerForm">
+        <div class="form-group">
+          <label for="apellido" class="required-field">Apellido:</label>
+          <input type="text" id="apellido" required tabindex="1">
+        </div>
+
+        <div class="form-group">
+          <label for="nombre" class="required-field">Nombre:</label>
+          <input type="text" id="nombre" required tabindex="2">
+        </div>
+
+        <div class="form-group">
+          <label for="tipo_documento" class="required-field">Tipo Documento:</label>
+          <select id="tipo_documento" tabindex="3">
+            <option value="DNI">DNI</option>
+            <option value="Pasaporte">Pasaporte</option>
+            <option value="OTROS">Otros</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="numero_documento" class="required-field">Número Documento:</label>
+          <input type="text" id="numero_documento" required tabindex="4">
+        </div>
+
+        <div class="form-group">
+          <label for="sexo">Sexo:</label>
+          <select id="sexo" tabindex="5">
+            <option value="F">Femenino</option>
+            <option value="M">Masculino</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="menor">Menor:</label>
+          <select id="menor" tabindex="6">
+            <option value="0">No</option>
+            <option value="1">Sí</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="nacionalidad">Nacionalidad:</label>
+          <select id="nacionalidad" tabindex="7">
+            <!-- Opciones generadas dinámicamente -->
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" onclick="addPassengerFromForm()" tabindex="8">Agregar</button>
+          <button type="button" onclick="closeAddPassengerModal()" tabindex="9">Cancelar</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -133,17 +239,80 @@
       observaciones: ""
     };
 
-    window.onload = function () {
+    // Inicialización
+    window.onload = function() {
       if (tableData.length === 0) {
         tableData = [defaultHeader];
         renderTable();
       }
+      populateNationalities();
     };
 
-    document.getElementById('csvFile').addEventListener('change', function (e) {
+    function populateNationalities() {
+      const select = document.getElementById('nacionalidad');
+      validValues.nacionalidad.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country;
+        option.textContent = country;
+        if (country === defaults.nacionalidad) option.selected = true;
+        select.appendChild(option);
+      });
+    }
+
+    // Funciones para el modal de agregar pasajero
+    function openAddPassengerModal() {
+      document.getElementById('addPassengerModal').style.display = 'flex';
+      document.getElementById('apellido').focus();
+    }
+
+    function closeAddPassengerModal() {
+      document.getElementById('addPassengerModal').style.display = 'none';
+      document.getElementById('passengerForm').reset();
+    }
+
+    function addPassengerFromForm() {
+      const newRow = [
+        document.getElementById('apellido').value.trim(),
+        document.getElementById('nombre').value.trim(),
+        document.getElementById('tipo_documento').value,
+        '', // descripcion_documento
+        document.getElementById('numero_documento').value.trim(),
+        document.getElementById('sexo').value,
+        document.getElementById('menor').value,
+        document.getElementById('nacionalidad').value,
+        defaults.tripulante,
+        defaults.ocupa_butaca,
+        defaults.observaciones
+      ];
+
+      // Validación básica
+      if (!newRow[0] || !newRow[1] || !newRow[4]) {
+        alert('Por favor complete los campos obligatorios');
+        return;
+      }
+
+      if (tableData.length === 0) tableData = [defaultHeader];
+      tableData.push(newRow);
+      renderTable();
+      closeAddPassengerModal();
+    }
+
+    // Funciones para el modal de guardar
+    function openSaveModal() {
+      document.getElementById('saveModal').style.display = 'flex';
+      document.getElementById('fileNameInputModal').focus();
+    }
+
+    function closeSaveModal() {
+      document.getElementById('saveModal').style.display = 'none';
+    }
+
+    // Resto de funciones existentes (parseCSV, renderTable, validateCell, etc.)
+    // ... [Todas las demás funciones se mantienen igual que en el código anterior] ...
+    document.getElementById('csvFile').addEventListener('change', function(e) {
       const file = e.target.files[0];
       const reader = new FileReader();
-      reader.onload = function (event) {
+      reader.onload = function(event) {
         const text = event.target.result;
         tableData = parseCSV(text);
         renderTable();
@@ -202,19 +371,20 @@
 
       body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
-        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}"></td>`;
+        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}"></td>`;
         tr.innerHTML += `<td>${rowIndex + 1}</td>`;
+
+        let tabIndexCounter = (rowIndex * 100) + 1;
 
         row.forEach((cell, colIndex) => {
           if (colIndex === 3) return;
 
           const td = document.createElement('td');
           const columnName = header[colIndex];
-          const tabIndexValue = (rowIndex * (header.length - 1)) + colIndex + 1;
 
           if (validValues[columnName]) {
             const select = document.createElement('select');
-            select.setAttribute('tabindex', tabIndexValue);
+            select.setAttribute('tabindex', tabIndexCounter++);
             const options = validValues[columnName];
             const cellValue = cell.trim().toUpperCase();
 
@@ -236,7 +406,7 @@
           } else {
             const input = document.createElement('input');
             input.type = 'text';
-            input.setAttribute('tabindex', tabIndexValue);
+            input.setAttribute('tabindex', tabIndexCounter++);
             input.value = cell.trim();
 
             input.addEventListener('input', e => {
@@ -250,7 +420,6 @@
             td.appendChild(input);
           }
 
-          // Validación por celda
           const validationError = validateCell(columnName, row[colIndex], row[2]);
           if (validationError) {
             td.classList.add('invalid-cell');
@@ -301,13 +470,6 @@
       return tips[headerName] || "";
     }
 
-    function addRow() {
-      if (tableData.length === 0) tableData = [defaultHeader];
-      const newRow = defaultHeader.map(col => defaults[col] || '');
-      tableData.push(newRow);
-      renderTable();
-    }
-
     function removeSelectedRows() {
       const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
       const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
@@ -328,15 +490,6 @@
       renderTable();
     }
 
-    function openModal() {
-      document.getElementById('modal').style.display = 'flex';
-      document.getElementById('fileNameInputModal').focus();
-    }
-
-    function closeModal() {
-      document.getElementById('modal').style.display = 'none';
-    }
-
     function confirmDownload() {
       const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
@@ -347,7 +500,7 @@
       a.href = url;
       a.download = fileName;
       a.click();
-      closeModal();
+      closeSaveModal();
     }
   </script>
 </body>
