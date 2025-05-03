@@ -45,10 +45,31 @@
       background: white;
       padding: 20px;
       border-radius: 5px;
+      min-width: 300px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
-    .invalid-row {
-  background-color: #ffcccc !important; /* rojo más intenso */
-  border: 2px solid #ff0000;
+    button:disabled {
+      background-color: #ff6b6b;
+      color: white;
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+    .invalid-cell {
+      background-color: #ffebee !important;
+      border: 2px solid #f44336 !important;
+      position: relative;
+    }
+    .invalid-cell::after {
+      content: "⚠";
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #d32f2f;
+    }
+    [tabindex]:focus {
+      outline: 2px solid #3f51b5;
+      box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.3);
     }
   </style>
 </head>
@@ -97,7 +118,7 @@
       tipo_documento: ["DNI", "Pasaporte", "OTROS"],
       sexo: ["F", "M"],
       menor: ["0", "1"],
-      nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"],
+      nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
       tripulante: ["0", "1"],
       ocupa_butaca: ["0", "1"]
     };
@@ -131,55 +152,23 @@
     });
 
     function parseCSV(text) {
-  const rows = text.trim().split('\n').map(row => row.split(';'));
-  let header = rows[0];
-  const body = rows.slice(1);
+      const rows = text.trim().split('\n').map(row => row.split(';'));
+      let header = rows[0];
+      const body = rows.slice(1);
 
-  const requiredColumns = [
-    { name: 'ocupa_butaca', defaultValue: '1' },
-    { name: 'observaciones', defaultValue: '' }
-  ];
+      const requiredColumns = [
+        { name: 'ocupa_butaca', defaultValue: '1' },
+        { name: 'observaciones', defaultValue: '' }
+      ];
 
-  requiredColumns.forEach(col => {
-    if (!header.includes(col.name)) {
-      header.push(col.name);
-      body.forEach(row => row.push(col.defaultValue));
-    }
-  });
-
-  return [header, ...body];
-}
-    function isRowValid(row) {
-      return getValidationError(row) === "";
-    }
-
-    function getValidationError(row) {
-      const tipoDoc = row[2]?.trim().toUpperCase();
-      const numeroDoc = row[4]?.trim();
-      const apellido = row[0]?.trim();
-      const nombre = row[1]?.trim();
-
-      if (!apellido || apellido.length > 100) {
-        return "Apellido requerido (máximo 100 caracteres)";
-      }
-
-      if (!nombre || nombre.length > 100) {
-        return "Nombre requerido (máximo 100 caracteres)";
-      }
-
-      if (tipoDoc === "DNI") {
-        if (!/^\d{7,8}$/.test(numeroDoc)) {
-          return "DNI debe contener solo números (7 a 8 dígitos)";
+      requiredColumns.forEach(col => {
+        if (!header.includes(col.name)) {
+          header.push(col.name);
+          body.forEach(row => row.push(col.defaultValue));
         }
-      } else if (tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") {
-        if (numeroDoc.length < 5 || numeroDoc.length > 100) {
-          return "Número de documento debe tener entre 5 y 100 caracteres";
-        }
-      } else {
-        return "Tipo de documento inválido";
-      }
+      });
 
-      return "";
+      return [header, ...body];
     }
 
     function renderTable() {
@@ -195,15 +184,21 @@
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
 
-      headRow.innerHTML = `<th>Sel</th><th>#</th>` +
-        header.map((title, i) => i === 3 ? '' : `<th>${title.trim()}</th>`).join('');
+      headRow.innerHTML = `<th>Sel</th><th>#</th>`;
+      header.forEach((title, i) => {
+        if (i === 3) return;
+        const th = document.createElement('th');
+        th.textContent = title.trim();
+        th.title = getHeaderTooltip(title);
+        headRow.appendChild(th);
+      });
 
       thead.appendChild(headRow);
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
       const seenDocuments = new Set();
-      let invalidIndexes = new Set();
+      let invalidCellsCount = 0;
 
       body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
@@ -215,83 +210,99 @@
 
           const td = document.createElement('td');
           const columnName = header[colIndex];
+          const tabIndexValue = (rowIndex * (header.length - 1)) + colIndex + 1;
 
           if (validValues[columnName]) {
-  const select = document.createElement('select');
-  const options = validValues[columnName];
-  const cellValue = cell.trim().toUpperCase();
+            const select = document.createElement('select');
+            select.setAttribute('tabindex', tabIndexValue);
+            const options = validValues[columnName];
+            const cellValue = cell.trim().toUpperCase();
 
-  options.forEach(value => {
-    const option = document.createElement('option');
-    option.value = value;
+            options.forEach(value => {
+              const option = document.createElement('option');
+              option.value = value;
+              option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) 
+                ? (value === "1" ? "SI" : "NO") : value;
+              if (cellValue === value.toUpperCase()) option.selected = true;
+              select.appendChild(option);
+            });
 
-    const isBooleanOption = ["tripulante", "ocupa_butaca", "menor"].includes(columnName);
-    option.textContent = isBooleanOption ? (value === "1" ? "SI" : "NO") : value;
+            select.addEventListener('change', e => {
+              tableData[rowIndex + 1][colIndex] = e.target.value;
+              renderTable();
+            });
 
-    if (cellValue === value.toUpperCase()) {
-      option.selected = true;
-    }
-
-    select.appendChild(option);
-  });
-
-  select.addEventListener('change', e => {
-    tableData[rowIndex + 1][colIndex] = e.target.value;
-    renderTable();
-  });
-
-  td.appendChild(select);
-}
- else {
+            td.appendChild(select);
+          } else {
             const input = document.createElement('input');
             input.type = 'text';
+            input.setAttribute('tabindex', tabIndexValue);
             input.value = cell.trim();
 
             input.addEventListener('input', e => {
-            tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-             });
+              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+            });
 
-             input.addEventListener('blur', e => {
-               tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-              renderTable(); // Ejecuta validación al salir del campo
-             });
-
+            input.addEventListener('blur', () => {
+              renderTable();
+            });
 
             td.appendChild(input);
+          }
+
+          // Validación por celda
+          const validationError = validateCell(columnName, row[colIndex], row[2]);
+          if (validationError) {
+            td.classList.add('invalid-cell');
+            td.title = validationError;
+            invalidCellsCount++;
           }
 
           tr.appendChild(td);
         });
 
-        const docNum = row[4].trim();
-        const isDuplicate = seenDocuments.has(docNum);
-        const errorMessage = getValidationError(row);
-
-        if (!isDuplicate) seenDocuments.add(docNum);
-
-        if (isDuplicate || errorMessage) {
-          tr.classList.add('invalid-row');
-          tr.title = isDuplicate ? "Número de documento duplicado" : errorMessage;
-          invalidIndexes.add(rowIndex + 1);
-        }
-
         tbody.appendChild(tr);
       });
 
-      document.getElementById('saveBtn').disabled = invalidIndexes.size > 0;
+      document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
       table.appendChild(tbody);
       container.appendChild(table);
-      updateTableData(header, body);
     }
 
-    function updateTableData(header, body) {
-      tableData = [header, ...body];
+    function validateCell(columnName, value, tipoDoc = "") {
+      value = (value || "").trim();
+      tipoDoc = (tipoDoc || "").trim().toUpperCase();
+
+      switch(columnName) {
+        case 'apellido':
+        case 'nombre':
+          if (!value) return "Campo requerido";
+          if (value.length > 100) return "Máximo 100 caracteres";
+          break;
+        case 'numero_documento':
+          if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) return "DNI requiere 7-8 dígitos";
+          if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && (value.length < 5 || value.length > 100)) {
+            return "Documento requiere 5-100 caracteres";
+          }
+          break;
+        default:
+          return "";
+      }
+      return "";
+    }
+
+    function getHeaderTooltip(headerName) {
+      const tips = {
+        numero_documento: "DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+        menor: "0 = NO, 1 = SI",
+        ocupa_butaca: "0 = NO, 1 = SI",
+        tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS"
+      };
+      return tips[headerName] || "";
     }
 
     function addRow() {
-      if (tableData.length === 0) {
-        tableData = [defaultHeader];
-      }
+      if (tableData.length === 0) tableData = [defaultHeader];
       const newRow = defaultHeader.map(col => defaults[col] || '');
       tableData.push(newRow);
       renderTable();
@@ -304,10 +315,7 @@
         alert('No hay filas seleccionadas para eliminar.');
         return;
       }
-      indexesToRemove.sort((a, b) => b - a);
-      indexesToRemove.forEach(index => {
-        tableData.splice(index, 1);
-      });
+      indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
       renderTable();
     }
 
@@ -322,6 +330,7 @@
 
     function openModal() {
       document.getElementById('modal').style.display = 'flex';
+      document.getElementById('fileNameInputModal').focus();
     }
 
     function closeModal() {
@@ -341,6 +350,5 @@
       closeModal();
     }
   </script>
-
 </body>
 </html>
