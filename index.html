@@ -4,9 +4,130 @@
   <meta charset="UTF-8">
   <title>Editor CSV Web</title>
   <style>
-    /* ... (otros estilos se mantienen igual) ... */
-
-    /* Nuevos estilos para el formulario a pantalla completa */
+    /* Estilos Generales */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    /* Controles Principales */
+    #controls {
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    #controls button, #controls input[type="file"] {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    
+    #controls button {
+      background-color: #3498db;
+      color: white;
+    }
+    
+    #controls button:hover {
+      background-color: #2980b9;
+    }
+    
+    #controls button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+    }
+    
+    /* Tabla */
+    #tableContainer {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow-x: auto;
+      padding: 10px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    th {
+      background-color: #f2f2f2;
+      position: sticky;
+      top: 0;
+    }
+    
+    input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    /* Celdas inválidas */
+    .invalid-cell {
+      background-color: #ffebee !important;
+      border: 2px solid #e74c3c !important;
+      position: relative;
+    }
+    
+    .invalid-cell::after {
+      content: "⚠";
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #c0392b;
+    }
+    
+    /* Modal de Guardado */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Formulario a Pantalla Completa */
     .form-modal {
       display: none;
       position: fixed;
@@ -14,80 +135,157 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: white; /* Fondo blanco en lugar de semitransparente */
+      background: white;
       z-index: 1000;
       overflow-y: auto;
     }
-
+    
     .form-content {
-      padding: 20px;
-      max-width: 800px;
+      padding: 30px;
+      max-width: 1000px;
       margin: 0 auto;
     }
-
+    
     .form-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
       border-bottom: 1px solid #eee;
     }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+    
+    .form-header h2 {
+      color: #2c3e50;
+      margin: 0;
     }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 10px;
-      box-sizing: border-box;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    .form-actions {
-      grid-column: span 2;
-      margin-top: 30px;
-      text-align: center;
-    }
-
+    
     .close-modal-btn {
       background: none;
       border: none;
-      font-size: 24px;
+      font-size: 28px;
       cursor: pointer;
-      color: #666;
+      color: #7f8c8d;
+      transition: color 0.3s;
     }
-
+    
+    .close-modal-btn:hover {
+      color: #e74c3c;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #34495e;
+    }
+    
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    
+    .required-field::after {
+      content: " *";
+      color: #e74c3c;
+    }
+    
+    .form-actions {
+      grid-column: 1 / -1;
+      margin-top: 40px;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    
+    .primary-btn {
+      background-color: #2ecc71;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    
+    .primary-btn:hover {
+      background-color: #27ae60;
+    }
+    
+    .secondary-btn {
+      background-color: #95a5a6;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    
+    .secondary-btn:hover {
+      background-color: #7f8c8d;
+    }
+    
+    /* Responsive */
     @media (max-width: 768px) {
+      #controls {
+        flex-direction: column;
+      }
+      
       .form-grid {
         grid-template-columns: 1fr;
       }
-      .form-actions {
-        grid-column: span 1;
+      
+      .form-content {
+        padding: 20px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- ... (el resto del HTML se mantiene igual hasta el modal) ... -->
+  <h1>Editor de CSV Web 🚀</h1>
 
-  <!-- Modal para agregar pasajeros - ahora a pantalla completa -->
+  <div id="controls">
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="openAddPassengerModal()">Agregar Pasajeros</button>
+    <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
+    <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
+    <button onclick="openSaveModal()" id="saveBtn">Guardar Como</button>
+  </div>
+
+  <div id="tableContainer"></div>
+
+  <!-- Modal para guardar -->
+  <div id="saveModal" class="modal">
+    <div class="modal-content">
+      <h3>Nombre del archivo</h3>
+      <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
+      <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+        <button class="primary-btn" onclick="confirmDownload()">Aceptar</button>
+        <button class="secondary-btn" onclick="closeSaveModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para agregar pasajeros (Pantalla Completa) -->
   <div id="addPassengerModal" class="form-modal">
     <div class="form-content">
       <div class="form-header">
@@ -173,7 +371,71 @@
   </div>
 
   <script>
-    // ... (el resto del JavaScript se mantiene igual) ...
+    let tableData = [];
+
+    const defaultHeader = [
+      "apellido",
+      "nombre",
+      "tipo_documento",
+      "descripcion_documento",
+      "numero_documento",
+      "sexo",
+      "menor",
+      "nacionalidad",
+      "tripulante",
+      "ocupa_butaca",
+      "observaciones"
+    ];
+
+    const validValues = {
+      tipo_documento: ["DNI", "Pasaporte", "OTROS"],
+      sexo: ["F", "M"],
+      menor: ["0", "1"],
+      nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
+      tripulante: ["0", "1"],
+      ocupa_butaca: ["0", "1"]
+    };
+
+    const defaults = {
+      tipo_documento: "DNI",
+      sexo: "F",
+      menor: "0",
+      nacionalidad: "Argentina",
+      tripulante: "0",
+      ocupa_butaca: "1",
+      observaciones: ""
+    };
+
+    // Inicialización
+    window.onload = function() {
+      if (tableData.length === 0) {
+        tableData = [defaultHeader];
+        renderTable();
+      }
+      populateNationalities();
+    };
+
+    function populateNationalities() {
+      const select = document.getElementById('nacionalidad');
+      validValues.nacionalidad.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country;
+        option.textContent = country;
+        if (country === defaults.nacionalidad) option.selected = true;
+        select.appendChild(option);
+      });
+    }
+
+    // Funciones para el modal de agregar pasajero
+    function openAddPassengerModal() {
+      document.getElementById('addPassengerModal').style.display = 'block';
+      document.getElementById('apellido').focus();
+    }
+
+    function closeAddPassengerModal() {
+      document.getElementById('addPassengerModal').style.display = 'none';
+      document.getElementById('passengerForm').reset();
+    }
 
     function addPassengerFromForm() {
       const newRow = [
@@ -200,6 +462,215 @@
       tableData.push(newRow);
       renderTable();
       closeAddPassengerModal();
+    }
+
+    // Funciones para el modal de guardar
+    function openSaveModal() {
+      document.getElementById('saveModal').style.display = 'flex';
+      document.getElementById('fileNameInputModal').focus();
+    }
+
+    function closeSaveModal() {
+      document.getElementById('saveModal').style.display = 'none';
+    }
+
+    // Manejo de archivos CSV
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const text = event.target.result;
+        tableData = parseCSV(text);
+        renderTable();
+      };
+      reader.readAsText(file);
+    });
+
+    function parseCSV(text) {
+      const rows = text.trim().split('\n').map(row => row.split(';'));
+      let header = rows[0];
+      const body = rows.slice(1);
+
+      const requiredColumns = [
+        { name: 'ocupa_butaca', defaultValue: '1' },
+        { name: 'observaciones', defaultValue: '' }
+      ];
+
+      requiredColumns.forEach(col => {
+        if (!header.includes(col.name)) {
+          header.push(col.name);
+          body.forEach(row => row.push(col.defaultValue));
+        }
+      });
+
+      return [header, ...body];
+    }
+
+    // Renderizado de la tabla
+    function renderTable() {
+      const container = document.getElementById('tableContainer');
+      const table = document.createElement('table');
+      container.innerHTML = '';
+
+      if (tableData.length === 0) return;
+
+      const header = tableData[0];
+      const body = tableData.slice(1);
+
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+
+      headRow.innerHTML = `<th>Sel</th><th>#</th>`;
+      header.forEach((title, i) => {
+        if (i === 3) return;
+        const th = document.createElement('th');
+        th.textContent = title.trim();
+        th.title = getHeaderTooltip(title);
+        headRow.appendChild(th);
+      });
+
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      const seenDocuments = new Set();
+      let invalidCellsCount = 0;
+
+      body.forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}"></td>`;
+        tr.innerHTML += `<td>${rowIndex + 1}</td>`;
+
+        let tabIndexCounter = (rowIndex * 100) + 1;
+
+        row.forEach((cell, colIndex) => {
+          if (colIndex === 3) return;
+
+          const td = document.createElement('td');
+          const columnName = header[colIndex];
+
+          if (validValues[columnName]) {
+            const select = document.createElement('select');
+            select.setAttribute('tabindex', tabIndexCounter++);
+            const options = validValues[columnName];
+            const cellValue = cell.trim().toUpperCase();
+
+            options.forEach(value => {
+              const option = document.createElement('option');
+              option.value = value;
+              option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) 
+                ? (value === "1" ? "SI" : "NO") : value;
+              if (cellValue === value.toUpperCase()) option.selected = true;
+              select.appendChild(option);
+            });
+
+            select.addEventListener('change', e => {
+              tableData[rowIndex + 1][colIndex] = e.target.value;
+              renderTable();
+            });
+
+            td.appendChild(select);
+          } else {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.setAttribute('tabindex', tabIndexCounter++);
+            input.value = cell.trim();
+
+            input.addEventListener('input', e => {
+              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+            });
+
+            input.addEventListener('blur', () => {
+              renderTable();
+            });
+
+            td.appendChild(input);
+          }
+
+          const validationError = validateCell(columnName, row[colIndex], row[2]);
+          if (validationError) {
+            td.classList.add('invalid-cell');
+            td.title = validationError;
+            invalidCellsCount++;
+          }
+
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+
+    // Validación de celdas
+    function validateCell(columnName, value, tipoDoc = "") {
+      value = (value || "").trim();
+      tipoDoc = (tipoDoc || "").trim().toUpperCase();
+
+      switch(columnName) {
+        case 'apellido':
+        case 'nombre':
+          if (!value) return "Campo requerido";
+          if (value.length > 100) return "Máximo 100 caracteres";
+          break;
+        case 'numero_documento':
+          if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) return "DNI requiere 7-8 dígitos";
+          if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && (value.length < 5 || value.length > 100)) {
+            return "Documento requiere 5-100 caracteres";
+          }
+          break;
+        default:
+          return "";
+      }
+      return "";
+    }
+
+    // Tooltips para headers
+    function getHeaderTooltip(headerName) {
+      const tips = {
+        numero_documento: "DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+        menor: "0 = NO, 1 = SI",
+        ocupa_butaca: "0 = NO, 1 = SI",
+        tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS"
+      };
+      return tips[headerName] || "";
+    }
+
+    // Funciones de acciones
+    function removeSelectedRows() {
+      const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
+      const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+      if (indexesToRemove.length === 0) {
+        alert('No hay filas seleccionadas para eliminar.');
+        return;
+      }
+      indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
+      renderTable();
+    }
+
+    function sortTableAndRender() {
+      if (tableData.length <= 1) return;
+      const header = tableData[0];
+      const body = tableData.slice(1);
+      body.sort((a, b) => (a[0]?.toLowerCase() || '').localeCompare(b[0]?.toLowerCase() || ''));
+      tableData = [header, ...body];
+      renderTable();
+    }
+
+    function confirmDownload() {
+      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
+      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+      const csvContent = tableData.map(row => row.join(';')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      closeSaveModal();
     }
   </script>
 </body>
