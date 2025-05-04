@@ -104,6 +104,20 @@
       color: #c0392b;
     }
     
+    /* Filas editables */
+    tr.editable-row {
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    tr.editable-row:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .editing {
+      background-color: #e3f2fd !important;
+    }
+    
     /* Modal de Guardado */
     .modal {
       display: none;
@@ -285,11 +299,11 @@
     </div>
   </div>
 
-  <!-- Modal para agregar pasajeros (Pantalla Completa) -->
+  <!-- Modal para agregar/editar pasajeros (Pantalla Completa) -->
   <div id="addPassengerModal" class="form-modal">
     <div class="form-content">
       <div class="form-header">
-        <h2>Agregar Nuevo Pasajero</h2>
+        <h2 id="formTitle">Agregar Nuevo Pasajero</h2>
         <button class="close-modal-btn" onclick="closeAddPassengerModal()">×</button>
       </div>
       
@@ -362,7 +376,7 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="primary-btn" onclick="addPassengerFromForm()" tabindex="11">Agregar Pasajero</button>
+            <button type="button" class="primary-btn" onclick="savePassenger()" tabindex="11" id="savePassengerBtn">Agregar Pasajero</button>
             <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()" tabindex="12">Cancelar</button>
           </div>
         </div>
@@ -371,7 +385,10 @@
   </div>
 
   <script>
+    // Variables globales
     let tableData = [];
+    let editingIndex = null;
+    let documentNumbersMap = new Map(); // Para controlar duplicados
 
     const defaultHeader = [
       "apellido",
@@ -417,6 +434,7 @@
 
     function populateNationalities() {
       const select = document.getElementById('nacionalidad');
+      select.innerHTML = '';
       validValues.nacionalidad.forEach(country => {
         const option = document.createElement('option');
         option.value = country;
@@ -426,18 +444,44 @@
       });
     }
 
-    // Funciones para el modal de agregar pasajero
+    // Funciones para el modal de agregar/editar pasajero
     function openAddPassengerModal() {
+      editingIndex = null;
+      document.getElementById('formTitle').textContent = 'Agregar Nuevo Pasajero';
+      document.getElementById('savePassengerBtn').textContent = 'Agregar Pasajero';
+      document.getElementById('passengerForm').reset();
+      document.getElementById('addPassengerModal').style.display = 'block';
+      document.getElementById('apellido').focus();
+    }
+
+    function editRow(rowIndex) {
+      editingIndex = rowIndex;
+      const rowData = tableData[rowIndex];
+      
+      document.getElementById('formTitle').textContent = 'Editar Pasajero';
+      document.getElementById('savePassengerBtn').textContent = 'Guardar Cambios';
+      
+      document.getElementById('apellido').value = rowData[0] || '';
+      document.getElementById('nombre').value = rowData[1] || '';
+      document.getElementById('tipo_documento').value = rowData[2] || defaults.tipo_documento;
+      document.getElementById('numero_documento').value = rowData[4] || '';
+      document.getElementById('sexo').value = rowData[5] || defaults.sexo;
+      document.getElementById('menor').value = rowData[6] || defaults.menor;
+      document.getElementById('nacionalidad').value = rowData[7] || defaults.nacionalidad;
+      document.getElementById('tripulante').value = rowData[8] || defaults.tripulante;
+      document.getElementById('ocupa_butaca').value = rowData[9] || defaults.ocupa_butaca;
+      document.getElementById('observaciones').value = rowData[10] || defaults.observaciones;
+      
       document.getElementById('addPassengerModal').style.display = 'block';
       document.getElementById('apellido').focus();
     }
 
     function closeAddPassengerModal() {
       document.getElementById('addPassengerModal').style.display = 'none';
-      document.getElementById('passengerForm').reset();
+      editingIndex = null;
     }
 
-    function addPassengerFromForm() {
+    function savePassenger() {
       const newRow = [
         document.getElementById('apellido').value.trim(),
         document.getElementById('nombre').value.trim(),
@@ -458,8 +502,28 @@
         return;
       }
 
+      // Validar duplicados (excepto cuando estamos editando la misma fila)
+      const docNumber = newRow[4];
+      if (documentNumbersMap.has(docNumber)) {
+        const rowsWithSameDoc = documentNumbersMap.get(docNumber);
+        const isEditingCurrent = editingIndex !== null && rowsWithSameDoc.includes(editingIndex);
+        
+        if (!isEditingCurrent && (editingIndex === null || rowsWithSameDoc.length > 1)) {
+          alert('Este número de documento ya existe en otra fila');
+          return;
+        }
+      }
+
       if (tableData.length === 0) tableData = [defaultHeader];
-      tableData.push(newRow);
+      
+      if (editingIndex !== null) {
+        // Modo edición
+        tableData[editingIndex] = newRow;
+      } else {
+        // Modo creación
+        tableData.push(newRow);
+      }
+      
       renderTable();
       closeAddPassengerModal();
     }
@@ -533,12 +597,17 @@
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-      const seenDocuments = new Set();
+      documentNumbersMap.clear(); // Reiniciamos el mapa de documentos
       let invalidCellsCount = 0;
 
       body.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
-        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}"></td>`;
+        tr.classList.add('editable-row');
+        if (editingIndex === rowIndex + 1) tr.classList.add('editing');
+        
+        tr.addEventListener('click', () => editRow(rowIndex + 1));
+
+        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}" onclick="event.stopPropagation()"></td>`;
         tr.innerHTML += `<td>${rowIndex + 1}</td>`;
 
         let tabIndexCounter = (rowIndex * 100) + 1;
@@ -548,19 +617,28 @@
 
           const td = document.createElement('td');
           const columnName = header[colIndex];
+          const cellValue = cell.trim();
+
+          // Registrar número de documento para validar duplicados
+          if (columnName === 'numero_documento') {
+            if (documentNumbersMap.has(cellValue)) {
+              documentNumbersMap.get(cellValue).push(rowIndex + 1);
+            } else {
+              documentNumbersMap.set(cellValue, [rowIndex + 1]);
+            }
+          }
 
           if (validValues[columnName]) {
             const select = document.createElement('select');
             select.setAttribute('tabindex', tabIndexCounter++);
             const options = validValues[columnName];
-            const cellValue = cell.trim().toUpperCase();
 
             options.forEach(value => {
               const option = document.createElement('option');
               option.value = value;
               option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) 
                 ? (value === "1" ? "SI" : "NO") : value;
-              if (cellValue === value.toUpperCase()) option.selected = true;
+              if (cellValue.toUpperCase() === value.toUpperCase()) option.selected = true;
               select.appendChild(option);
             });
 
@@ -569,28 +647,37 @@
               renderTable();
             });
 
+            select.addEventListener('click', e => e.stopPropagation());
+
             td.appendChild(select);
           } else {
             const input = document.createElement('input');
             input.type = 'text';
             input.setAttribute('tabindex', tabIndexCounter++);
-            input.value = cell.trim();
+            input.value = cellValue;
 
             input.addEventListener('input', e => {
               tableData[rowIndex + 1][colIndex] = e.target.value.trim();
             });
 
-            input.addEventListener('blur', () => {
-              renderTable();
-            });
+            input.addEventListener('blur', () => renderTable());
+            input.addEventListener('click', e => e.stopPropagation());
 
             td.appendChild(input);
           }
 
+          // Validación por celda
           const validationError = validateCell(columnName, row[colIndex], row[2]);
           if (validationError) {
             td.classList.add('invalid-cell');
             td.title = validationError;
+            invalidCellsCount++;
+          }
+
+          // Validación de documento duplicado
+          if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue).length > 1) {
+            td.classList.add('invalid-cell');
+            td.title = "Número de documento duplicado";
             invalidCellsCount++;
           }
 
@@ -617,6 +704,7 @@
           if (value.length > 100) return "Máximo 100 caracteres";
           break;
         case 'numero_documento':
+          if (!value) return "Campo requerido";
           if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) return "DNI requiere 7-8 dígitos";
           if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && (value.length < 5 || value.length > 100)) {
             return "Documento requiere 5-100 caracteres";
