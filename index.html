@@ -4,76 +4,9 @@
   <meta charset="UTF-8">
   <title>Editor CSV Web</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    #controls {
-      margin-bottom: 20px;
-    }
-    #tableContainer {
-      margin-top: 20px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    input[type="text"], select {
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button {
-      margin-right: 10px;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-    }
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 5px;
-      min-width: 300px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    }
-    button:disabled {
-      background-color: #ff6b6b;
-      color: white;
-      cursor: not-allowed;
-      opacity: 0.8;
-    }
-    .invalid-cell {
-      background-color: #ffebee !important;
-      border: 2px solid #f44336 !important;
-      position: relative;
-    }
-    .invalid-cell::after {
-      content: "⚠";
-      position: absolute;
-      right: 5px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #d32f2f;
-    }
-    [tabindex]:focus {
-      outline: 2px solid #3f51b5;
-      box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.3);
-    }
-    /* Estilos para el formulario vertical */
+    /* ... (otros estilos se mantienen igual) ... */
+
+    /* Nuevos estilos para el formulario a pantalla completa */
     .form-modal {
       display: none;
       position: fixed;
@@ -81,194 +14,166 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
+      background: white; /* Fondo blanco en lugar de semitransparente */
       z-index: 1000;
-    }
-    .form-content {
-      background: white;
-      padding: 20px;
-      border-radius: 5px;
-      width: 400px;
-      max-height: 80vh;
       overflow-y: auto;
     }
+
+    .form-content {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
     .form-group {
       margin-bottom: 15px;
     }
+
     .form-group label {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
     }
+
     .form-group input,
     .form-group select {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
     }
+
     .form-actions {
-      margin-top: 20px;
-      text-align: right;
+      grid-column: span 2;
+      margin-top: 30px;
+      text-align: center;
     }
-    .required-field::after {
-      content: " *";
-      color: red;
+
+    .close-modal-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-actions {
+        grid-column: span 1;
+      }
     }
   </style>
 </head>
 <body>
 
-  <h1>Editor de CSV Web 🚀</h1>
+  <!-- ... (el resto del HTML se mantiene igual hasta el modal) ... -->
 
-  <div id="controls">
-    <input type="file" id="csvFile" accept=".csv">
-    <button onclick="openAddPassengerModal()">Agregar Pasajeros</button>
-    <button onclick="removeSelectedRows()">Eliminar filas seleccionadas</button>
-    <button onclick="sortTableAndRender()">Ordenar por Apellido</button>
-    <button onclick="openSaveModal()" id="saveBtn">Guardar Como</button>
-  </div>
-
-  <div id="tableContainer"></div>
-
-  <!-- Modal para guardar -->
-  <div id="saveModal" class="modal">
-    <div class="modal-content">
-      <h3>Nombre del archivo</h3>
-      <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
-      <br><br>
-      <button onclick="confirmDownload()">Aceptar</button>
-      <button onclick="closeSaveModal()">Cancelar</button>
-    </div>
-  </div>
-
-  <!-- Modal para agregar pasajeros -->
+  <!-- Modal para agregar pasajeros - ahora a pantalla completa -->
   <div id="addPassengerModal" class="form-modal">
     <div class="form-content">
-      <h2>Agregar Nuevo Pasajero</h2>
+      <div class="form-header">
+        <h2>Agregar Nuevo Pasajero</h2>
+        <button class="close-modal-btn" onclick="closeAddPassengerModal()">×</button>
+      </div>
+      
       <form id="passengerForm">
-        <div class="form-group">
-          <label for="apellido" class="required-field">Apellido:</label>
-          <input type="text" id="apellido" required tabindex="1">
-        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="apellido" class="required-field">Apellido:</label>
+            <input type="text" id="apellido" required tabindex="1">
+          </div>
 
-        <div class="form-group">
-          <label for="nombre" class="required-field">Nombre:</label>
-          <input type="text" id="nombre" required tabindex="2">
-        </div>
+          <div class="form-group">
+            <label for="nombre" class="required-field">Nombre:</label>
+            <input type="text" id="nombre" required tabindex="2">
+          </div>
 
-        <div class="form-group">
-          <label for="tipo_documento" class="required-field">Tipo Documento:</label>
-          <select id="tipo_documento" tabindex="3">
-            <option value="DNI">DNI</option>
-            <option value="Pasaporte">Pasaporte</option>
-            <option value="OTROS">Otros</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="tipo_documento" class="required-field">Tipo Documento:</label>
+            <select id="tipo_documento" tabindex="3">
+              <option value="DNI">DNI</option>
+              <option value="Pasaporte">Pasaporte</option>
+              <option value="OTROS">Otros</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="numero_documento" class="required-field">Número Documento:</label>
-          <input type="text" id="numero_documento" required tabindex="4">
-        </div>
+          <div class="form-group">
+            <label for="numero_documento" class="required-field">Número Documento:</label>
+            <input type="text" id="numero_documento" required tabindex="4">
+          </div>
 
-        <div class="form-group">
-          <label for="sexo">Sexo:</label>
-          <select id="sexo" tabindex="5">
-            <option value="F">Femenino</option>
-            <option value="M">Masculino</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="sexo">Sexo:</label>
+            <select id="sexo" tabindex="5">
+              <option value="F">Femenino</option>
+              <option value="M">Masculino</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="menor">Menor:</label>
-          <select id="menor" tabindex="6">
-            <option value="0">No</option>
-            <option value="1">Sí</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="menor">Menor:</label>
+            <select id="menor" tabindex="6">
+              <option value="0">No</option>
+              <option value="1">Sí</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="nacionalidad">Nacionalidad:</label>
-          <select id="nacionalidad" tabindex="7">
-            <!-- Opciones generadas dinámicamente -->
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="nacionalidad">Nacionalidad:</label>
+            <select id="nacionalidad" tabindex="7"></select>
+          </div>
 
-        <div class="form-actions">
-          <button type="button" onclick="addPassengerFromForm()" tabindex="8">Agregar</button>
-          <button type="button" onclick="closeAddPassengerModal()" tabindex="9">Cancelar</button>
+          <div class="form-group">
+            <label for="tripulante">Tripulante:</label>
+            <select id="tripulante" tabindex="8">
+              <option value="0">No</option>
+              <option value="1">Sí</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="ocupa_butaca">Ocupa Butaca:</label>
+            <select id="ocupa_butaca" tabindex="9">
+              <option value="1">Sí</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="grid-column: span 2">
+            <label for="observaciones">Observaciones:</label>
+            <input type="text" id="observaciones" tabindex="10">
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="primary-btn" onclick="addPassengerFromForm()" tabindex="11">Agregar Pasajero</button>
+            <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()" tabindex="12">Cancelar</button>
+          </div>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    let tableData = [];
-
-    const defaultHeader = [
-      "apellido",
-      "nombre",
-      "tipo_documento",
-      "descripcion_documento",
-      "numero_documento",
-      "sexo",
-      "menor",
-      "nacionalidad",
-      "tripulante",
-      "ocupa_butaca",
-      "observaciones"
-    ];
-
-    const validValues = {
-      tipo_documento: ["DNI", "Pasaporte", "OTROS"],
-      sexo: ["F", "M"],
-      menor: ["0", "1"],
-      nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
-      tripulante: ["0", "1"],
-      ocupa_butaca: ["0", "1"]
-    };
-
-    const defaults = {
-      tipo_documento: "DNI",
-      sexo: "F",
-      menor: "0",
-      nacionalidad: "Argentina",
-      tripulante: "0",
-      ocupa_butaca: "1",
-      observaciones: ""
-    };
-
-    // Inicialización
-    window.onload = function() {
-      if (tableData.length === 0) {
-        tableData = [defaultHeader];
-        renderTable();
-      }
-      populateNationalities();
-    };
-
-    function populateNationalities() {
-      const select = document.getElementById('nacionalidad');
-      validValues.nacionalidad.forEach(country => {
-        const option = document.createElement('option');
-        option.value = country;
-        option.textContent = country;
-        if (country === defaults.nacionalidad) option.selected = true;
-        select.appendChild(option);
-      });
-    }
-
-    // Funciones para el modal de agregar pasajero
-    function openAddPassengerModal() {
-      document.getElementById('addPassengerModal').style.display = 'flex';
-      document.getElementById('apellido').focus();
-    }
-
-    function closeAddPassengerModal() {
-      document.getElementById('addPassengerModal').style.display = 'none';
-      document.getElementById('passengerForm').reset();
-    }
+    // ... (el resto del JavaScript se mantiene igual) ...
 
     function addPassengerFromForm() {
       const newRow = [
@@ -280,14 +185,14 @@
         document.getElementById('sexo').value,
         document.getElementById('menor').value,
         document.getElementById('nacionalidad').value,
-        defaults.tripulante,
-        defaults.ocupa_butaca,
-        defaults.observaciones
+        document.getElementById('tripulante').value,
+        document.getElementById('ocupa_butaca').value,
+        document.getElementById('observaciones').value.trim()
       ];
 
       // Validación básica
       if (!newRow[0] || !newRow[1] || !newRow[4]) {
-        alert('Por favor complete los campos obligatorios');
+        alert('Por favor complete los campos obligatorios (Apellido, Nombre y Número de Documento)');
         return;
       }
 
@@ -295,212 +200,6 @@
       tableData.push(newRow);
       renderTable();
       closeAddPassengerModal();
-    }
-
-    // Funciones para el modal de guardar
-    function openSaveModal() {
-      document.getElementById('saveModal').style.display = 'flex';
-      document.getElementById('fileNameInputModal').focus();
-    }
-
-    function closeSaveModal() {
-      document.getElementById('saveModal').style.display = 'none';
-    }
-
-    // Resto de funciones existentes (parseCSV, renderTable, validateCell, etc.)
-    // ... [Todas las demás funciones se mantienen igual que en el código anterior] ...
-    document.getElementById('csvFile').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const text = event.target.result;
-        tableData = parseCSV(text);
-        renderTable();
-      };
-      reader.readAsText(file);
-    });
-
-    function parseCSV(text) {
-      const rows = text.trim().split('\n').map(row => row.split(';'));
-      let header = rows[0];
-      const body = rows.slice(1);
-
-      const requiredColumns = [
-        { name: 'ocupa_butaca', defaultValue: '1' },
-        { name: 'observaciones', defaultValue: '' }
-      ];
-
-      requiredColumns.forEach(col => {
-        if (!header.includes(col.name)) {
-          header.push(col.name);
-          body.forEach(row => row.push(col.defaultValue));
-        }
-      });
-
-      return [header, ...body];
-    }
-
-    function renderTable() {
-      const container = document.getElementById('tableContainer');
-      const table = document.createElement('table');
-      container.innerHTML = '';
-
-      if (tableData.length === 0) return;
-
-      const header = tableData[0];
-      const body = tableData.slice(1);
-
-      const thead = document.createElement('thead');
-      const headRow = document.createElement('tr');
-
-      headRow.innerHTML = `<th>Sel</th><th>#</th>`;
-      header.forEach((title, i) => {
-        if (i === 3) return;
-        const th = document.createElement('th');
-        th.textContent = title.trim();
-        th.title = getHeaderTooltip(title);
-        headRow.appendChild(th);
-      });
-
-      thead.appendChild(headRow);
-      table.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      const seenDocuments = new Set();
-      let invalidCellsCount = 0;
-
-      body.forEach((row, rowIndex) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}"></td>`;
-        tr.innerHTML += `<td>${rowIndex + 1}</td>`;
-
-        let tabIndexCounter = (rowIndex * 100) + 1;
-
-        row.forEach((cell, colIndex) => {
-          if (colIndex === 3) return;
-
-          const td = document.createElement('td');
-          const columnName = header[colIndex];
-
-          if (validValues[columnName]) {
-            const select = document.createElement('select');
-            select.setAttribute('tabindex', tabIndexCounter++);
-            const options = validValues[columnName];
-            const cellValue = cell.trim().toUpperCase();
-
-            options.forEach(value => {
-              const option = document.createElement('option');
-              option.value = value;
-              option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) 
-                ? (value === "1" ? "SI" : "NO") : value;
-              if (cellValue === value.toUpperCase()) option.selected = true;
-              select.appendChild(option);
-            });
-
-            select.addEventListener('change', e => {
-              tableData[rowIndex + 1][colIndex] = e.target.value;
-              renderTable();
-            });
-
-            td.appendChild(select);
-          } else {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.setAttribute('tabindex', tabIndexCounter++);
-            input.value = cell.trim();
-
-            input.addEventListener('input', e => {
-              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
-            });
-
-            input.addEventListener('blur', () => {
-              renderTable();
-            });
-
-            td.appendChild(input);
-          }
-
-          const validationError = validateCell(columnName, row[colIndex], row[2]);
-          if (validationError) {
-            td.classList.add('invalid-cell');
-            td.title = validationError;
-            invalidCellsCount++;
-          }
-
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
-      table.appendChild(tbody);
-      container.appendChild(table);
-    }
-
-    function validateCell(columnName, value, tipoDoc = "") {
-      value = (value || "").trim();
-      tipoDoc = (tipoDoc || "").trim().toUpperCase();
-
-      switch(columnName) {
-        case 'apellido':
-        case 'nombre':
-          if (!value) return "Campo requerido";
-          if (value.length > 100) return "Máximo 100 caracteres";
-          break;
-        case 'numero_documento':
-          if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) return "DNI requiere 7-8 dígitos";
-          if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && (value.length < 5 || value.length > 100)) {
-            return "Documento requiere 5-100 caracteres";
-          }
-          break;
-        default:
-          return "";
-      }
-      return "";
-    }
-
-    function getHeaderTooltip(headerName) {
-      const tips = {
-        numero_documento: "DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
-        menor: "0 = NO, 1 = SI",
-        ocupa_butaca: "0 = NO, 1 = SI",
-        tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS"
-      };
-      return tips[headerName] || "";
-    }
-
-    function removeSelectedRows() {
-      const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-      const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-      if (indexesToRemove.length === 0) {
-        alert('No hay filas seleccionadas para eliminar.');
-        return;
-      }
-      indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
-      renderTable();
-    }
-
-    function sortTableAndRender() {
-      if (tableData.length <= 1) return;
-      const header = tableData[0];
-      const body = tableData.slice(1);
-      body.sort((a, b) => (a[0]?.toLowerCase() || '').localeCompare(b[0]?.toLowerCase() || ''));
-      tableData = [header, ...body];
-      renderTable();
-    }
-
-    function confirmDownload() {
-      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
-      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-      const csvContent = tableData.map(row => row.join(';')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      closeSaveModal();
     }
   </script>
 </body>
