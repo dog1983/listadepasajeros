@@ -388,7 +388,7 @@
     // Variables globales
     let tableData = [];
     let editingIndex = null;
-    let documentNumbersMap = new Map(); // Para controlar duplicados
+    let documentNumbersMap = new Map();
 
     const defaultHeader = [
       "apellido",
@@ -496,22 +496,10 @@
         document.getElementById('observaciones').value.trim()
       ];
 
-      // Validación básica
+      // Validación básica (solo campos obligatorios)
       if (!newRow[0] || !newRow[1] || !newRow[4]) {
         alert('Por favor complete los campos obligatorios (Apellido, Nombre y Número de Documento)');
         return;
-      }
-
-      // Validar duplicados (excepto cuando estamos editando la misma fila)
-      const docNumber = newRow[4];
-      if (documentNumbersMap.has(docNumber)) {
-        const rowsWithSameDoc = documentNumbersMap.get(docNumber);
-        const isEditingCurrent = editingIndex !== null && rowsWithSameDoc.includes(editingIndex);
-        
-        if (!isEditingCurrent && (editingIndex === null || rowsWithSameDoc.length > 1)) {
-          alert('Este número de documento ya existe en otra fila');
-          return;
-        }
       }
 
       if (tableData.length === 0) tableData = [defaultHeader];
@@ -597,7 +585,7 @@
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-      documentNumbersMap.clear(); // Reiniciamos el mapa de documentos
+      documentNumbersMap.clear();
       let invalidCellsCount = 0;
 
       body.forEach((row, rowIndex) => {
@@ -687,6 +675,7 @@
         tbody.appendChild(tr);
       });
 
+      // Bloquear guardado si hay errores (incluyendo duplicados)
       document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
       table.appendChild(tbody);
       container.appendChild(table);
@@ -749,6 +738,12 @@
     }
 
     function confirmDownload() {
+      // Verificar nuevamente antes de guardar (por si acaso)
+      if (document.getElementById('saveBtn').disabled) {
+        alert('No se puede guardar mientras existan errores en los datos');
+        return;
+      }
+
       const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
       const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
       const csvContent = tableData.map(row => row.join(';')).join('\n');
