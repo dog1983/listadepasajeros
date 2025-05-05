@@ -21,7 +21,7 @@
       margin-bottom: 30px;
       font-size: 1.8rem;
     }
-
+    
     /* Controles Principales */
     #controls {
       background-color: white;
@@ -58,7 +58,7 @@
       background-color: #95a5a6;
       cursor: not-allowed;
     }
-
+    
     /* Tabla */
     #tableContainer {
       background-color: white;
@@ -79,7 +79,6 @@
       border: 1px solid #ddd;
       padding: 10px;
       text-align: center;
-      position: relative;
     }
     
     th {
@@ -97,65 +96,61 @@
       border-radius: 4px;
       font-size: 0.9rem;
     }
-
-    /* Errores */
+    
+    /* Celdas inválidas */
     .invalid-cell {
       background-color: #ffebee !important;
       border: 2px solid #e74c3c !important;
+      position: relative;
     }
     
-    .error-message {
-      color: #dc3545;
-      font-size: 0.75rem;
-      margin-top: 4px;
-      display: none;
-    }
-    
-    .row-error {
-      display: none;
-      background-color: #ffebee;
-      color: #dc3545;
-      padding: 8px;
-      border-left: 3px solid #dc3545;
-      margin-top: 5px;
-      font-size: 0.85rem;
-      grid-column: 1 / -1;
-    }
-    
-    .has-error {
-      background-color: #fff5f5;
-    }
-    
-    .error-badge {
+    .invalid-cell::after {
+      content: "⚠";
       position: absolute;
-      top: 2px;
-      right: 2px;
-      background-color: #dc3545;
-      color: white;
-      border-radius: 50%;
-      width: 16px;
-      height: 16px;
-      font-size: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #c0392b;
     }
     
-    #error-summary {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #dc3545;
-      color: white;
-      padding: 10px;
-      z-index: 1000;
-      text-align: center;
+    /* Filas editables */
+    tr.editable-row {
       cursor: pointer;
-      font-size: 0.9rem;
+      transition: background-color 0.2s;
     }
-
-    /* Formulario */
+    
+    tr.editable-row:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .editing {
+      background-color: #e3f2fd !important;
+    }
+    
+    /* Modal de Guardado */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Formulario a Pantalla Completa - RESPONSIVE */
     .form-modal {
       display: none;
       position: fixed;
@@ -176,6 +171,8 @@
       box-sizing: border-box;
       margin: 0 auto;
       min-height: 100%;
+      display: flex;
+      flex-direction: column;
     }
     
     .form-header {
@@ -189,6 +186,7 @@
       top: 0;
       background: white;
       z-index: 10;
+      padding-top: 10px;
     }
     
     .form-header h2 {
@@ -204,12 +202,18 @@
       cursor: pointer;
       color: #7f8c8d;
       transition: color 0.3s;
+      padding: 5px;
+    }
+    
+    .close-modal-btn:hover {
+      color: #e74c3c;
     }
     
     .form-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 15px;
+      flex: 1;
     }
     
     .form-group {
@@ -221,20 +225,35 @@
       margin-bottom: 8px;
       font-weight: 600;
       color: #34495e;
+      font-size: 0.9rem;
     }
     
-    .form-error {
-      color: #dc3545;
-      font-size: 0.8rem;
-      min-height: 1rem;
-      margin-top: 4px;
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    
+    .required-field::after {
+      content: " *";
+      color: #e74c3c;
     }
     
     .form-actions {
-      margin-top: 30px;
+      margin-top: 20px;
+      text-align: center;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 15px 0;
+      border-top: 1px solid #eee;
     }
     
     .primary-btn {
@@ -245,6 +264,12 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 1rem;
+      transition: background-color 0.3s;
+      width: 100%;
+    }
+    
+    .primary-btn:hover {
+      background-color: #27ae60;
     }
     
     .secondary-btn {
@@ -255,34 +280,19 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 1rem;
-    }
-
-    /* Modal para guardar */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
+      transition: background-color 0.3s;
       width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
     }
     
-    .modal-content {
-      background-color: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 400px;
+    .secondary-btn:hover {
+      background-color: #7f8c8d;
     }
-
+    
+    /* Media queries para pantallas más grandes */
     @media (min-width: 768px) {
       .form-content {
         padding: 30px;
-        max-width: 700px;
+        max-width: 800px;
       }
       
       .form-grid {
@@ -290,92 +300,31 @@
         gap: 20px;
       }
       
+      .form-group[style*="grid-column: span 2"] {
+        grid-column: span 2;
+      }
+      
       .form-actions {
         flex-direction: row;
-        justify-content: flex-end;
+        justify-content: center;
       }
       
-      .error-message {
-        display: block;
-      }
-      
-      .row-error {
-        display: none !important;
+      .primary-btn,
+      .secondary-btn {
+        width: auto;
+        min-width: 150px;
+        padding: 12px 25px;
       }
     }
-    
-    @media (max-width: 767px) {
-      table {
-        display: block;
+
+    /* Optimización para móviles pequeños */
+    @media (max-width: 360px) {
+      #controls button, #controls input[type="file"] {
+        flex: 1 1 100%;
       }
       
-      thead {
-        display: none;
-      }
-      
-      tbody {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 15px;
-      }
-      
-      tr {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        position: relative;
-      }
-      
-      tr::before {
-        content: "Fila " attr(data-row-number);
-        grid-column: 1 / -1;
-        font-weight: bold;
-        padding-bottom: 5px;
-        border-bottom: 1px solid #eee;
-      }
-      
-      td {
-        border: none !important;
-        padding: 5px !important;
-        text-align: left !important;
-      }
-      
-      td::before {
-        content: attr(data-column-name);
-        display: block;
-        font-weight: bold;
-        font-size: 0.8rem;
-        color: #7f8c8d;
-      }
-      
-      td:first-child {
-        grid-column: 1 / -1;
-        display: flex;
-        justify-content: flex-end;
-      }
-      
-      td:first-child::before {
-        display: none;
-      }
-      
-      .rowCheckbox {
-        margin-left: 10px;
-      }
-      
-      .invalid-cell {
-        background-color: #ffebee !important;
-        border: none !important;
-      }
-      
-      .invalid-cell::after {
-        content: "⚠️";
-        position: absolute;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
+      .form-header h2 {
+        font-size: 1.3rem;
       }
     }
   </style>
@@ -418,19 +367,17 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="apellido" class="required-field">Apellido:</label>
-            <input type="text" id="apellido" required>
-            <div class="form-error" id="apellido-error"></div>
+            <input type="text" id="apellido" required tabindex="1">
           </div>
 
           <div class="form-group">
             <label for="nombre" class="required-field">Nombre:</label>
-            <input type="text" id="nombre" required>
-            <div class="form-error" id="nombre-error"></div>
+            <input type="text" id="nombre" required tabindex="2">
           </div>
 
           <div class="form-group">
             <label for="tipo_documento" class="required-field">Tipo Documento:</label>
-            <select id="tipo_documento">
+            <select id="tipo_documento" tabindex="3">
               <option value="DNI">DNI</option>
               <option value="Pasaporte">Pasaporte</option>
               <option value="OTROS">Otros</option>
@@ -439,13 +386,12 @@
 
           <div class="form-group">
             <label for="numero_documento" class="required-field">Número Documento:</label>
-            <input type="text" id="numero_documento" required>
-            <div class="form-error" id="numero_documento-error"></div>
+            <input type="text" id="numero_documento" required tabindex="4">
           </div>
 
           <div class="form-group">
             <label for="sexo">Sexo:</label>
-            <select id="sexo">
+            <select id="sexo" tabindex="5">
               <option value="F">Femenino</option>
               <option value="M">Masculino</option>
             </select>
@@ -453,7 +399,7 @@
 
           <div class="form-group">
             <label for="menor">Menor:</label>
-            <select id="menor">
+            <select id="menor" tabindex="6">
               <option value="0">No</option>
               <option value="1">Sí</option>
             </select>
@@ -461,12 +407,12 @@
 
           <div class="form-group">
             <label for="nacionalidad">Nacionalidad:</label>
-            <select id="nacionalidad"></select>
+            <select id="nacionalidad" tabindex="7"></select>
           </div>
 
           <div class="form-group">
             <label for="tripulante">Tripulante:</label>
-            <select id="tripulante">
+            <select id="tripulante" tabindex="8">
               <option value="0">No</option>
               <option value="1">Sí</option>
             </select>
@@ -474,7 +420,7 @@
 
           <div class="form-group">
             <label for="ocupa_butaca">Ocupa Butaca:</label>
-            <select id="ocupa_butaca">
+            <select id="ocupa_butaca" tabindex="9">
               <option value="1">Sí</option>
               <option value="0">No</option>
             </select>
@@ -482,12 +428,12 @@
 
           <div class="form-group" style="grid-column: span 2">
             <label for="observaciones">Observaciones:</label>
-            <input type="text" id="observaciones">
+            <input type="text" id="observaciones" tabindex="10">
           </div>
 
           <div class="form-actions">
-            <button type="button" class="primary-btn" onclick="savePassenger()" id="savePassengerBtn">Agregar Pasajero</button>
-            <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()">Cancelar</button>
+            <button type="button" class="primary-btn" onclick="savePassenger()" tabindex="11" id="savePassengerBtn">Agregar Pasajero</button>
+            <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()" tabindex="12">Cancelar</button>
           </div>
         </div>
       </form>
@@ -501,16 +447,24 @@
     let documentNumbersMap = new Map();
 
     const defaultHeader = [
-      "apellido", "nombre", "tipo_documento", "descripcion_documento",
-      "numero_documento", "sexo", "menor", "nacionalidad",
-      "tripulante", "ocupa_butaca", "observaciones"
+      "apellido",
+      "nombre",
+      "tipo_documento",
+      "descripcion_documento",
+      "numero_documento",
+      "sexo",
+      "menor",
+      "nacionalidad",
+      "tripulante",
+      "ocupa_butaca",
+      "observaciones"
     ];
 
     const validValues = {
       tipo_documento: ["DNI", "Pasaporte", "OTROS"],
       sexo: ["F", "M"],
       menor: ["0", "1"],
-      nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnis", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
+      nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
       tripulante: ["0", "1"],
       ocupa_butaca: ["0", "1"]
     };
@@ -527,22 +481,26 @@
 
     // Inicialización
     window.onload = function() {
-      if (tableData.length === 0) tableData = [defaultHeader];
-      renderTable();
+      if (tableData.length === 0) {
+        tableData = [defaultHeader];
+        renderTable();
+      }
       populateNationalities();
     };
 
     function populateNationalities() {
       const select = document.getElementById('nacionalidad');
+      select.innerHTML = '';
       validValues.nacionalidad.forEach(country => {
         const option = document.createElement('option');
         option.value = country;
         option.textContent = country;
+        if (country === defaults.nacionalidad) option.selected = true;
         select.appendChild(option);
       });
     }
 
-    // Funciones del formulario
+    // Funciones para el modal de agregar/editar pasajero
     function openAddPassengerModal() {
       editingIndex = null;
       document.getElementById('formTitle').textContent = 'Agregar Nuevo Pasajero';
@@ -553,392 +511,69 @@
       document.getElementById('apellido').focus();
     }
 
+    function editRow(rowIndex) {
+      editingIndex = rowIndex;
+      const rowData = tableData[rowIndex];
+      
+      document.getElementById('formTitle').textContent = 'Editar Pasajero';
+      document.getElementById('savePassengerBtn').textContent = 'Guardar Cambios';
+      
+      document.getElementById('apellido').value = rowData[0] || '';
+      document.getElementById('nombre').value = rowData[1] || '';
+      document.getElementById('tipo_documento').value = rowData[2] || defaults.tipo_documento;
+      document.getElementById('numero_documento').value = rowData[4] || '';
+      document.getElementById('sexo').value = rowData[5] || defaults.sexo;
+      document.getElementById('menor').value = rowData[6] || defaults.menor;
+      document.getElementById('nacionalidad').value = rowData[7] || defaults.nacionalidad;
+      document.getElementById('tripulante').value = rowData[8] || defaults.tripulante;
+      document.getElementById('ocupa_butaca').value = rowData[9] || defaults.ocupa_butaca;
+      document.getElementById('observaciones').value = rowData[10] || defaults.observaciones;
+      
+      document.getElementById('addPassengerModal').style.display = 'block';
+      document.getElementById('apellido').focus();
+    }
+
     function closeAddPassengerModal() {
       document.getElementById('addPassengerModal').style.display = 'none';
       editingIndex = null;
     }
 
     function savePassenger() {
-      clearFormErrors();
-      const errors = [];
-      let hasErrors = false;
+      const newRow = [
+    document.getElementById('apellido').value.trim(),
+    document.getElementById('nombre').value.trim(),
+    document.getElementById('tipo_documento').value,
+    '', // descripcion_documento
+    document.getElementById('numero_documento').value.trim(),
+    document.getElementById('sexo').value || defaults.sexo, // Usa valor del form o default
+    document.getElementById('menor').value || defaults.menor,
+    document.getElementById('nacionalidad').value || defaults.nacionalidad, // Asegura el default
+    document.getElementById('tripulante').value || defaults.tripulante,
+    document.getElementById('ocupa_butaca').value || defaults.ocupa_butaca,
+    document.getElementById('observaciones').value.trim() || defaults.observaciones
+  ];
 
-      // Validación de campos
-      const apellido = document.getElementById('apellido').value.trim();
-      const nombre = document.getElementById('nombre').value.trim();
-      const tipoDoc = document.getElementById('tipo_documento').value;
-      const numDoc = document.getElementById('numero_documento').value.trim();
-
-      if (!apellido) {
-        showFormError('apellido-error', 'Apellido es requerido');
-        hasErrors = true;
-      }
-      if (!nombre) {
-        showFormError('nombre-error', 'Nombre es requerido');
-        hasErrors = true;
-      }
-      if (!numDoc) {
-        showFormError('numero_documento-error', 'Número de documento es requerido');
-        hasErrors = true;
-      } else {
-        const docError = validateDocument(tipoDoc, numDoc);
-        if (docError) {
-          showFormError('numero_documento-error', docError);
-          hasErrors = true;
-        }
-      }
-
-      if (hasErrors) {
-        scrollToFirstError();
+      // Validación básica (solo campos obligatorios)
+      if (!newRow[0] || !newRow[1] || !newRow[4]) {
+        alert('Por favor complete los campos obligatorios (Apellido, Nombre y Número de Documento)');
         return;
       }
 
-      // Crear nueva fila
-      const newRow = [
-        apellido,
-        nombre,
-        tipoDoc,
-        '',
-        numDoc,
-        document.getElementById('sexo').value || defaults.sexo,
-        document.getElementById('menor').value || defaults.menor,
-        document.getElementById('nacionalidad').value || defaults.nacionalidad,
-        document.getElementById('tripulante').value || defaults.tripulante,
-        document.getElementById('ocupa_butaca').value || defaults.ocupa_butaca,
-        document.getElementById('observaciones').value.trim() || defaults.observaciones
-      ];
-
+      if (tableData.length === 0) tableData = [defaultHeader];
+      
       if (editingIndex !== null) {
+        // Modo edición
         tableData[editingIndex] = newRow;
       } else {
+        // Modo creación
         tableData.push(newRow);
       }
-
+      
       renderTable();
       closeAddPassengerModal();
     }
 
-    function validateDocument(tipoDoc, numDoc) {
-      if (tipoDoc === 'DNI' && !/^\d{7,8}$/.test(numDoc)) {
-        return 'DNI debe tener 7 u 8 dígitos';
-      }
-      if ((tipoDoc === 'Pasaporte' || tipoDoc === 'OTROS') && (numDoc.length < 5 || numDoc.length > 100)) {
-        return 'Documento debe tener entre 5 y 100 caracteres';
-      }
-      return null;
-    }
-
-    function clearFormErrors() {
-      document.querySelectorAll('.form-error').forEach(e => e.textContent = '');
-    }
-
-    function showFormError(id, message) {
-      document.getElementById(id).textContent = message;
-    }
-
-    function scrollToFirstError() {
-      const firstError = document.querySelector('.form-error:not(:empty)');
-      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // Funciones de la tabla
-    function renderTable() {
-      const container = document.getElementById('tableContainer');
-      container.innerHTML = '';
-      
-      const isMobile = window.innerWidth <= 767;
-      
-      if (isMobile) {
-        renderMobileTable();
-      } else {
-        renderDesktopTable();
-      }
-      
-      document.getElementById('saveBtn').disabled = document.querySelectorAll('.invalid-cell').length > 0;
-    }
-
-    function renderDesktopTable() {
-      const container = document.getElementById('tableContainer');
-      const table = document.createElement('table');
-      const thead = document.createElement('thead');
-      const tbody = document.createElement('tbody');
-      documentNumbersMap.clear();
-      let invalidCellsCount = 0;
-      const errorMessages = [];
-
-      // Cabecera
-      thead.innerHTML = `
-        <tr>
-          <th>Sel</th><th>#</th>
-          ${defaultHeader.map((h, i) => i === 3 ? '' : `<th>${h}</th>`).join('')}
-        </tr>
-      `;
-
-      // Filas
-      tableData.slice(1).forEach((row, rowIndex) => {
-        const tr = document.createElement('tr');
-        tr.classList.add('editable-row');
-        tr.innerHTML = `
-          <td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}"></td>
-          <td>${rowIndex + 1}</td>
-        `;
-
-        row.forEach((cell, colIndex) => {
-          if (colIndex === 3) return;
-          const td = document.createElement('td');
-          const columnName = defaultHeader[colIndex];
-          const cellValue = cell.toString().trim();
-
-          // Validación de documentos
-          if (columnName === 'numero_documento') {
-            if (documentNumbersMap.has(cellValue)) {
-              documentNumbersMap.get(cellValue).push(rowIndex + 1);
-            } else {
-              documentNumbersMap.set(cellValue, [rowIndex + 1]);
-            }
-          }
-
-          // Input/Select
-          if (validValues[columnName]) {
-            const select = document.createElement('select');
-            validValues[columnName].forEach(value => {
-              const option = document.createElement('option');
-              option.value = value;
-              option.textContent = ['menor', 'tripulante', 'ocupa_butaca'].includes(columnName) 
-                ? (value === '1' ? 'Sí' : 'No') : value;
-              if (value === cellValue) option.selected = true;
-              select.appendChild(option);
-            });
-            select.onchange = () => updateCell(rowIndex + 1, colIndex, select.value);
-            td.appendChild(select);
-          } else {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = cellValue;
-            input.onblur = () => updateCell(rowIndex + 1, colIndex, input.value.trim());
-            td.appendChild(input);
-          }
-
-          // Validación y errores
-          const error = validateCell(columnName, cellValue, row[2]);
-          const errorDiv = document.createElement('div');
-          errorDiv.className = 'error-message';
-          
-          if (error) {
-            td.classList.add('invalid-cell');
-            errorDiv.textContent = error;
-            errorDiv.style.display = 'block';
-            invalidCellsCount++;
-            errorMessages.push(`Fila ${rowIndex + 2}: ${error}`);
-          }
-
-          if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue)?.length > 1) {
-            td.classList.add('invalid-cell');
-            errorDiv.textContent = 'Documento duplicado';
-            errorDiv.style.display = 'block';
-            invalidCellsCount++;
-            errorMessages.push(`Fila ${rowIndex + 2}: Documento duplicado`);
-          }
-
-          td.appendChild(errorDiv);
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      });
-
-      table.appendChild(thead);
-      table.appendChild(tbody);
-      container.appendChild(table);
-      updateErrorSummary(errorMessages);
-    }
-
-    function renderMobileTable() {
-      const container = document.getElementById('tableContainer');
-      const table = document.createElement('table');
-      const tbody = document.createElement('tbody');
-      documentNumbersMap.clear();
-      let invalidCellsCount = 0;
-      const errorMessages = [];
-
-      // Filas
-      tableData.slice(1).forEach((row, rowIndex) => {
-        const tr = document.createElement('tr');
-        tr.classList.add('editable-row');
-        tr.setAttribute('data-row-number', rowIndex + 1);
-        
-        // Checkbox de selección
-        const checkboxTd = document.createElement('td');
-        checkboxTd.innerHTML = `<input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}">`;
-        tr.appendChild(checkboxTd);
-        
-        // Contador de errores
-        let rowErrors = 0;
-        const rowErrorMessages = [];
-        
-        // Celdas de datos
-        row.forEach((cell, colIndex) => {
-          if (colIndex === 3) return; // Saltar descripción documento
-          
-          const td = document.createElement('td');
-          const columnName = defaultHeader[colIndex];
-          const cellValue = cell.toString().trim();
-          td.setAttribute('data-column-name', columnName);
-          
-          // Validación de documentos
-          if (columnName === 'numero_documento') {
-            if (documentNumbersMap.has(cellValue)) {
-              documentNumbersMap.get(cellValue).push(rowIndex + 1);
-            } else {
-              documentNumbersMap.set(cellValue, [rowIndex + 1]);
-            }
-          }
-
-          // Input/Select
-          if (validValues[columnName]) {
-            const select = document.createElement('select');
-            validValues[columnName].forEach(value => {
-              const option = document.createElement('option');
-              option.value = value;
-              option.textContent = ['menor', 'tripulante', 'ocupa_butaca'].includes(columnName) 
-                ? (value === '1' ? 'Sí' : 'No') : value;
-              if (value === cellValue) option.selected = true;
-              select.appendChild(option);
-            });
-            select.onchange = () => updateCell(rowIndex + 1, colIndex, select.value);
-            td.appendChild(select);
-          } else {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = cellValue;
-            input.onblur = () => updateCell(rowIndex + 1, colIndex, input.value.trim());
-            td.appendChild(input);
-          }
-
-          // Validación y errores
-          const error = validateCell(columnName, cellValue, row[2]);
-          
-          if (error) {
-            td.classList.add('invalid-cell');
-            rowErrors++;
-            rowErrorMessages.push(`${columnName}: ${error}`);
-            errorMessages.push(`Fila ${rowIndex + 2}: ${columnName} - ${error}`);
-          }
-
-          if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue)?.length > 1) {
-            td.classList.add('invalid-cell');
-            rowErrors++;
-            rowErrorMessages.push('Documento duplicado');
-            errorMessages.push(`Fila ${rowIndex + 2}: Documento duplicado`);
-          }
-
-          tr.appendChild(td);
-        });
-        
-        // Mostrar errores de la fila si hay alguno
-        if (rowErrors > 0) {
-          tr.classList.add('has-error');
-          const errorDiv = document.createElement('div');
-          errorDiv.className = 'row-error';
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = rowErrorMessages.join(', ');
-          tr.appendChild(errorDiv);
-          invalidCellsCount += rowErrors;
-        }
-
-        tbody.appendChild(tr);
-      });
-
-      table.appendChild(tbody);
-      container.appendChild(table);
-      updateErrorSummary(errorMessages);
-    }
-
-    function updateCell(row, col, value) {
-      tableData[row][col] = value;
-      renderTable();
-    }
-
-    function validateCell(column, value, tipoDoc = '') {
-      value = value.toString().trim();
-      switch(column) {
-        case 'apellido':
-        case 'nombre':
-          if (!value) return 'Campo requerido';
-          if (value.length > 100) return 'Máximo 100 caracteres';
-          break;
-        case 'numero_documento':
-          if (!value) return 'Campo requerido';
-          tipoDoc = tipoDoc.toString().trim().toUpperCase();
-          if (tipoDoc === 'DNI' && !/^\d{7,8}$/.test(value)) return 'DNI inválido';
-          if ((tipoDoc === 'PASAPORTE' || tipoDoc === 'OTROS') && (value.length < 5 || value.length > 100)) {
-            return 'Documento inválido';
-          }
-          break;
-      }
-      return '';
-    }
-
-    function updateErrorSummary(errors) {
-      const existing = document.getElementById('error-summary');
-      if (existing) existing.remove();
-      
-      if (errors.length > 0) {
-        const summary = document.createElement('div');
-        summary.id = 'error-summary';
-        summary.textContent = `⚠️ ${errors.length} errores detectados (toque para ver detalles)`;
-        summary.onclick = () => alert(errors.join('\n'));
-        document.body.appendChild(summary);
-      }
-    }
-
-    // Resto de funciones
-    function removeSelectedRows() {
-      const indexes = Array.from(document.querySelectorAll('.rowCheckbox:checked'))
-        .map(cb => parseInt(cb.dataset.index))
-        .sort((a, b) => b - a);
-      
-      if (indexes.length === 0) {
-        alert('Seleccione filas para eliminar');
-        return;
-      }
-      
-      indexes.forEach(i => tableData.splice(i, 1));
-      renderTable();
-    }
-
-    function sortTableAndRender() {
-      tableData = [tableData[0], ...tableData.slice(1).sort((a, b) => a[0].localeCompare(b[0]))];
-      renderTable();
-    }
-
-    // Funciones de archivos
-    document.getElementById('csvFile').onchange = function(e) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        tableData = parseCSV(e.target.result);
-        renderTable();
-      };
-      reader.readAsText(file);
-    };
-
-    function parseCSV(text) {
-      const rows = text.split('\n').map(row => row.split(';'));
-      let header = rows[0];
-      const body = rows.slice(1);
-      
-      // Asegurar columnas requeridas
-      ['ocupa_butaca', 'observaciones'].forEach(col => {
-        if (!header.includes(col)) {
-          header.push(col);
-          body.forEach(row => row.push(col === 'ocupa_butaca' ? '1' : ''));
-        }
-      });
-      
-      return [header, ...body];
-    }
-
+    // Funciones para el modal de guardar
     function openSaveModal() {
       document.getElementById('saveModal').style.display = 'flex';
       document.getElementById('fileNameInputModal').focus();
@@ -948,19 +583,232 @@
       document.getElementById('saveModal').style.display = 'none';
     }
 
-    function confirmDownload() {
-      if (document.getElementById('saveBtn').disabled) {
-        alert('Corrija los errores antes de guardar');
+    // Manejo de archivos CSV
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const text = event.target.result;
+        tableData = parseCSV(text);
+        renderTable();
+      };
+      reader.readAsText(file);
+    });
+
+    function parseCSV(text) {
+      const rows = text.trim().split('\n').map(row => row.split(';'));
+      let header = rows[0];
+      const body = rows.slice(1);
+
+      const requiredColumns = [
+        { name: 'ocupa_butaca', defaultValue: '1' },
+        { name: 'observaciones', defaultValue: '' }
+      ];
+
+      requiredColumns.forEach(col => {
+        if (!header.includes(col.name)) {
+          header.push(col.name);
+          body.forEach(row => row.push(col.defaultValue));
+        }
+      });
+
+      return [header, ...body];
+    }
+
+    // Renderizado de la tabla
+    function renderTable() {
+      const container = document.getElementById('tableContainer');
+      const table = document.createElement('table');
+      container.innerHTML = '';
+
+      if (tableData.length === 0) return;
+
+      const header = tableData[0];
+      const body = tableData.slice(1);
+
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+
+      headRow.innerHTML = `<th>Sel</th><th>#</th>`;
+      header.forEach((title, i) => {
+        if (i === 3) return;
+        const th = document.createElement('th');
+        th.textContent = title.trim();
+        th.title = getHeaderTooltip(title);
+        headRow.appendChild(th);
+      });
+
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      documentNumbersMap.clear();
+      let invalidCellsCount = 0;
+
+      body.forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+        tr.classList.add('editable-row');
+        if (editingIndex === rowIndex + 1) tr.classList.add('editing');
+        
+        tr.addEventListener('click', () => editRow(rowIndex + 1));
+
+        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}" onclick="event.stopPropagation()"></td>`;
+        tr.innerHTML += `<td>${rowIndex + 1}</td>`;
+
+        let tabIndexCounter = (rowIndex * 100) + 1;
+
+        row.forEach((cell, colIndex) => {
+          if (colIndex === 3) return;
+
+          const td = document.createElement('td');
+          const columnName = header[colIndex];
+          const cellValue = cell.trim();
+
+          // Registrar número de documento para validar duplicados
+          if (columnName === 'numero_documento') {
+            if (documentNumbersMap.has(cellValue)) {
+              documentNumbersMap.get(cellValue).push(rowIndex + 1);
+            } else {
+              documentNumbersMap.set(cellValue, [rowIndex + 1]);
+            }
+          }
+
+          if (validValues[columnName]) {
+            const select = document.createElement('select');
+            select.setAttribute('tabindex', tabIndexCounter++);
+            const options = validValues[columnName];
+
+            options.forEach(value => {
+              const option = document.createElement('option');
+              option.value = value;
+              option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) 
+                ? (value === "1" ? "SI" : "NO") : value;
+              if (cellValue.toUpperCase() === value.toUpperCase()) option.selected = true;
+              select.appendChild(option);
+            });
+
+            select.addEventListener('change', e => {
+              tableData[rowIndex + 1][colIndex] = e.target.value;
+              renderTable();
+            });
+
+            select.addEventListener('click', e => e.stopPropagation());
+
+            td.appendChild(select);
+          } else {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.setAttribute('tabindex', tabIndexCounter++);
+            input.value = cellValue;
+
+            input.addEventListener('input', e => {
+              tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+            });
+
+            input.addEventListener('blur', () => renderTable());
+            input.addEventListener('click', e => e.stopPropagation());
+
+            td.appendChild(input);
+          }
+
+          // Validación por celda
+          const validationError = validateCell(columnName, row[colIndex], row[2]);
+          if (validationError) {
+            td.classList.add('invalid-cell');
+            td.title = validationError;
+            invalidCellsCount++;
+          }
+
+          // Validación de documento duplicado
+          if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue).length > 1) {
+            td.classList.add('invalid-cell');
+            td.title = "Número de documento duplicado";
+            invalidCellsCount++;
+          }
+
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      // Bloquear guardado si hay errores (incluyendo duplicados)
+      document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+
+    // Validación de celdas
+    function validateCell(columnName, value, tipoDoc = "") {
+      value = (value || "").trim();
+      tipoDoc = (tipoDoc || "").trim().toUpperCase();
+
+      switch(columnName) {
+        case 'apellido':
+        case 'nombre':
+          if (!value) return "Campo requerido";
+          if (value.length > 100) return "Máximo 100 caracteres";
+          break;
+        case 'numero_documento':
+          if (!value) return "Campo requerido";
+          if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) return "DNI requiere 7-8 dígitos";
+          if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && (value.length < 5 || value.length > 100)) {
+            return "Documento requiere 5-100 caracteres";
+          }
+          break;
+        default:
+          return "";
+      }
+      return "";
+    }
+
+    // Tooltips para headers
+    function getHeaderTooltip(headerName) {
+      const tips = {
+        numero_documento: "DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+        menor: "0 = NO, 1 = SI",
+        ocupa_butaca: "0 = NO, 1 = SI",
+        tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS"
+      };
+      return tips[headerName] || "";
+    }
+
+    // Funciones de acciones
+    function removeSelectedRows() {
+      const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
+      const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+      if (indexesToRemove.length === 0) {
+        alert('No hay filas seleccionadas para eliminar.');
         return;
       }
-      
-      const name = document.getElementById('fileNameInputModal').value.trim() || 'datos';
-      const csv = tableData.map(row => row.join(';')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
+      renderTable();
+    }
+
+    function sortTableAndRender() {
+      if (tableData.length <= 1) return;
+      const header = tableData[0];
+      const body = tableData.slice(1);
+      body.sort((a, b) => (a[0]?.toLowerCase() || '').localeCompare(b[0]?.toLowerCase() || ''));
+      tableData = [header, ...body];
+      renderTable();
+    }
+
+    function confirmDownload() {
+      // Verificar nuevamente antes de guardar (por si acaso)
+      if (document.getElementById('saveBtn').disabled) {
+        alert('No se puede guardar mientras existan errores en los datos');
+        return;
+      }
+
+      const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
+      const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+      const csvContent = tableData.map(row => row.join(';')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${name}.csv`;
+      a.download = fileName;
       a.click();
       closeSaveModal();
     }
