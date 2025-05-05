@@ -401,33 +401,6 @@
         margin-top: 0;
         margin-bottom: 5px;
       }
-
-      /* Ajustes específicos para el formulario modal en móviles */
-      .form-modal .form-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-      }
-      
-      .form-modal .form-group {
-        margin-bottom: 0;
-      }
-      
-      .form-modal .form-group label {
-        font-size: 0.9rem;
-        margin-bottom: 5px;
-      }
-      
-      .form-modal .form-group input,
-      .form-modal .form-group select {
-        width: 100%;
-        padding: 10px;
-        font-size: 1rem;
-      }
-      
-      .form-modal .form-content {
-        padding-bottom: 100px; /* Espacio para los botones */
-      }
     }
 
     /* Optimización para móviles pequeños */
@@ -444,7 +417,6 @@
 </head>
 <body>
 
-  <!-- El resto de tu HTML permanece igual -->
   <h1>Editor de CSV Web 🚀</h1>
 
   <div id="controls">
@@ -822,13 +794,9 @@
             validValues[columnName].forEach(value => {
               const option = document.createElement('option');
               option.value = value;
-              // Mostrar "SÍ"/"NO" para campos booleanos
-              if (columnName === 'tripulante' || columnName === 'ocupa_butaca' || columnName === 'menor') {
-                option.textContent = value === "1" ? "SÍ" : "NO";
-              } else {
-                option.textContent = value;
-              }
-              if (cellValue === value) option.selected = true;
+              option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) 
+                ? (value === "1" ? "SI" : "NO") : value;
+              if (cellValue.toUpperCase() === value.toUpperCase()) option.selected = true;
               select.appendChild(option);
             });
             select.addEventListener('change', e => {
@@ -931,13 +899,9 @@
             validValues[columnName].forEach(value => {
               const option = document.createElement('option');
               option.value = value;
-              // Mostrar "SÍ"/"NO" para campos booleanos
-              if (columnName === 'tripulante' || columnName === 'ocupa_butaca' || columnName === 'menor') {
-                option.textContent = value === "1" ? "SÍ" : "NO";
-              } else {
-                option.textContent = value;
-              }
-              if (cellValue === value) option.selected = true;
+              option.textContent = ['menor', 'tripulante', 'ocupa_butaca'].includes(columnName) 
+                ? (value === '1' ? 'Sí' : 'No') : value;
+              if (value === cellValue) option.selected = true;
               select.appendChild(option);
             });
             select.onchange = () => {
