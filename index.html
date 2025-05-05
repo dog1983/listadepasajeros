@@ -100,22 +100,17 @@
     /* Celdas inválidas */
     .invalid-cell {
       background-color: #ffebee !important;
-      border: 1px solid #e74c3c !important;
+      border: 2px solid #e74c3c !important;
       position: relative;
     }
     
-    .error-message {
-      color: #e74c3c;
-      font-size: 0.75rem;
-      margin-top: 4px;
-      display: block;
-      padding: 2px 5px;
-      background-color: #ffebee;
-      border-radius: 0 0 4px 4px;
-      border-left: 2px solid #e74c3c;
-      border-right: 2px solid #e74c3c;
-      border-bottom: 2px solid #e74c3c;
-      margin-top: -1px;
+    .invalid-cell::after {
+      content: "⚠";
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #c0392b;
     }
     
     /* Filas editables */
@@ -322,87 +317,6 @@
       }
     }
 
-    /* Estilos para móviles */
-    @media (max-width: 767px) {
-      table {
-        display: block;
-        width: 100%;
-      }
-      
-      thead {
-        display: none;
-      }
-      
-      tbody {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 15px;
-      }
-      
-      tr {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: white;
-        position: relative;
-      }
-      
-      tr.has-error {
-        border-left: 4px solid #e74c3c;
-      }
-      
-      tr::before {
-        content: "Fila " attr(data-row-number);
-        grid-column: 1 / -1;
-        font-weight: bold;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #eee;
-        margin-bottom: 5px;
-      }
-      
-      td {
-        border: none !important;
-        padding: 5px !important;
-        text-align: left !important;
-        position: relative;
-      }
-      
-      td::before {
-        content: attr(data-column-name);
-        display: block;
-        font-weight: bold;
-        font-size: 0.8rem;
-        color: #7f8c8d;
-        margin-bottom: 3px;
-      }
-      
-      td:first-child {
-        grid-column: 1 / -1;
-        display: flex;
-        justify-content: flex-end;
-        padding-bottom: 10px !important;
-      }
-      
-      td:first-child::before {
-        display: none;
-      }
-      
-      .invalid-cell {
-        background-color: #ffebee !important;
-        border: none !important;
-        padding-right: 25px !important;
-      }
-      
-      .error-message {
-        grid-column: span 2;
-        margin-top: 0;
-        margin-bottom: 5px;
-      }
-    }
-
     /* Optimización para móviles pequeños */
     @media (max-width: 360px) {
       #controls button, #controls input[type="file"] {
@@ -572,9 +486,6 @@
         renderTable();
       }
       populateNationalities();
-      window.addEventListener('resize', function() {
-        renderTable();
-      });
     };
 
     function populateNationalities() {
@@ -628,58 +539,38 @@
     }
 
     function savePassenger() {
-      const errors = [];
-      const apellido = document.getElementById('apellido').value.trim();
-      const nombre = document.getElementById('nombre').value.trim();
-      const tipoDoc = document.getElementById('tipo_documento').value;
-      const numDoc = document.getElementById('numero_documento').value.trim();
+      const newRow = [
+    document.getElementById('apellido').value.trim(),
+    document.getElementById('nombre').value.trim(),
+    document.getElementById('tipo_documento').value,
+    '', // descripcion_documento
+    document.getElementById('numero_documento').value.trim(),
+    document.getElementById('sexo').value || defaults.sexo, // Usa valor del form o default
+    document.getElementById('menor').value || defaults.menor,
+    document.getElementById('nacionalidad').value || defaults.nacionalidad, // Asegura el default
+    document.getElementById('tripulante').value || defaults.tripulante,
+    document.getElementById('ocupa_butaca').value || defaults.ocupa_butaca,
+    document.getElementById('observaciones').value.trim() || defaults.observaciones
+  ];
 
-      if (!apellido) errors.push("Apellido es requerido");
-      if (!nombre) errors.push("Nombre es requerido");
-      if (!numDoc) {
-        errors.push("Número de documento es requerido");
-      } else {
-        const docError = validateDocument(tipoDoc, numDoc);
-        if (docError) errors.push(docError);
-      }
-
-      if (errors.length > 0) {
-        alert("Errores:\n" + errors.join("\n"));
+      // Validación básica (solo campos obligatorios)
+      if (!newRow[0] || !newRow[1] || !newRow[4]) {
+        alert('Por favor complete los campos obligatorios (Apellido, Nombre y Número de Documento)');
         return;
       }
 
-      const newRow = [
-        apellido,
-        nombre,
-        tipoDoc,
-        '', // descripcion_documento
-        numDoc,
-        document.getElementById('sexo').value || defaults.sexo,
-        document.getElementById('menor').value || defaults.menor,
-        document.getElementById('nacionalidad').value || defaults.nacionalidad,
-        document.getElementById('tripulante').value || defaults.tripulante,
-        document.getElementById('ocupa_butaca').value || defaults.ocupa_butaca,
-        document.getElementById('observaciones').value.trim() || defaults.observaciones
-      ];
-
+      if (tableData.length === 0) tableData = [defaultHeader];
+      
       if (editingIndex !== null) {
+        // Modo edición
         tableData[editingIndex] = newRow;
       } else {
+        // Modo creación
         tableData.push(newRow);
       }
       
       renderTable();
       closeAddPassengerModal();
-    }
-
-    function validateDocument(tipoDoc, numDoc) {
-      if (tipoDoc === 'DNI' && !/^\d{7,8}$/.test(numDoc)) {
-        return 'DNI debe tener 7 u 8 dígitos';
-      }
-      if ((tipoDoc === 'Pasaporte' || tipoDoc === 'OTROS') && (numDoc.length < 5 || numDoc.length > 100)) {
-        return 'Documento debe tener entre 5 y 100 caracteres';
-      }
-      return null;
     }
 
     // Funciones para el modal de guardar
@@ -726,39 +617,31 @@
 
     // Renderizado de la tabla
     function renderTable() {
-      const isMobile = window.innerWidth <= 767;
-      if (isMobile) {
-        renderMobileTable();
-      } else {
-        renderDesktopTable();
-      }
-    }
-
-    function renderDesktopTable() {
       const container = document.getElementById('tableContainer');
+      const table = document.createElement('table');
       container.innerHTML = '';
-      
+
       if (tableData.length === 0) return;
 
       const header = tableData[0];
       const body = tableData.slice(1);
 
-      const table = document.createElement('table');
       const thead = document.createElement('thead');
-      const tbody = document.createElement('tbody');
-      
-      // Cabecera
       const headRow = document.createElement('tr');
+
       headRow.innerHTML = `<th>Sel</th><th>#</th>`;
       header.forEach((title, i) => {
         if (i === 3) return;
         const th = document.createElement('th');
         th.textContent = title.trim();
+        th.title = getHeaderTooltip(title);
         headRow.appendChild(th);
       });
+
       thead.appendChild(headRow);
       table.appendChild(thead);
 
+      const tbody = document.createElement('tbody');
       documentNumbersMap.clear();
       let invalidCellsCount = 0;
 
@@ -769,8 +652,10 @@
         
         tr.addEventListener('click', () => editRow(rowIndex + 1));
 
-        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" onclick="event.stopPropagation()"></td>`;
+        tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}" onclick="event.stopPropagation()"></td>`;
         tr.innerHTML += `<td>${rowIndex + 1}</td>`;
+
+        let tabIndexCounter = (rowIndex * 100) + 1;
 
         row.forEach((cell, colIndex) => {
           if (colIndex === 3) return;
@@ -788,10 +673,12 @@
             }
           }
 
-          // Input/Select
           if (validValues[columnName]) {
             const select = document.createElement('select');
-            validValues[columnName].forEach(value => {
+            select.setAttribute('tabindex', tabIndexCounter++);
+            const options = validValues[columnName];
+
+            options.forEach(value => {
               const option = document.createElement('option');
               option.value = value;
               option.textContent = ["tripulante", "ocupa_butaca", "menor"].includes(columnName) 
@@ -799,45 +686,44 @@
               if (cellValue.toUpperCase() === value.toUpperCase()) option.selected = true;
               select.appendChild(option);
             });
+
             select.addEventListener('change', e => {
               tableData[rowIndex + 1][colIndex] = e.target.value;
               renderTable();
             });
+
             select.addEventListener('click', e => e.stopPropagation());
+
             td.appendChild(select);
           } else {
             const input = document.createElement('input');
             input.type = 'text';
+            input.setAttribute('tabindex', tabIndexCounter++);
             input.value = cellValue;
+
             input.addEventListener('input', e => {
               tableData[rowIndex + 1][colIndex] = e.target.value.trim();
             });
+
             input.addEventListener('blur', () => renderTable());
             input.addEventListener('click', e => e.stopPropagation());
+
             td.appendChild(input);
           }
 
-          // Validación y mensaje de error
+          // Validación por celda
           const validationError = validateCell(columnName, row[colIndex], row[2]);
           if (validationError) {
             td.classList.add('invalid-cell');
+            td.title = validationError;
             invalidCellsCount++;
-            
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = validationError;
-            td.appendChild(errorDiv);
           }
 
           // Validación de documento duplicado
-          if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue)?.length > 1) {
+          if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue).length > 1) {
             td.classList.add('invalid-cell');
+            td.title = "Número de documento duplicado";
             invalidCellsCount++;
-            
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = "Documento duplicado";
-            td.appendChild(errorDiv);
           }
 
           tr.appendChild(td);
@@ -846,114 +732,10 @@
         tbody.appendChild(tr);
       });
 
+      // Bloquear guardado si hay errores (incluyendo duplicados)
       document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
       table.appendChild(tbody);
       container.appendChild(table);
-    }
-
-    function renderMobileTable() {
-      const container = document.getElementById('tableContainer');
-      container.innerHTML = '';
-      
-      if (tableData.length === 0) return;
-      
-      const table = document.createElement('table');
-      const tbody = document.createElement('tbody');
-      const header = tableData[0];
-      const body = tableData.slice(1);
-      
-      documentNumbersMap.clear();
-      let invalidCellsCount = 0;
-      
-      body.forEach((row, rowIndex) => {
-        const tr = document.createElement('tr');
-        tr.classList.add('editable-row');
-        tr.setAttribute('data-row-number', rowIndex + 1);
-        
-        // Checkbox de selección
-        const checkboxTd = document.createElement('td');
-        checkboxTd.innerHTML = `<input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" onclick="event.stopPropagation()">`;
-        tr.appendChild(checkboxTd);
-        
-        // Celdas de datos
-        row.forEach((cell, colIndex) => {
-          if (colIndex === 3) return;
-          
-          const td = document.createElement('td');
-          const columnName = header[colIndex];
-          const cellValue = cell.toString().trim();
-          td.setAttribute('data-column-name', columnName);
-          
-          // Validación de documentos
-          if (columnName === 'numero_documento') {
-            if (documentNumbersMap.has(cellValue)) {
-              documentNumbersMap.get(cellValue).push(rowIndex + 1);
-            } else {
-              documentNumbersMap.set(cellValue, [rowIndex + 1]);
-            }
-          }
-
-          // Input/Select
-          if (validValues[columnName]) {
-            const select = document.createElement('select');
-            validValues[columnName].forEach(value => {
-              const option = document.createElement('option');
-              option.value = value;
-              option.textContent = ['menor', 'tripulante', 'ocupa_butaca'].includes(columnName) 
-                ? (value === '1' ? 'Sí' : 'No') : value;
-              if (value === cellValue) option.selected = true;
-              select.appendChild(option);
-            });
-            select.onchange = () => {
-              tableData[rowIndex + 1][colIndex] = select.value;
-              renderTable();
-            };
-            select.onclick = (e) => e.stopPropagation();
-            td.appendChild(select);
-          } else {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = cellValue;
-            input.onblur = () => {
-              tableData[rowIndex + 1][colIndex] = input.value.trim();
-              renderTable();
-            };
-            input.onclick = (e) => e.stopPropagation();
-            td.appendChild(input);
-          }
-
-          // Validación y mensaje de error
-          const validationError = validateCell(columnName, cellValue, row[2]);
-          if (validationError) {
-            td.classList.add('invalid-cell');
-            invalidCellsCount++;
-            
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = validationError;
-            tr.appendChild(errorDiv);
-          }
-
-          // Validación de documento duplicado
-          if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue)?.length > 1) {
-            td.classList.add('invalid-cell');
-            invalidCellsCount++;
-            
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = "Documento duplicado";
-            tr.appendChild(errorDiv);
-          }
-
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      });
-
-      table.appendChild(tbody);
-      container.appendChild(table);
-      document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
     }
 
     // Validación de celdas
@@ -980,6 +762,17 @@
       return "";
     }
 
+    // Tooltips para headers
+    function getHeaderTooltip(headerName) {
+      const tips = {
+        numero_documento: "DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+        menor: "0 = NO, 1 = SI",
+        ocupa_butaca: "0 = NO, 1 = SI",
+        tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS"
+      };
+      return tips[headerName] || "";
+    }
+
     // Funciones de acciones
     function removeSelectedRows() {
       const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
@@ -1002,6 +795,7 @@
     }
 
     function confirmDownload() {
+      // Verificar nuevamente antes de guardar (por si acaso)
       if (document.getElementById('saveBtn').disabled) {
         alert('No se puede guardar mientras existan errores en los datos');
         return;
