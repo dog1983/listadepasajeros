@@ -111,20 +111,34 @@
       display: none;
     }
     
-    .mobile-error {
-      position: fixed;
-      bottom: 20px;
-      left: 10px;
-      right: 10px;
-      background: #ffebee;
-      color: #dc3545;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #dc3545;
-      z-index: 1000;
-      text-align: center;
+    .row-error {
       display: none;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      background-color: #ffebee;
+      color: #dc3545;
+      padding: 8px;
+      border-left: 3px solid #dc3545;
+      margin-top: 5px;
+      font-size: 0.85rem;
+      grid-column: 1 / -1;
+    }
+    
+    .has-error {
+      background-color: #fff5f5;
+    }
+    
+    .error-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background-color: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     #error-summary {
@@ -243,6 +257,28 @@
       font-size: 1rem;
     }
 
+    /* Modal para guardar */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+    }
+
     @media (min-width: 768px) {
       .form-content {
         padding: 30px;
@@ -257,6 +293,89 @@
       .form-actions {
         flex-direction: row;
         justify-content: flex-end;
+      }
+      
+      .error-message {
+        display: block;
+      }
+      
+      .row-error {
+        display: none !important;
+      }
+    }
+    
+    @media (max-width: 767px) {
+      table {
+        display: block;
+      }
+      
+      thead {
+        display: none;
+      }
+      
+      tbody {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+      
+      tr {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        position: relative;
+      }
+      
+      tr::before {
+        content: "Fila " attr(data-row-number);
+        grid-column: 1 / -1;
+        font-weight: bold;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+      }
+      
+      td {
+        border: none !important;
+        padding: 5px !important;
+        text-align: left !important;
+      }
+      
+      td::before {
+        content: attr(data-column-name);
+        display: block;
+        font-weight: bold;
+        font-size: 0.8rem;
+        color: #7f8c8d;
+      }
+      
+      td:first-child {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+      }
+      
+      td:first-child::before {
+        display: none;
+      }
+      
+      .rowCheckbox {
+        margin-left: 10px;
+      }
+      
+      .invalid-cell {
+        background-color: #ffebee !important;
+        border: none !important;
+      }
+      
+      .invalid-cell::after {
+        content: "⚠️";
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
       }
     }
   </style>
@@ -391,7 +510,7 @@
       tipo_documento: ["DNI", "Pasaporte", "OTROS"],
       sexo: ["F", "M"],
       menor: ["0", "1"],
-      nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
+      nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnis", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
       tripulante: ["0", "1"],
       ocupa_butaca: ["0", "1"]
     };
@@ -526,6 +645,20 @@
     function renderTable() {
       const container = document.getElementById('tableContainer');
       container.innerHTML = '';
+      
+      const isMobile = window.innerWidth <= 767;
+      
+      if (isMobile) {
+        renderMobileTable();
+      } else {
+        renderDesktopTable();
+      }
+      
+      document.getElementById('saveBtn').disabled = document.querySelectorAll('.invalid-cell').length > 0;
+    }
+
+    function renderDesktopTable() {
+      const container = document.getElementById('tableContainer');
       const table = document.createElement('table');
       const thead = document.createElement('thead');
       const tbody = document.createElement('tbody');
@@ -608,7 +741,6 @@
           }
 
           td.appendChild(errorDiv);
-          td.onclick = (e) => showMobileError(errorDiv.textContent);
           tr.appendChild(td);
         });
 
@@ -618,7 +750,107 @@
       table.appendChild(thead);
       table.appendChild(tbody);
       container.appendChild(table);
-      document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
+      updateErrorSummary(errorMessages);
+    }
+
+    function renderMobileTable() {
+      const container = document.getElementById('tableContainer');
+      const table = document.createElement('table');
+      const tbody = document.createElement('tbody');
+      documentNumbersMap.clear();
+      let invalidCellsCount = 0;
+      const errorMessages = [];
+
+      // Filas
+      tableData.slice(1).forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+        tr.classList.add('editable-row');
+        tr.setAttribute('data-row-number', rowIndex + 1);
+        
+        // Checkbox de selección
+        const checkboxTd = document.createElement('td');
+        checkboxTd.innerHTML = `<input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}">`;
+        tr.appendChild(checkboxTd);
+        
+        // Contador de errores
+        let rowErrors = 0;
+        const rowErrorMessages = [];
+        
+        // Celdas de datos
+        row.forEach((cell, colIndex) => {
+          if (colIndex === 3) return; // Saltar descripción documento
+          
+          const td = document.createElement('td');
+          const columnName = defaultHeader[colIndex];
+          const cellValue = cell.toString().trim();
+          td.setAttribute('data-column-name', columnName);
+          
+          // Validación de documentos
+          if (columnName === 'numero_documento') {
+            if (documentNumbersMap.has(cellValue)) {
+              documentNumbersMap.get(cellValue).push(rowIndex + 1);
+            } else {
+              documentNumbersMap.set(cellValue, [rowIndex + 1]);
+            }
+          }
+
+          // Input/Select
+          if (validValues[columnName]) {
+            const select = document.createElement('select');
+            validValues[columnName].forEach(value => {
+              const option = document.createElement('option');
+              option.value = value;
+              option.textContent = ['menor', 'tripulante', 'ocupa_butaca'].includes(columnName) 
+                ? (value === '1' ? 'Sí' : 'No') : value;
+              if (value === cellValue) option.selected = true;
+              select.appendChild(option);
+            });
+            select.onchange = () => updateCell(rowIndex + 1, colIndex, select.value);
+            td.appendChild(select);
+          } else {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = cellValue;
+            input.onblur = () => updateCell(rowIndex + 1, colIndex, input.value.trim());
+            td.appendChild(input);
+          }
+
+          // Validación y errores
+          const error = validateCell(columnName, cellValue, row[2]);
+          
+          if (error) {
+            td.classList.add('invalid-cell');
+            rowErrors++;
+            rowErrorMessages.push(`${columnName}: ${error}`);
+            errorMessages.push(`Fila ${rowIndex + 2}: ${columnName} - ${error}`);
+          }
+
+          if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue)?.length > 1) {
+            td.classList.add('invalid-cell');
+            rowErrors++;
+            rowErrorMessages.push('Documento duplicado');
+            errorMessages.push(`Fila ${rowIndex + 2}: Documento duplicado`);
+          }
+
+          tr.appendChild(td);
+        });
+        
+        // Mostrar errores de la fila si hay alguno
+        if (rowErrors > 0) {
+          tr.classList.add('has-error');
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'row-error';
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = rowErrorMessages.join(', ');
+          tr.appendChild(errorDiv);
+          invalidCellsCount += rowErrors;
+        }
+
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      container.appendChild(table);
       updateErrorSummary(errorMessages);
     }
 
@@ -645,14 +877,6 @@
           break;
       }
       return '';
-    }
-
-    function showMobileError(message) {
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'mobile-error';
-      errorDiv.textContent = message;
-      document.body.appendChild(errorDiv);
-      setTimeout(() => errorDiv.remove(), 3000);
     }
 
     function updateErrorSummary(errors) {
