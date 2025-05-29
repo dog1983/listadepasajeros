@@ -1,7 +1,11 @@
 // Datos y estado
 let csvData = [];
 let currentEditIndex = -1;
-const headers = ["Apellido", "Nombre", "Tipo Doc", "Número Doc", "Sexo", "Menor", "Nacionalidad"];
+const headers = [
+  "Apellido", "Nombre", "Tipo Doc", "Número Doc", "Sexo", 
+  "Menor", "Nacionalidad", "Tripulante", "Ocupa Butaca", "Observaciones"
+];
+
 const documentNumbers = new Set();
 const nationalities = [
   "Argentina", "Brasil", "Chile", "Colombia", "México", "Perú", 
@@ -91,36 +95,58 @@ function renderTable(data = csvData) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td><input type="checkbox" class="rowCheckbox" data-index="${index}"></td>`;
     
-    row.forEach((cell, colIndex) => {
-      const td = document.createElement('td');
+   row.forEach((cell, colIndex) => {
+  const td = document.createElement('td');
+  
+  if (headers[colIndex] === "Sexo" || headers[colIndex] === "Menor" || 
+      headers[colIndex] === "Tripulante" || headers[colIndex] === "Ocupa Butaca") {
+    const select = document.createElement('select');
+    let options;
+    
+    if (headers[colIndex] === "Sexo") {
+      options = ["F", "M"];
+    } else if (headers[colIndex] === "Menor" || headers[colIndex] === "Tripulante") {
+      options = ["0", "1"];
+    } else if (headers[colIndex] === "Ocupa Butaca") {
+      options = ["1", "0"]; // Orden invertido para que "Sí" sea el default
+    }
+    
+    options.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt;
       
-      if (headers[colIndex] === "Sexo" || headers[colIndex] === "Menor") {
-        const select = document.createElement('select');
-        const options = headers[colIndex] === "Sexo" ? ["F", "M"] : ["0", "1"];
-        
-        options.forEach(opt => {
-          const option = document.createElement('option');
-          option.value = opt;
-          option.textContent = headers[colIndex] === "Sexo" 
-            ? (opt === "F" ? "Femenino" : "Masculino")
-            : (opt === "1" ? "Sí" : "No");
-          if (cell === opt) option.selected = true;
-          select.appendChild(option);
-        });
-        
-        select.addEventListener('change', (e) => {
-          csvData[index][colIndex] = e.target.value;
-        });
-        
-        td.appendChild(select);
+      // Texto descriptivo para los selects
+      if (headers[colIndex] === "Sexo") {
+        option.textContent = opt === "F" ? "Femenino" : "Masculino";
       } else {
-        td.textContent = cell;
+        option.textContent = opt === "1" ? "Sí" : "No";
       }
       
-      // Validar celdas
-      validateCell(td, headers[colIndex], cell, index);
-      tr.appendChild(td);
+      if (cell === opt) option.selected = true;
+      select.appendChild(option);
     });
+    
+    select.addEventListener('change', (e) => {
+      csvData[index][colIndex] = e.target.value;
+    });
+    
+    td.appendChild(select);
+  } else if (headers[colIndex] === "Observaciones") {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = cell || '';
+    input.addEventListener('input', (e) => {
+      csvData[index][colIndex] = e.target.value;
+    });
+    td.appendChild(input);
+  } else {
+    td.textContent = cell;
+  }
+  
+  validateCell(td, headers[colIndex], cell, index);
+  tr.appendChild(td);
+});
+
     
     tr.onclick = () => editRow(index);
     tbody.appendChild(tr);
@@ -223,6 +249,9 @@ function editRow(index) {
   document.getElementById('gender').value = passenger[4] || 'F';
   document.getElementById('minor').value = passenger[5] || '0';
   document.getElementById('nationality').value = passenger[6] || 'Argentina';
+  document.getElementById('crew').value = passenger[7] || '0';
+  document.getElementById('seat').value = passenger[8] || '1';
+  document.getElementById('notes').value = passenger[9] || '';
   
   clearErrors();
   document.getElementById('passengerModal').style.display = 'flex';
@@ -246,6 +275,9 @@ function resetForm() {
   document.getElementById('gender').value = 'F';
   document.getElementById('minor').value = '0';
   document.getElementById('nationality').value = 'Argentina';
+  document.getElementById('crew').value = '0';
+  document.getElementById('seat').value = '1';
+  document.getElementById('notes').value = '';
 }
 
 // Validación y guardado
@@ -303,14 +335,16 @@ function savePassenger() {
     document.getElementById('docNumber').value.trim(),
     document.getElementById('gender').value,
     document.getElementById('minor').value,
-    document.getElementById('nationality').value
+    document.getElementById('nationality').value,
+    document.getElementById('crew').value,
+    document.getElementById('seat').value,
+    document.getElementById('notes').value.trim()
   ];
   
   if (currentEditIndex === -1) {
     csvData.push(newRow);
     documentNumbers.add(newRow[3]);
   } else {
-    // Actualizar el conjunto de números de documento si cambió
     if (csvData[currentEditIndex][3] !== newRow[3]) {
       documentNumbers.delete(csvData[currentEditIndex][3]);
       documentNumbers.add(newRow[3]);
@@ -321,6 +355,7 @@ function savePassenger() {
   renderTable();
   closeModal('passengerModal');
 }
+
 
 // Acciones
 function removeSelectedRows() {
