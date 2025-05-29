@@ -330,3 +330,34 @@ tr.editable-row:hover {
     font-size: 1.3rem;
   }
 }
+/* Estilos para mensajes de error */
+.error-message {
+  color: #e74c3c;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
+  text-align: left;
+  padding: 2px 5px;
+  background-color: #ffebee;
+  border-radius: 0 0 4px 4px;
+}
+
+/* Ajustar celdas con error */
+td.invalid-cell {
+  padding-bottom: 0;
+  border-bottom: none;
+  position: relative;
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+  .error-message {
+    font-size: 0.7rem;
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  td, th {
+    padding: 8px 4px;
+  }
+}
