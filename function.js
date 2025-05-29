@@ -1,410 +1,423 @@
-// Datos y estado
-let csvData = [];
-let currentEditIndex = -1;
-const headers = [
-  "Apellido", "Nombre", "Tipo Doc", "Número Doc", "Sexo", 
-  "Menor", "Nacionalidad", "Tripulante", "Ocupa Butaca", "Observaciones"
+// Variables globales
+let tableData = [];
+let editingIndex = null;
+let documentNumbersMap = new Map();
+let currentSortColumn = null;
+let sortDirection = 1; // 1 para ascendente, -1 para descendente
+
+const defaultHeader = [
+  "apellido",
+  "nombre",
+  "tipo_documento",
+  "descripcion_documento",
+  "numero_documento",
+  "sexo",
+  "menor",
+  "nacionalidad",
+  "tripulante",
+  "ocupa_butaca",
+  "observaciones"
 ];
 
-const documentNumbers = new Set();
-const nationalities = [
-  "Argentina", "Brasil", "Chile", "Colombia", "México", "Perú", 
-  "España", "Estados Unidos", "Francia", "Italia", "Alemania"
-].sort();
+const validValues = {
+  tipo_documento: ["DNI", "Pasaporte", "OTROS"],
+  sexo: ["F", "M"],
+  menor: ["0", "1"],
+  nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
+  tripulante: ["0", "1"],
+  ocupa_butaca: ["0", "1"]
+};
+
+const defaults = {
+  tipo_documento: "DNI",
+  sexo: "F",
+  menor: "0",
+  nacionalidad: "Argentina",
+  tripulante: "0",
+  ocupa_butaca: "1",
+  observaciones: ""
+};
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('csvFile').addEventListener('change', handleFileUpload);
-  document.getElementById('searchInput').addEventListener('input', handleSearch);
+window.onload = function() {
+  if (tableData.length === 0) {
+    tableData = [defaultHeader];
+    renderTable();
+  }
   populateNationalities();
-});
+  
+  // Configurar evento para el input de archivo
+  document.getElementById('csvFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const text = event.target.result;
+      tableData = parseCSV(text);
+      renderTable();
+    };
+    reader.readAsText(file);
+  });
+};
 
 function populateNationalities() {
-  const select = document.getElementById('nationality');
-  nationalities.forEach(country => {
+  const select = document.getElementById('nacionalidad');
+  select.innerHTML = '';
+  validValues.nacionalidad.forEach(country => {
     const option = document.createElement('option');
     option.value = country;
     option.textContent = country;
+    if (country === defaults.nacionalidad) option.selected = true;
     select.appendChild(option);
   });
 }
 
-// Manejo de archivos
-function handleFileUpload(e) {
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  
-  reader.onload = function(e) {
-    const content = e.target.result;
-    csvData = parseCSV(content);
-    updateDocumentNumbers();
-    renderTable();
-  };
-  
-  reader.readAsText(file);
-}
-
-function parseCSV(text) {
-  const rows = text.trim().split('\n').map(row => row.split(';'));
-  // Asegurar que todas las filas tengan la misma longitud
-  const maxCols = Math.max(...rows.map(row => row.length));
-  return rows.map(row => {
-    while (row.length < maxCols) row.push('');
-    return row;
-  });
-}
-
-function updateDocumentNumbers() {
-  documentNumbers.clear();
-  const docIndex = headers.indexOf("Número Doc");
-  csvData.forEach(row => {
-    if (row[docIndex]) documentNumbers.add(row[docIndex]);
-  });
-}
-
-// Renderizado de tabla
-function renderTable(data = csvData) {
-  const container = document.getElementById('tableContainer');
-  container.innerHTML = '';
-  
-  if (data.length === 0) {
-    container.innerHTML = '<p>No hay datos para mostrar</p>';
-    return;
-  }
-  
-  const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  const tbody = document.createElement('tbody');
-  
-  // Cabecera
-  const headerRow = document.createElement('tr');
-  headerRow.innerHTML = '<th><input type="checkbox" id="selectAll"></th>';
-  
-  headers.forEach(header => {
-    const th = document.createElement('th');
-    th.textContent = header;
-    th.onclick = () => sortTable(header);
-    headerRow.appendChild(th);
-  });
-  
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-  
-  // Filas
-  data.forEach((row, index) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><input type="checkbox" class="rowCheckbox" data-index="${index}"></td>`;
-    
-   row.forEach((cell, colIndex) => {
-  const td = document.createElement('td');
-  
-  if (headers[colIndex] === "Sexo" || headers[colIndex] === "Menor" || 
-      headers[colIndex] === "Tripulante" || headers[colIndex] === "Ocupa Butaca") {
-    const select = document.createElement('select');
-    let options;
-    
-    if (headers[colIndex] === "Sexo") {
-      options = ["F", "M"];
-    } else if (headers[colIndex] === "Menor" || headers[colIndex] === "Tripulante") {
-      options = ["0", "1"];
-    } else if (headers[colIndex] === "Ocupa Butaca") {
-      options = ["1", "0"]; // Orden invertido para que "Sí" sea el default
-    }
-    
-    options.forEach(opt => {
-      const option = document.createElement('option');
-      option.value = opt;
-      
-      // Texto descriptivo para los selects
-      if (headers[colIndex] === "Sexo") {
-        option.textContent = opt === "F" ? "Femenino" : "Masculino";
-      } else {
-        option.textContent = opt === "1" ? "Sí" : "No";
-      }
-      
-      if (cell === opt) option.selected = true;
-      select.appendChild(option);
-    });
-    
-    select.addEventListener('change', (e) => {
-      csvData[index][colIndex] = e.target.value;
-    });
-    
-    td.appendChild(select);
-  } else if (headers[colIndex] === "Observaciones") {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = cell || '';
-    input.addEventListener('input', (e) => {
-      csvData[index][colIndex] = e.target.value;
-    });
-    td.appendChild(input);
-  } else {
-    td.textContent = cell;
-  }
-  
-  validateCell(td, headers[colIndex], cell, index);
-  tr.appendChild(td);
-});
-
-    
-    tr.onclick = () => editRow(index);
-    tbody.appendChild(tr);
-  });
-  
-  table.appendChild(tbody);
-  container.appendChild(table);
-  
-  // Evento para seleccionar todos
-  document.getElementById('selectAll').onclick = function(e) {
-    e.stopPropagation();
-    const checkboxes = document.querySelectorAll('.rowCheckbox');
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = this.checked;
-    });
-  };
-}
-
-function validateCell(td, header, value, rowIndex) {
-  const docIndex = headers.indexOf("Número Doc");
-  
-  if (header === "Apellido" || header === "Nombre") {
-    if (!value || value.trim() === '') {
-      td.classList.add('invalid-cell');
-      td.title = "Campo obligatorio";
-    }
-  }
-  
-  if (header === "Número Doc") {
-    const docTypeIndex = headers.indexOf("Tipo Doc");
-    const docType = csvData[rowIndex][docTypeIndex];
-    
-    if (!value || value.trim() === '') {
-      td.classList.add('invalid-cell');
-      td.title = "Campo obligatorio";
-    } else if (docType === "DNI" && !/^\d{7,8}$/.test(value)) {
-      td.classList.add('invalid-cell');
-      td.title = "DNI debe tener 7 u 8 dígitos";
-    } else if ((docType === "Pasaporte" || docType === "OTROS") && value.length < 5) {
-      td.classList.add('invalid-cell');
-      td.title = "Mínimo 5 caracteres";
-    }
-    
-    // Validar duplicados
-    const duplicates = csvData.filter((row, i) => i !== rowIndex && row[docIndex] === value);
-    if (duplicates.length > 0) {
-      td.classList.add('invalid-cell');
-      td.title = "Número de documento duplicado";
-    }
-  }
-}
-
-// Ordenación
-function sortTable(header) {
-  const headerIndex = headers.indexOf(header);
-  if (headerIndex === -1) return;
-  
-  csvData.sort((a, b) => {
-    const valA = a[headerIndex] || '';
-    const valB = b[headerIndex] || '';
-    return valA.toString().localeCompare(valB.toString());
-  });
-  
-  renderTable();
-}
-
-// Búsqueda
-function handleSearch(e) {
-  const term = e.target.value.toLowerCase();
-  if (!term) {
-    renderTable();
-    return;
-  }
-  
-  const filtered = csvData.filter(row => 
-    row.some(cell => cell.toLowerCase().includes(term))
-  );
-  
-  renderTable(filtered);
-}
-
-// Funciones de modales
+// Funciones para el modal de agregar/editar pasajero
 function openAddPassengerModal() {
-  currentEditIndex = -1;
-  document.getElementById('modalTitle').textContent = 'Agregar Pasajero';
-  clearErrors();
-  resetForm();
-  document.getElementById('passengerModal').style.display = 'flex';
+  editingIndex = null;
+  document.getElementById('formTitle').textContent = 'Agregar Nuevo Pasajero';
+  document.getElementById('savePassengerBtn').textContent = 'Agregar Pasajero';
+  document.getElementById('passengerForm').reset();
+  document.getElementById('nacionalidad').value = defaults.nacionalidad;
+  document.getElementById('addPassengerModal').style.display = 'block';
+  document.getElementById('apellido').focus();
 }
 
-function editRow(index) {
-  currentEditIndex = index;
-  const passenger = csvData[index];
+function editRow(rowIndex) {
+  editingIndex = rowIndex;
+  const rowData = tableData[rowIndex];
   
-  document.getElementById('modalTitle').textContent = 'Editar Pasajero';
-  document.getElementById('lastName').value = passenger[0] || '';
-  document.getElementById('firstName').value = passenger[1] || '';
-  document.getElementById('docType').value = passenger[2] || 'DNI';
-  document.getElementById('docNumber').value = passenger[3] || '';
-  document.getElementById('gender').value = passenger[4] || 'F';
-  document.getElementById('minor').value = passenger[5] || '0';
-  document.getElementById('nationality').value = passenger[6] || 'Argentina';
-  document.getElementById('crew').value = passenger[7] || '0';
-  document.getElementById('seat').value = passenger[8] || '1';
-  document.getElementById('notes').value = passenger[9] || '';
+  document.getElementById('formTitle').textContent = 'Editar Pasajero';
+  document.getElementById('savePassengerBtn').textContent = 'Guardar Cambios';
   
-  clearErrors();
-  document.getElementById('passengerModal').style.display = 'flex';
+  document.getElementById('apellido').value = rowData[0] || '';
+  document.getElementById('nombre').value = rowData[1] || '';
+  document.getElementById('tipo_documento').value = rowData[2] || defaults.tipo_documento;
+  document.getElementById('numero_documento').value = rowData[4] || '';
+  document.getElementById('sexo').value = rowData[5] || defaults.sexo;
+  document.getElementById('menor').value = rowData[6] || defaults.menor;
+  document.getElementById('nacionalidad').value = rowData[7] || defaults.nacionalidad;
+  document.getElementById('tripulante').value = rowData[8] || defaults.tripulante;
+  document.getElementById('ocupa_butaca').value = rowData[9] || defaults.ocupa_butaca;
+  document.getElementById('observaciones').value = rowData[10] || defaults.observaciones;
+  
+  document.getElementById('addPassengerModal').style.display = 'block';
+  document.getElementById('apellido').focus();
 }
 
-function closeModal(modalId) {
-  document.getElementById(modalId).style.display = 'none';
-}
-
-function clearErrors() {
-  document.querySelectorAll('.error-message').forEach(el => {
-    el.textContent = '';
-  });
-}
-
-function resetForm() {
-  document.getElementById('lastName').value = '';
-  document.getElementById('firstName').value = '';
-  document.getElementById('docType').value = 'DNI';
-  document.getElementById('docNumber').value = '';
-  document.getElementById('gender').value = 'F';
-  document.getElementById('minor').value = '0';
-  document.getElementById('nationality').value = 'Argentina';
-  document.getElementById('crew').value = '0';
-  document.getElementById('seat').value = '1';
-  document.getElementById('notes').value = '';
-}
-
-// Validación y guardado
-function validateAndSave() {
-  const lastName = document.getElementById('lastName').value.trim();
-  const firstName = document.getElementById('firstName').value.trim();
-  const docNumber = document.getElementById('docNumber').value.trim();
-  const docType = document.getElementById('docType').value;
-  
-  let isValid = true;
-  clearErrors();
-  
-  if (!lastName) {
-    document.getElementById('lastNameError').textContent = 'Apellido es requerido';
-    isValid = false;
-  }
-  
-  if (!firstName) {
-    document.getElementById('firstNameError').textContent = 'Nombre es requerido';
-    isValid = false;
-  }
-  
-  if (!docNumber) {
-    document.getElementById('docNumberError').textContent = 'Número de documento es requerido';
-    isValid = false;
-  } else if (docType === "DNI" && !/^\d{7,8}$/.test(docNumber)) {
-    document.getElementById('docNumberError').textContent = 'DNI debe tener 7 u 8 dígitos';
-    isValid = false;
-  } else if ((docType === "Pasaporte" || docType === "OTROS") && docNumber.length < 5) {
-    document.getElementById('docNumberError').textContent = 'Mínimo 5 caracteres';
-    isValid = false;
-  } else if (isDocNumberDuplicate(docNumber)) {
-    document.getElementById('docNumberError').textContent = 'Número de documento ya existe';
-    isValid = false;
-  }
-  
-  if (isValid) {
-    savePassenger();
-  }
-}
-
-function isDocNumberDuplicate(docNumber) {
-  if (currentEditIndex >= 0) {
-    const currentDoc = csvData[currentEditIndex][3];
-    if (currentDoc === docNumber) return false;
-  }
-  return documentNumbers.has(docNumber);
+function closeAddPassengerModal() {
+  document.getElementById('addPassengerModal').style.display = 'none';
+  editingIndex = null;
 }
 
 function savePassenger() {
   const newRow = [
-    document.getElementById('lastName').value.trim(),
-    document.getElementById('firstName').value.trim(),
-    document.getElementById('docType').value,
-    document.getElementById('docNumber').value.trim(),
-    document.getElementById('gender').value,
-    document.getElementById('minor').value,
-    document.getElementById('nationality').value,
-    document.getElementById('crew').value,
-    document.getElementById('seat').value,
-    document.getElementById('notes').value.trim()
+    document.getElementById('apellido').value.trim(),
+    document.getElementById('nombre').value.trim(),
+    document.getElementById('tipo_documento').value,
+    '', // descripcion_documento
+    document.getElementById('numero_documento').value.trim(),
+    document.getElementById('sexo').value || defaults.sexo,
+    document.getElementById('menor').value || defaults.menor,
+    document.getElementById('nacionalidad').value || defaults.nacionalidad,
+    document.getElementById('tripulante').value || defaults.tripulante,
+    document.getElementById('ocupa_butaca').value || defaults.ocupa_butaca,
+    document.getElementById('observaciones').value.trim() || defaults.observaciones
   ];
+
+  // Validación básica (solo campos obligatorios)
+  if (!newRow[0] || !newRow[1] || !newRow[4]) {
+    alert('Por favor complete los campos obligatorios (Apellido, Nombre y Número de Documento)');
+    return;
+  }
+
+  if (tableData.length === 0) tableData = [defaultHeader];
   
-  if (currentEditIndex === -1) {
-    csvData.push(newRow);
-    documentNumbers.add(newRow[3]);
+  if (editingIndex !== null) {
+    // Modo edición
+    tableData[editingIndex] = newRow;
   } else {
-    if (csvData[currentEditIndex][3] !== newRow[3]) {
-      documentNumbers.delete(csvData[currentEditIndex][3]);
-      documentNumbers.add(newRow[3]);
-    }
-    csvData[currentEditIndex] = newRow;
+    // Modo creación
+    tableData.push(newRow);
   }
   
   renderTable();
-  closeModal('passengerModal');
+  closeAddPassengerModal();
 }
 
+// Funciones para el modal de guardar
+function openSaveModal() {
+  document.getElementById('saveModal').style.display = 'flex';
+  document.getElementById('fileNameInputModal').focus();
+}
 
-// Acciones
+function closeSaveModal() {
+  document.getElementById('saveModal').style.display = 'none';
+}
+
+function parseCSV(text) {
+  const rows = text.trim().split('\n').map(row => row.split(';'));
+  let header = rows[0];
+  const body = rows.slice(1);
+
+  const requiredColumns = [
+    { name: 'ocupa_butaca', defaultValue: '1' },
+    { name: 'observaciones', defaultValue: '' }
+  ];
+
+  requiredColumns.forEach(col => {
+    if (!header.includes(col.name)) {
+      header.push(col.name);
+      body.forEach(row => row.push(col.defaultValue));
+    }
+  });
+
+  return [header, ...body];
+}
+
+// Renderizado de la tabla
+function renderTable() {
+  const container = document.getElementById('tableContainer');
+  const table = document.createElement('table');
+  container.innerHTML = '';
+
+  if (tableData.length === 0) return;
+
+  const header = tableData[0];
+  const body = tableData.slice(1);
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+
+  headRow.innerHTML = `<th>Sel</th><th>#</th>`;
+  header.forEach((title, i) => {
+    if (i === 3) return;
+    const th = document.createElement('th');
+    th.textContent = title.trim();
+    th.title = getHeaderTooltip(title);
+    th.dataset.columnIndex = i;
+    th.addEventListener('click', () => sortTableByColumn(i));
+    if (currentSortColumn === i) {
+      th.style.backgroundColor = '#d4e6f1';
+      th.innerHTML += sortDirection === 1 ? ' ↑' : ' ↓';
+    }
+    headRow.appendChild(th);
+  });
+
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  documentNumbersMap.clear();
+  let invalidCellsCount = 0;
+
+  body.forEach((row, rowIndex) => {
+    const tr = document.createElement('tr');
+    tr.classList.add('editable-row');
+    if (editingIndex === rowIndex + 1) tr.classList.add('editing');
+    
+    tr.addEventListener('click', () => editRow(rowIndex + 1));
+
+    tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}" onclick="event.stopPropagation()"></td>`;
+    tr.innerHTML += `<td>${rowIndex + 1}</td>`;
+
+    let tabIndexCounter = (rowIndex * 100) + 1;
+
+    row.forEach((cell, colIndex) => {
+      if (colIndex === 3) return;
+
+      const td = document.createElement('td');
+      const columnName = header[colIndex];
+      const cellValue = cell.trim();
+
+      // Registrar número de documento para validar duplicados
+      if (columnName === 'numero_documento') {
+        if (documentNumbersMap.has(cellValue)) {
+          documentNumbersMap.get(cellValue).push(rowIndex + 1);
+        } else {
+          documentNumbersMap.set(cellValue, [rowIndex + 1]);
+        }
+      }
+
+      if (validValues[columnName]) {
+        const select = document.createElement('select');
+        select.setAttribute('tabindex', tabIndexCounter++);
+        const options = validValues[columnName];
+
+        options.forEach(value => {
+          const option = document.createElement('option');
+          option.value = value;
+          
+          // Mejorar visualización de valores en combobox
+          if (columnName === 'sexo') {
+            option.textContent = value === 'F' ? 'Femenino' : 'Masculino';
+          } else if (columnName === 'menor') {
+            option.textContent = value === '1' ? 'Sí (Menor)' : 'No (Adulto)';
+          } else if (["tripulante", "ocupa_butaca"].includes(columnName)) {
+            option.textContent = value === "1" ? "Sí" : "No";
+          } else {
+            option.textContent = value;
+          }
+          
+          if (cellValue.toUpperCase() === value.toUpperCase()) option.selected = true;
+          select.appendChild(option);
+        });
+
+        select.addEventListener('change', e => {
+          tableData[rowIndex + 1][colIndex] = e.target.value;
+          renderTable();
+        });
+
+        select.addEventListener('click', e => e.stopPropagation());
+
+        td.appendChild(select);
+      } else {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.setAttribute('tabindex', tabIndexCounter++);
+        input.value = cellValue;
+
+        input.addEventListener('input', e => {
+          tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+        });
+
+        input.addEventListener('blur', () => renderTable());
+        input.addEventListener('click', e => e.stopPropagation());
+
+        td.appendChild(input);
+      }
+
+      // Validación por celda
+      const validationError = validateCell(columnName, row[colIndex], row[2]);
+      if (validationError) {
+        td.classList.add('invalid-cell');
+        td.title = validationError;
+        invalidCellsCount++;
+      }
+
+      // Validación de documento duplicado
+      if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue)?.length > 1) {
+        td.classList.add('invalid-cell');
+        td.title = "Número de documento duplicado";
+        invalidCellsCount++;
+      }
+
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  // Bloquear guardado si hay errores (incluyendo duplicados)
+  document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
+  table.appendChild(tbody);
+  container.appendChild(table);
+}
+
+// Validación de celdas
+function validateCell(columnName, value, tipoDoc = "") {
+  value = (value || "").trim();
+  tipoDoc = (tipoDoc || "").trim().toUpperCase();
+
+  switch(columnName) {
+    case 'apellido':
+    case 'nombre':
+      if (!value) return "Campo requerido";
+      if (value.length > 100) return "Máximo 100 caracteres";
+      break;
+    case 'numero_documento':
+      if (!value) return "Campo requerido";
+      if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) return "DNI requiere 7-8 dígitos";
+      if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && (value.length < 5 || value.length > 100)) {
+        return "Documento requiere 5-100 caracteres";
+      }
+      break;
+    default:
+      return "";
+  }
+  return "";
+}
+
+// Tooltips para headers
+function getHeaderTooltip(headerName) {
+  const tips = {
+    numero_documento: "DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+    menor: "0 = NO (Adulto), 1 = SI (Menor)",
+    ocupa_butaca: "0 = NO, 1 = SI",
+    tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS",
+    sexo: "F = Femenino, M = Masculino"
+  };
+  return tips[headerName] || "";
+}
+
+// Funciones de acciones
 function removeSelectedRows() {
   const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-  const indexes = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-  
-  if (indexes.length === 0) {
-    alert('Seleccione al menos una fila');
+  const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+  if (indexesToRemove.length === 0) {
+    alert('No hay filas seleccionadas para eliminar.');
     return;
   }
-  
-  // Eliminar en orden descendente y actualizar números de documento
-  indexes.sort((a, b) => b - a).forEach(i => {
-    documentNumbers.delete(csvData[i][3]);
-    csvData.splice(i, 1);
-  });
-  
+  indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
   renderTable();
 }
 
-function toggleSelectAll() {
-  const selectAll = document.getElementById('selectAll');
-  selectAll.checked = !selectAll.checked;
-  document.querySelectorAll('.rowCheckbox').forEach(checkbox => {
-    checkbox.checked = selectAll.checked;
+function sortTableByColumn(columnIndex) {
+  if (tableData.length <= 1) return;
+  
+  // Si es la misma columna, invertir la dirección
+  if (currentSortColumn === columnIndex) {
+    sortDirection *= -1;
+  } else {
+    currentSortColumn = columnIndex;
+    sortDirection = 1;
+  }
+  
+  const header = tableData[0];
+  const body = tableData.slice(1);
+  
+  body.sort((a, b) => {
+    const valA = a[columnIndex]?.toString().toLowerCase() || '';
+    const valB = b[columnIndex]?.toString().toLowerCase() || '';
+    return valA.localeCompare(valB) * sortDirection;
   });
+  
+  tableData = [header, ...body];
+  renderTable();
 }
 
-function openSaveModal() {
-  // Validar que no haya celdas inválidas antes de guardar
-  const invalidCells = document.querySelectorAll('.invalid-cell');
-  if (invalidCells.length > 0) {
-    alert('Corrija los errores resaltados en rojo antes de guardar');
+function sortTableByHeader() {
+  if (tableData.length <= 1) return;
+  
+  const header = tableData[0];
+  const columnNames = header.filter((_, i) => i !== 3); // Excluir descripcion_documento
+  
+  const columnToSort = prompt(`Ingrese el nombre de la columna para ordenar:\n${columnNames.join(', ')}`);
+  if (!columnToSort) return;
+  
+  const columnIndex = header.findIndex(col => col.toLowerCase() === columnToSort.toLowerCase());
+  if (columnIndex === -1 || columnIndex === 3) {
+    alert('Columna no válida');
     return;
   }
   
-  document.getElementById('fileNameInput').value = '';
-  document.getElementById('saveModal').style.display = 'flex';
+  sortTableByColumn(columnIndex);
 }
 
-function downloadCSV() {
-  const fileName = document.getElementById('fileNameInput').value.trim() || 'pasajeros';
-  const content = csvData.map(row => row.join(';')).join('\n');
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-  
+function confirmDownload() {
+  // Verificar nuevamente antes de guardar (por si acaso)
+  if (document.getElementById('saveBtn').disabled) {
+    alert('No se puede guardar mientras existan errores en los datos');
+    return;
+  }
+
+  const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
+  const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+  const csvContent = tableData.map(row => row.join(';')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `${fileName}.csv`;
+  a.href = url;
+  a.download = fileName;
   a.click();
-  
-  closeModal('saveModal');
+  closeSaveModal();
 }
