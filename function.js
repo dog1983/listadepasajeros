@@ -238,6 +238,11 @@ function renderTable() {
         }
       }
 
+      // Contenedor para el contenido de la celda
+      const cellContent = document.createElement('div');
+      cellContent.style.display = 'flex';
+      cellContent.style.flexDirection = 'column';
+
       if (validValues[columnName]) {
         const select = document.createElement('select');
         select.setAttribute('tabindex', tabIndexCounter++);
@@ -247,7 +252,6 @@ function renderTable() {
           const option = document.createElement('option');
           option.value = value;
           
-          // Mejorar visualización de valores en combobox
           if (columnName === 'sexo') {
             option.textContent = value === 'F' ? 'Femenino' : 'Masculino';
           } else if (columnName === 'menor') {
@@ -269,7 +273,7 @@ function renderTable() {
 
         select.addEventListener('click', e => e.stopPropagation());
 
-        td.appendChild(select);
+        cellContent.appendChild(select);
       } else {
         const input = document.createElement('input');
         input.type = 'text';
@@ -283,24 +287,35 @@ function renderTable() {
         input.addEventListener('blur', () => renderTable());
         input.addEventListener('click', e => e.stopPropagation());
 
-        td.appendChild(input);
+        cellContent.appendChild(input);
       }
 
       // Validación por celda
       const validationError = validateCell(columnName, row[colIndex], row[2]);
       if (validationError) {
         td.classList.add('invalid-cell');
-        td.title = validationError;
+        
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = validationError;
+        
+        cellContent.appendChild(errorSpan);
         invalidCellsCount++;
       }
 
       // Validación de documento duplicado
       if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue)?.length > 1) {
         td.classList.add('invalid-cell');
-        td.title = "Número de documento duplicado";
+        
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = "Error: Número de documento duplicado";
+        
+        cellContent.appendChild(errorSpan);
         invalidCellsCount++;
       }
 
+      td.appendChild(cellContent);
       tr.appendChild(td);
     });
 
@@ -320,15 +335,20 @@ function validateCell(columnName, value, tipoDoc = "") {
 
   switch(columnName) {
     case 'apellido':
+      if (!value) return "Error: Apellido es requerido";
+      if (value.length > 100) return "Error: Máximo 100 caracteres";
+      break;
     case 'nombre':
-      if (!value) return "Campo requerido";
-      if (value.length > 100) return "Máximo 100 caracteres";
+      if (!value) return "Error: Nombre es requerido";
+      if (value.length > 100) return "Error: Máximo 100 caracteres";
       break;
     case 'numero_documento':
-      if (!value) return "Campo requerido";
-      if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) return "DNI requiere 7-8 dígitos";
-      if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && (value.length < 5 || value.length > 100)) {
-        return "Documento requiere 5-100 caracteres";
+      if (!value) return "Error: Número de documento es requerido";
+      if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) 
+        return "Error: DNI debe tener 7 u 8 dígitos";
+      if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && 
+         (value.length < 5 || value.length > 100)) {
+        return "Error: Documento debe tener entre 5 y 100 caracteres";
       }
       break;
     default:
