@@ -44,56 +44,81 @@
         <button class="close-btn" onclick="closeModal('passengerModal')">×</button>
       </div>
       
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Apellido*</label>
-          <input type="text" id="lastName" required>
-          <div class="error-message" id="lastNameError"></div>
-        </div>
-        
-        <div class="form-group">
-          <label>Nombre*</label>
-          <input type="text" id="firstName" required>
-          <div class="error-message" id="firstNameError"></div>
-        </div>
-        
-        <div class="form-group">
-          <label>Tipo Doc.*</label>
-          <select id="docType">
-            <option value="DNI">DNI</option>
-            <option value="Pasaporte">Pasaporte</option>
-            <option value="OTROS">Otros</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>Número Doc.*</label>
-          <input type="text" id="docNumber" required>
-          <div class="error-message" id="docNumberError"></div>
-        </div>
-        
-        <div class="form-group">
-          <label>Sexo</label>
-          <select id="gender">
-            <option value="F">Femenino</option>
-            <option value="M">Masculino</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>Menor</label>
-          <select id="minor">
-            <option value="0">No</option>
-            <option value="1">Sí</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>Nacionalidad</label>
-          <select id="nationality"></select>
-        </div>
-      </div>
-      
+    <!-- ... (código anterior se mantiene igual hasta el form-grid dentro del passengerModal) ... -->
+
+<div class="form-grid">
+  <div class="form-group">
+    <label>Apellido*</label>
+    <input type="text" id="lastName" required>
+    <div class="error-message" id="lastNameError"></div>
+  </div>
+  
+  <div class="form-group">
+    <label>Nombre*</label>
+    <input type="text" id="firstName" required>
+    <div class="error-message" id="firstNameError"></div>
+  </div>
+  
+  <div class="form-group">
+    <label>Tipo Doc.*</label>
+    <select id="docType">
+      <option value="DNI">DNI</option>
+      <option value="Pasaporte">Pasaporte</option>
+      <option value="OTROS">Otros</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label>Número Doc.*</label>
+    <input type="text" id="docNumber" required>
+    <div class="error-message" id="docNumberError"></div>
+  </div>
+  
+  <div class="form-group">
+    <label>Sexo</label>
+    <select id="gender">
+      <option value="F">Femenino</option>
+      <option value="M">Masculino</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label>Menor</label>
+    <select id="minor">
+      <option value="0">No</option>
+      <option value="1">Sí</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label>Nacionalidad</label>
+    <select id="nationality"></select>
+  </div>
+
+  <!-- Columnas reestablecidas -->
+  <div class="form-group">
+    <label>Tripulante</label>
+    <select id="crew">
+      <option value="0">No</option>
+      <option value="1">Sí</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label>Ocupa Butaca</label>
+    <select id="seat">
+      <option value="1">Sí</option>
+      <option value="0">No</option>
+    </select>
+  </div>
+  
+  <div class="form-group" style="grid-column: span 2">
+    <label>Observaciones</label>
+    <input type="text" id="notes">
+  </div>
+</div>
+
+<!-- ... (el resto del código se mantiene igual) ... -->
       <div class="modal-actions">
         <button class="primary-btn" onclick="validateAndSave()">Guardar</button>
         <button class="secondary-btn" onclick="closeModal('passengerModal')">Cancelar</button>
