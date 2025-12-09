@@ -253,9 +253,9 @@ function renderTable() {
           option.value = value;
           
           if (columnName === 'sexo') {
-            option.textContent = value === 'F' ? 'Femenino' : 'Masculino';
+            option.textContent = value === 'F' ? 'F' : 'M';
           } else if (columnName === 'menor') {
-            option.textContent = value === '1' ? 'Sí (Menor)' : 'No (Adulto)';
+            option.textContent = value === '1' ? 'SI' : 'NO';
           } else if (["tripulante", "ocupa_butaca"].includes(columnName)) {
             option.textContent = value === "1" ? "Sí" : "No";
           } else {
@@ -361,10 +361,10 @@ function validateCell(columnName, value, tipoDoc = "") {
 function getHeaderTooltip(headerName) {
   const tips = {
     numero_documento: "DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
-    menor: "0 = NO (Adulto), 1 = SI (Menor)",
+    menor: "0 = NO, 1 = SI",
     ocupa_butaca: "0 = NO, 1 = SI",
     tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS",
-    sexo: "F = Femenino, M = Masculino"
+    sexo: "F = F, M = M"
   };
   return tips[headerName] || "";
 }
