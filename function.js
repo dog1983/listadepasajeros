@@ -23,7 +23,7 @@ const validValues = {
   tipo_documento: ["DNI", "Pasaporte", "OTROS"],
   sexo: ["F", "M"],
   menor: ["0", "1"],
-  nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "A[...]",
+  nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "A[...]
   tripulante: ["0", "1"],
   ocupa_butaca: ["0", "1"]
 };
@@ -440,53 +440,6 @@ function confirmDownload() {
   a.download = fileName;
   a.click();
   closeSaveModal();
-}
-
-// --- Nuevas funciones para enviar por mail (mailto) ---
-function openMailModal() {
-  document.getElementById('mailTo').value = '';
-  document.getElementById('mailSubject').value = 'Listado de Pasajeros';
-  document.getElementById('includeCsvInBody').checked = true;
-  document.getElementById('mailModal').style.display = 'flex';
-  document.getElementById('mailTo').focus();
-}
-
-function closeMailModal() {
-  document.getElementById('mailModal').style.display = 'none';
-}
-
-function sendMail() {
-  // Verificar errores como en guardar
-  if (document.getElementById('saveBtn').disabled) {
-    alert('No se puede enviar mientras existan errores en los datos');
-    return;
-  }
-
-  const to = document.getElementById('mailTo').value.trim();
-  const subject = document.getElementById('mailSubject').value.trim() || 'Listado de Pasajeros';
-  const includeBody = document.getElementById('includeCsvInBody').checked;
-
-  if (!to) {
-    alert('Por favor ingrese al menos un destinatario');
-    return;
-  }
-
-  // Construir CSV (mismo formato que guardar)
-  const csvContent = tableData.map(row => row.join(';')).join('\n');
-
-  let body = '';
-  if (includeBody) {
-    body = '\n' + csvContent;
-  } else {
-    body = '\n\n(El CSV no fue incluido en el cuerpo)';
-  }
-
-  // Construir mailto
-  const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-  // Abrir cliente de correo
-  window.location.href = mailto;
-  closeMailModal();
 }
 
 // -----------------------------------------------------
