@@ -5,217 +5,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Listado de Pasajeros</title>
   <link rel="stylesheet" href="estilos.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
-</head>
-<body>
-  <header class="main-header">
-    <h1>🚌 Listado de Pasajeros</h1>
-  </header>
+ <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
 
-  <main class="main-container">
-    <!-- Controles principales -->
-    <section class="controls-section">
-      <div class="controls-grid">
-        <div class="control-group">
-          <label for="csvFile" class="file-input-label">
-            <span class="file-icon">📁</span>
-            <span class="file-text">Cargar CSV</span>
-            <input type="file" id="csvFile" accept=".csv" class="file-input">
-          </label>
-        </div>
-        
-        <div class="mobile-buttons">
-          <button class="btn-primary" onclick="openAddPassengerModal()">
-            <span class="btn-icon">➕</span>
-            <span class="btn-text">Agregar</span>
-          </button>
-          
-          <button class="btn-secondary" onclick="removeSelectedRows()">
-            <span class="btn-icon">🗑️</span>
-            <span class="btn-text">Eliminar</span>
-          </button>
-          
-          <button class="btn-success" onclick="openSaveModal()" id="saveBtn">
-            <span class="btn-icon">💾</span>
-            <span class="btn-text">Guardar</span>
-          </button>
-        </div>
-        
-        <div class="stats-bar">
-          <span id="rowCount" class="stat-item">0 pasajeros</span>
-          <span id="errorCount" class="stat-item error">0 errores</span>
-        </div>
-      </div>
-    </section>
+  <div id="controls">
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="openAddPassengerModal()">Agregar Pasajeros</button>
+    <button onclick="removeSelectedRows()">Eliminar Pasajeros</button>
+    <button onclick="openSaveModal()" id="saveBtn">Guardar Como</button>
+  </div>
 
-    <!-- Lista de pasajeros (vista móvil) -->
-    <section class="passengers-list" id="passengersList">
-      <!-- Se llenará dinámicamente con JavaScript -->
-    </section>
-
-    <!-- Tabla para desktop -->
-    <section class="table-section" id="tableSection">
-      <div id="tableContainer"></div>
-    </section>
-  </main>
+  <div id="tableContainer"></div>
 
   <!-- Modal para guardar -->
   <div id="saveModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h3>📁 Guardar Archivo</h3>
-        <button class="close-btn" onclick="closeSaveModal()">×</button>
-      </div>
-      <div class="modal-body">
-        <input type="text" id="fileNameInputModal" placeholder="nombre_archivo" class="modal-input">
-        <p class="modal-hint">Se guardará como: <span id="fileNamePreview">.csv</span></p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-primary" onclick="confirmDownload()">Guardar</button>
-        <button class="btn-secondary" onclick="closeSaveModal()">Cancelar</button>
+      <h3>Nombre del archivo</h3>
+      <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
+      <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+        <button class="primary-btn" onclick="confirmDownload()">Aceptar</button>
+        <button class="secondary-btn" onclick="closeSaveModal()">Cancelar</button>
       </div>
     </div>
   </div>
 
   <!-- Modal para agregar/editar pasajeros -->
-  <div id="addPassengerModal" class="modal full-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="formTitle">➕ Agregar Pasajero</h2>
-        <button class="close-btn" onclick="closeAddPassengerModal()">×</button>
+  <div id="addPassengerModal" class="form-modal">
+    <div class="form-content">
+      <div class="form-header">
+        <h2 id="formTitle">Agregar Nuevo Pasajero</h2>
+        <button class="close-modal-btn" onclick="closeAddPassengerModal()">×</button>
       </div>
       
-      <div class="modal-body">
-        <form id="passengerForm" class="passenger-form">
-          <div class="form-section">
-            <h3 class="form-section-title">📋 Información Personal</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="apellido" class="required-field">
-                  <span class="label-text">Apellido</span>
-                  <span class="required-star">*</span>
-                </label>
-                <input type="text" id="apellido" required placeholder="Ingrese apellido">
-                <div class="error-message" id="apellidoError"></div>
-              </div>
-              
-              <div class="form-group">
-                <label for="nombre" class="required-field">
-                  <span class="label-text">Nombre</span>
-                  <span class="required-star">*</span>
-                </label>
-                <input type="text" id="nombre" required placeholder="Ingrese nombre">
-                <div class="error-message" id="nombreError"></div>
-              </div>
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="sexo" class="required-field">
-                  <span class="label-text">Sexo</span>
-                </label>
-                <div class="radio-group">
-                  <label class="radio-label">
-                    <input type="radio" name="sexo" value="F" checked>
-                    <span class="radio-text">👩 Femenino</span>
-                  </label>
-                  <label class="radio-label">
-                    <input type="radio" name="sexo" value="M">
-                    <span class="radio-text">👨 Masculino</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label for="menor" class="required-field">
-                  <span class="label-text">Menor de edad</span>
-                </label>
-                <select id="menor" class="form-select">
-                  <option value="0">👶 No (18+ años)</option>
-                  <option value="1">👦 Sí (menor de 18)</option>
-                </select>
-              </div>
-            </div>
+      <form id="passengerForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="apellido" class="required-field">Apellido:</label>
+            <input type="text" id="apellido" required tabindex="1">
           </div>
-          
-          <div class="form-section">
-            <h3 class="form-section-title">📄 Documentación</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="tipo_documento" class="required-field">
-                  <span class="label-text">Tipo de Documento</span>
-                </label>
-                <select id="tipo_documento" class="form-select">
-                  <option value="DNI">🇦🇷 DNI</option>
-                  <option value="Pasaporte">🌍 Pasaporte</option>
-                  <option value="OTROS">📄 Otros</option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <label for="numero_documento" class="required-field">
-                  <span class="label-text">Número</span>
-                  <span class="required-star">*</span>
-                </label>
-                <input type="text" id="numero_documento" required 
-                       placeholder="Ej: 12345678">
-                <div class="error-message" id="numeroDocumentoError"></div>
-              </div>
-            </div>
+
+          <div class="form-group">
+            <label for="nombre" class="required-field">Nombre:</label>
+            <input type="text" id="nombre" required tabindex="2">
           </div>
-          
-          <div class="form-section">
-            <h3 class="form-section-title">🌍 Información Adicional</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="nacionalidad" class="required-field">
-                  <span class="label-text">Nacionalidad</span>
-                </label>
-                <select id="nacionalidad" class="form-select"></select>
-              </div>
-              
-              <div class="form-group">
-                <label for="tripulante" class="required-field">
-                  <span class="label-text">Tripulante</span>
-                </label>
-                <select id="tripulante" class="form-select">
-                  <option value="0">👤 Pasajero</option>
-                  <option value="1">👨‍✈️ Tripulante</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="ocupa_butaca" class="required-field">
-                  <span class="label-text">Ocupa Butaca</span>
-                </label>
-                <select id="ocupa_butaca" class="form-select">
-                  <option value="1">💺 Sí (ocupa asiento)</option>
-                  <option value="0">👶 No (ej: menor de 5 años)</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="form-group full-width">
-              <label for="observaciones">
-                <span class="label-text">Observaciones</span>
-              </label>
-              <textarea id="observaciones" rows="3" 
-                        placeholder="Notas adicionales..."></textarea>
-            </div>
+
+          <div class="form-group">
+            <label for="tipo_documento" class="required-field">Tipo Documento:</label>
+            <select id="tipo_documento" tabindex="3">
+              <option value="DNI">DNI</option>
+              <option value="Pasaporte">Pasaporte</option>
+              <option value="OTROS">Otros</option>
+            </select>
           </div>
-          
+
+          <div class="form-group">
+            <label for="numero_documento" class="required-field">Número Documento:</label>
+            <input type="text" id="numero_documento" required tabindex="4">
+          </div>
+
+          <div class="form-group">
+            <label for="sexo">Sexo: (F: Femenino, M : Masculino</label>
+            <select id="sexo" tabindex="5">
+              <option value="F">F</option>
+              <option value="M">M</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="menor">Menor: (Si es menor de 18 años )</label>
+            <select id="menor" tabindex="6">
+              <option value="0">No</option>
+              <option value="1">Sí</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="nacionalidad">Nacionalidad: ( Pais de Nacimiento)</label>
+            <select id="nacionalidad" tabindex="7"></select>
+          </div>
+
+          <div class="form-group">
+            <label for="tripulante">Tripulante: ( NO si es pasajero)</label>
+            <select id="tripulante" tabindex="8">
+              <option value="0">No</option>
+              <option value="1">Sí</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="ocupa_butaca">Ocupa Butaca:(NO solo para menor de 5 años)</label>
+            <select id="ocupa_butaca" tabindex="9">
+              <option value="1">Sí</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="grid-column: span 2">
+            <label for="observaciones">Observaciones:</label>
+            <input type="text" id="observaciones" tabindex="10">
+          </div>
+
           <div class="form-actions">
-            <button type="button" class="btn-primary large" onclick="validateAndSavePassenger()" id="savePassengerBtn">
-              💾 Guardar Pasajero
-            </button>
-            <button type="button" class="btn-secondary" onclick="closeAddPassengerModal()">
-              ❌ Cancelar
-            </button>
+            <button type="button" class="primary-btn" onclick="savePassenger()" tabindex="11" id="savePassengerBtn">Agregar Pasajero</button>
+            <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()" tabindex="12">Cancelar</button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   </div>
 
