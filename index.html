@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lista de Pasajeros</title>
-  <link rel="stylesheet" href="estilos.css">
+  <title>Editor CSV Web</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <h1>Lista de Pasajeros</h1>
+  <h1>Editor de CSV Web 🚀</h1>
 
   <div id="controls">
     <input type="file" id="csvFile" accept=".csv">
     <button onclick="openAddPassengerModal()">Agregar Pasajeros</button>
-    <button onclick="removeSelectedRows()">Eliminar Pasajeros</button>
+    <button onclick="removeSelectedRows()">Eliminar filas</button>
+    <button onclick="sortTableByHeader()">Ordenar Tabla</button>
     <button onclick="openSaveModal()" id="saveBtn">Guardar Como</button>
   </div>
 
@@ -116,6 +117,6 @@
     </div>
   </div>
 
-  <script src="function.js"></script>
+  <script src="functions.js"></script>
 </body>
 </html>
