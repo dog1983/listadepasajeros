@@ -105,13 +105,29 @@ function openAddPassengerModal() {
   editingIndex = null;
   document.getElementById('formTitle').textContent = 'Agregar Nuevo Pasajero';
   document.getElementById('savePassengerBtn').textContent = 'Agregar Pasajero';
-  document.getElementById('passengerForm').reset();
+  
+  // CORRECCIÓN: No tenemos un formulario con ID 'passengerForm'
+  // En su lugar, reseteamos cada campo individualmente
+  document.getElementById('apellido').value = '';
+  document.getElementById('nombre').value = '';
+  document.getElementById('tipo_documento').value = defaults.tipo_documento;
+  document.getElementById('numero_documento').value = '';
+  document.getElementById('sexo').value = defaults.sexo;
+  document.getElementById('menor').value = defaults.menor;
   document.getElementById('nacionalidad').value = defaults.nacionalidad;
+  document.getElementById('tripulante').value = defaults.tripulante;
+  document.getElementById('ocupa_butaca').value = defaults.ocupa_butaca;
+  document.getElementById('observaciones').value = defaults.observaciones;
+  
   document.getElementById('addPassengerModal').style.display = 'block';
   document.getElementById('apellido').focus();
 }
 
 function editRow(rowIndex) {
+  // CORRECCIÓN IMPORTANTE: Deseleccionar filas al editar
+  document.querySelectorAll('.selected-row').forEach(row => row.classList.remove('selected-row'));
+  updateDeleteButtonState();
+  
   editingIndex = rowIndex;
   const rowData = tableData[rowIndex];
   
@@ -256,24 +272,32 @@ function renderTable() {
     tr.classList.add('editable-row');
     if (editingIndex === rowIndex + 1) tr.classList.add('editing');
     
-    // Reemplazar checkbox por selección con clic
+    // CORRECCIÓN: Doble clic para editar, clic simple para seleccionar
     tr.addEventListener('click', function(e) {
-      // Si se hizo clic en un input o select dentro de la celda, no seleccionar la fila
+      // Si se hizo clic en un input o select dentro de la celda, no hacer nada
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
         return;
       }
       
-      // Alternar selección de fila
+      // Solo seleccionar/deseleccionar la fila
       if (tr.classList.contains('selected-row')) {
         tr.classList.remove('selected-row');
       } else {
-        // Opcional: Deseleccionar otras filas primero
+        // Opcional: Deseleccionar otras filas primero para selección única
         // document.querySelectorAll('.selected-row').forEach(r => r.classList.remove('selected-row'));
         tr.classList.add('selected-row');
       }
       
-      // Actualizar estado del botón de eliminar
       updateDeleteButtonState();
+    });
+    
+    // CORRECCIÓN: Doble clic para editar
+    tr.addEventListener('dblclick', function(e) {
+      // Si se hizo doble clic en un input o select dentro de la celda, no editar
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+        return;
+      }
+      editRow(rowIndex + 1);
     });
 
     // Solo el número de fila
@@ -490,28 +514,6 @@ function sortTableByColumn(columnIndex) {
   
   tableData = [header, ...body];
   renderTable();
-}
-
-function sortTableByHeader() {
-  if (tableData.length <= 1) return;
-  
-  const columnNames = visibleColumns.map(col => columnDisplayNames[col] || col);
-  
-  const columnToSort = prompt(`Ingrese el nombre de la columna para ordenar:\n${columnNames.join(', ')}`);
-  if (!columnToSort) return;
-  
-  // Convertir nombre mostrado a nombre real de columna
-  let realColumnName = columnToSort;
-  if (columnToSort === "N°") realColumnName = "numero_documento";
-  if (columnToSort === "Obs.") realColumnName = "observaciones";
-  
-  const columnIndex = getColumnIndex(realColumnName);
-  if (columnIndex === -1) {
-    alert('Columna no válida');
-    return;
-  }
-  
-  sortTableByColumn(columnIndex);
 }
 
 function confirmDownload() {
