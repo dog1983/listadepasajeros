@@ -212,15 +212,17 @@ tr.editable-row:hover {
   color: #e74c3c;
 }
 
+/* CAMBIO SOLICITADO: Para móviles, formulario en columna vertical */
 .form-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 15px;
   flex: 1;
 }
 
 .form-group {
   margin-bottom: 15px;
+  width: 100%;
 }
 
 .form-group label {
@@ -298,7 +300,9 @@ tr.editable-row:hover {
     max-width: 800px;
   }
   
+  /* Solo en pantallas grandes usamos grid de 2 columnas */
   .form-grid {
+    display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }
@@ -329,7 +333,15 @@ tr.editable-row:hover {
   .form-header h2 {
     font-size: 1.3rem;
   }
+  
+  /* Asegurar que en móviles pequeños también sea vertical */
+  .form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
 }
+
 /* Estilos para mensajes de error */
 .error-message {
   color: #e74c3c;
