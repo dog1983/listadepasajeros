@@ -28,6 +28,20 @@ const columnDisplayNames = {
   "observaciones": "Obs."
 };
 
+// Headers requeridos para validación al cargar CSV
+const requiredHeaders = [
+  "apellido",
+  "nombre", 
+  "tipo_documento",
+  "descripcion_documento",
+  "numero_documento",
+  "sexo",
+  "menor",
+  "nacionalidad",
+  "tripulante",
+  "ocupa_butaca"
+];
+
 const validValues = {
   tipo_documento: ["DNI", "Pasaporte", "OTROS"],
   sexo: ["F", "M"],
@@ -60,15 +74,123 @@ window.onload = function() {
   // Configurar evento para el input de archivo
   document.getElementById('csvFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
+    
+    if (!file) {
+      return;
+    }
+    
+    // Validar extensión
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Por favor, seleccione un archivo CSV');
+      this.value = ''; // Limpiar input
+      return;
+    }
+    
     const reader = new FileReader();
     reader.onload = function(event) {
-      const text = event.target.result;
-      tableData = parseCSV(text);
-      renderTable();
+      try {
+        const text = event.target.result;
+        const parsedData = parseCSV(text);
+        
+        // Si parseCSV devuelve solo el header por error, no actualizar
+        if (parsedData.length === 1 && parsedData[0] === defaultHeader) {
+          // Ya mostró el mensaje de error en parseCSV
+          e.target.value = ''; // Limpiar input
+          return;
+        }
+        
+        tableData = parsedData;
+        renderTable();
+        
+      } catch (error) {
+        console.error('Error al procesar el archivo:', error);
+        alert('Error al procesar el archivo CSV. Verifique el formato.');
+        e.target.value = ''; // Limpiar input
+      }
     };
-    reader.readAsText(file);
+    
+    reader.onerror = function() {
+      alert('Error al leer el archivo');
+      e.target.value = ''; // Limpiar input
+    };
+    
+    reader.readAsText(file, 'UTF-8');
   });
 };
+
+// Función auxiliar para validar headers del CSV
+function validateCSVHeaders(headers) {
+  const headerMap = {};
+  headers.forEach((h, i) => {
+    headerMap[h.trim().toLowerCase()] = i;
+  });
+  
+  const errors = [];
+  
+  // Validar headers requeridos
+  requiredHeaders.forEach(requiredHeader => {
+    if (!headerMap[requiredHeader.toLowerCase()]) {
+      errors.push(`Falta columna: ${requiredHeader}`);
+    }
+  });
+  
+  // Validar que no haya columnas duplicadas (insensible a mayúsculas)
+  const lowerHeaders = headers.map(h => h.trim().toLowerCase());
+  const uniqueHeaders = new Set(lowerHeaders);
+  if (uniqueHeaders.size !== headers.length) {
+    errors.push('Hay columnas con nombres duplicados (diferencia solo en mayúsculas/minúsculas)');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors: errors
+  };
+}
+
+function parseCSV(text) {
+  const rows = text.trim().split('\n').map(row => row.split(';'));
+  
+  if (rows.length === 0) {
+    alert('El archivo está vacío');
+    return [defaultHeader];
+  }
+  
+  let header = rows[0].map(h => h.trim());
+  const body = rows.slice(1);
+  
+  // Validar headers
+  const validation = validateCSVHeaders(header);
+  if (!validation.isValid) {
+    const errorMessage = `El listado que intenta abrir tiene un formato incorrecto!\nNo coinciden las columnas.\n\nErrores encontrados:\n- ${validation.errors.join('\n- ')}\n\nColumnas requeridas:\n- ${requiredHeaders.join('\n- ')}`;
+    alert(errorMessage);
+    return [defaultHeader];
+  }
+  
+  // Asegurar que "observaciones" exista (opcional)
+  const lowerCaseHeader = header.map(h => h.toLowerCase());
+  const hasObservaciones = lowerCaseHeader.includes('observaciones');
+  
+  if (!hasObservaciones) {
+    header.push('observaciones');
+    body.forEach(row => row.push('')); // Valor por defecto vacío
+  }
+  
+  // Asegurar que "ocupa_butaca" tenga valor por defecto si falta
+  const ocupaButacaIndex = header.findIndex(h => h.toLowerCase() === 'ocupa_butaca');
+  if (ocupaButacaIndex !== -1) {
+    body.forEach(row => {
+      if (row.length <= ocupaButacaIndex || !row[ocupaButacaIndex] || row[ocupaButacaIndex].trim() === '') {
+        // Asegurar que la fila tenga suficiente longitud
+        while (row.length <= ocupaButacaIndex) {
+          row.push('');
+        }
+        row[ocupaButacaIndex] = '1';
+      }
+    });
+  }
+  
+  return [header, ...body];
+}
 
 function populateNationalities() {
   const select = document.getElementById('nacionalidad');
@@ -197,26 +319,6 @@ function openSaveModal() {
 
 function closeSaveModal() {
   document.getElementById('saveModal').style.display = 'none';
-}
-
-function parseCSV(text) {
-  const rows = text.trim().split('\n').map(row => row.split(';'));
-  let header = rows[0];
-  const body = rows.slice(1);
-
-  const requiredColumns = [
-    { name: 'ocupa_butaca', defaultValue: '1' },
-    { name: 'observaciones', defaultValue: '' }
-  ];
-
-  requiredColumns.forEach(col => {
-    if (!header.includes(col.name)) {
-      header.push(col.name);
-      body.forEach(row => row.push(col.defaultValue));
-    }
-  });
-
-  return [header, ...body];
 }
 
 // Función para obtener el índice de una columna en los datos
@@ -526,43 +628,22 @@ function confirmDownload() {
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
   const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
   
-  // Versión mejorada para manejar caracteres especiales
-  const csvContent = tableData.map(row => 
-    row.map(cell => {
-      // Escapar comillas y caracteres especiales
-      if (typeof cell === 'string') {
-        // Si contiene comillas, punto y coma o saltos de línea, envolver en comillas
-        if (cell.includes('"') || cell.includes(';') || cell.includes('\n') || cell.includes('\r')) {
-          return '"' + cell.replace(/"/g, '""') + '"';
-        }
-      }
-      return cell;
-    }).join(';')
-  ).join('\n');
+  // Guardamos TODAS las columnas con sus nombres originales
+  const csvContent = tableData.map(row => row.join(';')).join('\n');
   
-  // Agregar BOM para UTF-8 (esencial para Windows)
+  // CORRECCIÓN: Agregar BOM (Byte Order Mark) para UTF-8
+  // Esto asegura que Windows reconozca correctamente los caracteres especiales
   const BOM = '\uFEFF';
   const csvWithBOM = BOM + csvContent;
   
-  // Crear el archivo con codificación explícita
-  const blob = new Blob([csvWithBOM], { 
-    type: 'text/csv;charset=utf-8' 
-  });
+  // Cambiar el tipo MIME para especificar UTF-8 con BOM
+  const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
   
-  // Método alternativo para descargar
-  if (navigator.msSaveBlob) {
-    // Para Internet Explorer
-    navigator.msSaveBlob(blob, fileName);
-  } else {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-  
+  URL.revokeObjectURL(url);
   closeSaveModal();
 }
