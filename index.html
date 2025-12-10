@@ -14,7 +14,6 @@
         <input type="file" id="csvFile" accept=".csv">
         <button onclick="openAddPassengerModal()">Agregar Pasajero</button>
         <button onclick="removeSelectedRows()" id="deleteBtn" disabled>Eliminar Seleccionados</button>
-        <!-- CORRECCIÓN: Eliminado el botón "Ordenar por Columna" -->
         <button onclick="openSaveModal()" id="saveBtn">Guardar CSV</button>
     </div>
     
@@ -44,7 +43,7 @@
                 <!-- Tipo de Documento y Número -->
                 <div class="form-group">
                     <label for="tipo_documento" class="required-field">Tipo Documento</label>
-                    <select id="tipo_documento">
+                    <select id="tipo_documento" onchange="handleTipoDocumentoChange()">
                         <option value="DNI">DNI</option>
                         <option value="Pasaporte">Pasaporte</option>
                         <option value="OTROS">OTROS</option>
@@ -54,6 +53,13 @@
                 <div class="form-group">
                     <label for="numero_documento" class="required-field">Número Documento</label>
                     <input type="text" id="numero_documento" placeholder="Ej: 12345678" required>
+                </div>
+                
+                <!-- Descripción Documento (solo para OTROS) -->
+                <div class="form-group" id="descripcion_documento_group" style="display: none; grid-column: span 2;">
+                    <label for="descripcion_documento">Descripción Documento</label>
+                    <input type="text" id="descripcion_documento" placeholder="Ej: Cédula de Identidad, Licencia de Conducir, etc.">
+                    <small style="color: #666; font-size: 0.8rem;">Complete solo si seleccionó OTROS</small>
                 </div>
                 
                 <!-- Sexo y Menor -->
