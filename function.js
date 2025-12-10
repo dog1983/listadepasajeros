@@ -526,22 +526,43 @@ function confirmDownload() {
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
   const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
   
-  // Guardamos TODAS las columnas con sus nombres originales
-  const csvContent = tableData.map(row => row.join(';')).join('\n');
+  // Versión mejorada para manejar caracteres especiales
+  const csvContent = tableData.map(row => 
+    row.map(cell => {
+      // Escapar comillas y caracteres especiales
+      if (typeof cell === 'string') {
+        // Si contiene comillas, punto y coma o saltos de línea, envolver en comillas
+        if (cell.includes('"') || cell.includes(';') || cell.includes('\n') || cell.includes('\r')) {
+          return '"' + cell.replace(/"/g, '""') + '"';
+        }
+      }
+      return cell;
+    }).join(';')
+  ).join('\n');
   
-  // CORRECCIÓN: Agregar BOM (Byte Order Mark) para UTF-8
-  // Esto asegura que Windows reconozca correctamente los caracteres especiales
+  // Agregar BOM para UTF-8 (esencial para Windows)
   const BOM = '\uFEFF';
   const csvWithBOM = BOM + csvContent;
   
-  // Cambiar el tipo MIME para especificar UTF-8 con BOM
-  const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  a.click();
+  // Crear el archivo con codificación explícita
+  const blob = new Blob([csvWithBOM], { 
+    type: 'text/csv;charset=utf-8' 
+  });
   
-  URL.revokeObjectURL(url);
+  // Método alternativo para descargar
+  if (navigator.msSaveBlob) {
+    // Para Internet Explorer
+    navigator.msSaveBlob(blob, fileName);
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  
   closeSaveModal();
 }
