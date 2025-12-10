@@ -29,6 +29,7 @@ const columnDisplayNames = {
 };
 
 // Headers requeridos para validación al cargar CSV
+// Desde "apellido" hasta "ocupa_butaca" inclusive (11 columnas)
 const requiredHeaders = [
   "apellido",
   "nombre", 
@@ -40,13 +41,14 @@ const requiredHeaders = [
   "nacionalidad",
   "tripulante",
   "ocupa_butaca"
+  // "observaciones" es opcional, no se incluye en requiredHeaders
 ];
 
 const validValues = {
   tipo_documento: ["DNI", "Pasaporte", "OTROS"],
   sexo: ["F", "M"],
   menor: ["0", "1"],
-  nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticana", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
+  nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticana", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelenda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
   tripulante: ["0", "1"],
   ocupa_butaca: ["0", "1"]
 };
@@ -70,6 +72,9 @@ window.onload = function() {
   
   // Poblar nacionalidades
   populateNationalities();
+  
+  // Configurar evento para tipo_documento
+  document.getElementById('tipo_documento').addEventListener('change', handleTipoDocumentoChange);
   
   // Configurar evento para el input de archivo
   document.getElementById('csvFile').addEventListener('change', function(e) {
@@ -118,76 +123,94 @@ window.onload = function() {
   });
 };
 
-// Función auxiliar para validar headers del CSV
+// Función para validar headers del CSV
 function validateCSVHeaders(headers) {
-  const headerMap = {};
-  headers.forEach((h, i) => {
-    headerMap[h.trim().toLowerCase()] = i;
-  });
+  // Convertir headers del archivo a minúsculas para comparación insensible
+  const lowerHeaders = headers.map(h => h.trim().toLowerCase());
   
   const errors = [];
+  const missingHeaders = [];
   
-  // Validar headers requeridos
+  // Validar cada header requerido
   requiredHeaders.forEach(requiredHeader => {
-    if (!headerMap[requiredHeader.toLowerCase()]) {
-      errors.push(`Falta columna: ${requiredHeader}`);
+    const lowerRequired = requiredHeader.toLowerCase();
+    
+    // Verificar si el header existe (insensible a mayúsculas)
+    if (!lowerHeaders.includes(lowerRequired)) {
+      missingHeaders.push(requiredHeader);
     }
   });
   
-  // Validar que no haya columnas duplicadas (insensible a mayúsculas)
-  const lowerHeaders = headers.map(h => h.trim().toLowerCase());
-  const uniqueHeaders = new Set(lowerHeaders);
-  if (uniqueHeaders.size !== headers.length) {
-    errors.push('Hay columnas con nombres duplicados (diferencia solo en mayúsculas/minúsculas)');
+  if (missingHeaders.length > 0) {
+    errors.push(`Columnas faltantes: ${missingHeaders.join(', ')}`);
+  }
+  
+  // Verificar si hay columnas duplicadas (insensible a mayúsculas)
+  const headerCounts = {};
+  lowerHeaders.forEach(header => {
+    headerCounts[header] = (headerCounts[header] || 0) + 1;
+  });
+  
+  const duplicates = Object.keys(headerCounts).filter(header => headerCounts[header] > 1);
+  if (duplicates.length > 0) {
+    errors.push(`Columnas duplicadas: ${duplicates.join(', ')}`);
   }
   
   return {
     isValid: errors.length === 0,
-    errors: errors
+    errors: errors,
+    missingHeaders: missingHeaders
   };
 }
 
 function parseCSV(text) {
-  const rows = text.trim().split('\n').map(row => row.split(';'));
+  // Separar líneas y celdas
+  const rows = text.trim().split('\n').map(row => {
+    return row.split(';').map(cell => cell.trim());
+  });
   
   if (rows.length === 0) {
     alert('El archivo está vacío');
     return [defaultHeader];
   }
   
-  let header = rows[0].map(h => h.trim());
-  const body = rows.slice(1);
+  let header = rows[0];
+  let body = rows.slice(1);
+  
+  console.log('Headers encontrados en el archivo:', header);
+  console.log('Headers requeridos:', requiredHeaders);
   
   // Validar headers
   const validation = validateCSVHeaders(header);
   if (!validation.isValid) {
-    const errorMessage = `El listado que intenta abrir tiene un formato incorrecto!\nNo coinciden las columnas.\n\nErrores encontrados:\n- ${validation.errors.join('\n- ')}\n\nColumnas requeridas:\n- ${requiredHeaders.join('\n- ')}`;
+    const errorMessage = `El listado que intenta abrir tiene un formato incorrecto!\nNo coinciden las columnas.\n\nErrores:\n- ${validation.errors.join('\n- ')}\n\nColumnas requeridas (en orden):\n1. apellido\n2. nombre\n3. tipo_documento\n4. descripcion_documento\n5. numero_documento\n6. sexo\n7. menor\n8. nacionalidad\n9. tripulante\n10. ocupa_butaca\n\nColumnas opcionales:\n11. observaciones\n\nColumnas encontradas:\n${header.map((h, i) => `${i+1}. ${h}`).join('\n')}`;
+    
     alert(errorMessage);
     return [defaultHeader];
   }
   
-  // Asegurar que "observaciones" exista (opcional)
+  // Verificar si tiene observaciones (opcional)
   const lowerCaseHeader = header.map(h => h.toLowerCase());
   const hasObservaciones = lowerCaseHeader.includes('observaciones');
   
+  // Si no tiene observaciones, agregarla
   if (!hasObservaciones) {
     header.push('observaciones');
     body.forEach(row => row.push('')); // Valor por defecto vacío
   }
   
-  // Asegurar que "ocupa_butaca" tenga valor por defecto si falta
-  const ocupaButacaIndex = header.findIndex(h => h.toLowerCase() === 'ocupa_butaca');
-  if (ocupaButacaIndex !== -1) {
-    body.forEach(row => {
-      if (row.length <= ocupaButacaIndex || !row[ocupaButacaIndex] || row[ocupaButacaIndex].trim() === '') {
-        // Asegurar que la fila tenga suficiente longitud
-        while (row.length <= ocupaButacaIndex) {
-          row.push('');
-        }
-        row[ocupaButacaIndex] = '1';
-      }
-    });
-  }
+  // Asegurar que todas las filas tengan la misma longitud
+  const expectedLength = header.length;
+  body = body.map(row => {
+    if (row.length < expectedLength) {
+      // Agregar celdas vacías si faltan
+      return [...row, ...Array(expectedLength - row.length).fill('')];
+    } else if (row.length > expectedLength) {
+      // Truncar si hay celdas extras (caso de punto y coma al final)
+      return row.slice(0, expectedLength);
+    }
+    return row;
+  });
   
   return [header, ...body];
 }
@@ -228,11 +251,11 @@ function openAddPassengerModal() {
   document.getElementById('formTitle').textContent = 'Agregar Nuevo Pasajero';
   document.getElementById('savePassengerBtn').textContent = 'Agregar Pasajero';
   
-  // CORRECCIÓN: No tenemos un formulario con ID 'passengerForm'
-  // En su lugar, reseteamos cada campo individualmente
+  // Resetear todos los campos
   document.getElementById('apellido').value = '';
   document.getElementById('nombre').value = '';
   document.getElementById('tipo_documento').value = defaults.tipo_documento;
+  document.getElementById('descripcion_documento').value = '';
   document.getElementById('numero_documento').value = '';
   document.getElementById('sexo').value = defaults.sexo;
   document.getElementById('menor').value = defaults.menor;
@@ -241,12 +264,15 @@ function openAddPassengerModal() {
   document.getElementById('ocupa_butaca').value = defaults.ocupa_butaca;
   document.getElementById('observaciones').value = defaults.observaciones;
   
+  // Ocultar descripcion_documento inicialmente (solo se muestra para OTROS)
+  document.getElementById('descripcion_documento_group').style.display = 'none';
+  
   document.getElementById('addPassengerModal').style.display = 'block';
   document.getElementById('apellido').focus();
 }
 
 function editRow(rowIndex) {
-  // CORRECCIÓN IMPORTANTE: Deseleccionar filas al editar
+  // Deseleccionar filas al editar
   document.querySelectorAll('.selected-row').forEach(row => row.classList.remove('selected-row'));
   updateDeleteButtonState();
   
@@ -259,6 +285,7 @@ function editRow(rowIndex) {
   document.getElementById('apellido').value = rowData[0] || '';
   document.getElementById('nombre').value = rowData[1] || '';
   document.getElementById('tipo_documento').value = rowData[2] || defaults.tipo_documento;
+  document.getElementById('descripcion_documento').value = rowData[3] || ''; // descripcion_documento
   document.getElementById('numero_documento').value = rowData[4] || '';
   document.getElementById('sexo').value = rowData[5] || defaults.sexo;
   document.getElementById('menor').value = rowData[6] || defaults.menor;
@@ -266,6 +293,14 @@ function editRow(rowIndex) {
   document.getElementById('tripulante').value = rowData[8] || defaults.tripulante;
   document.getElementById('ocupa_butaca').value = rowData[9] || defaults.ocupa_butaca;
   document.getElementById('observaciones').value = rowData[10] || defaults.observaciones;
+  
+  // Mostrar/ocultar descripcion_documento según tipo_documento
+  const tipoDoc = rowData[2] || defaults.tipo_documento;
+  if (tipoDoc === 'OTROS') {
+    document.getElementById('descripcion_documento_group').style.display = 'block';
+  } else {
+    document.getElementById('descripcion_documento_group').style.display = 'none';
+  }
   
   document.getElementById('addPassengerModal').style.display = 'block';
   document.getElementById('apellido').focus();
@@ -276,12 +311,32 @@ function closeAddPassengerModal() {
   editingIndex = null;
 }
 
+// Función para manejar cambio en tipo_documento
+function handleTipoDocumentoChange() {
+  const tipoDocumento = document.getElementById('tipo_documento').value;
+  const descripcionGroup = document.getElementById('descripcion_documento_group');
+  
+  if (tipoDocumento === 'OTROS') {
+    descripcionGroup.style.display = 'block';
+    // Enfocar el campo de descripción después de un breve delay
+    setTimeout(() => {
+      document.getElementById('descripcion_documento').focus();
+    }, 100);
+  } else {
+    descripcionGroup.style.display = 'none';
+    document.getElementById('descripcion_documento').value = '';
+  }
+}
+
 function savePassenger() {
+  const tipoDocumento = document.getElementById('tipo_documento').value;
+  const descripcionDocumento = document.getElementById('descripcion_documento').value.trim();
+  
   const newRow = [
     document.getElementById('apellido').value.trim(),
     document.getElementById('nombre').value.trim(),
-    document.getElementById('tipo_documento').value,
-    '', // descripcion_documento
+    tipoDocumento,
+    tipoDocumento === 'OTROS' ? descripcionDocumento : '', // descripcion_documento solo para OTROS
     document.getElementById('numero_documento').value.trim(),
     document.getElementById('sexo').value || defaults.sexo,
     document.getElementById('menor').value || defaults.menor,
@@ -385,8 +440,6 @@ function renderTable() {
       if (tr.classList.contains('selected-row')) {
         tr.classList.remove('selected-row');
       } else {
-        // Opcional: Deseleccionar otras filas primero para selección única
-        // document.querySelectorAll('.selected-row').forEach(r => r.classList.remove('selected-row'));
         tr.classList.add('selected-row');
       }
       
