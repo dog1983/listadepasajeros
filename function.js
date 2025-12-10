@@ -23,6 +23,12 @@ const defaultHeader = [
 // CAMBIO SOLICITADO: Columnas que se mostrarán en la tabla principal
 const visibleColumns = ["apellido", "nombre", "numero_documento", "observaciones"];
 
+// CAMBIO SOLICITADO: Mapeo de nombres de columnas para mostrar en la tabla
+const columnDisplayNames = {
+  "numero_documento": "N°",
+  "observaciones": "Obs."
+};
+
 const validValues = {
   tipo_documento: ["DNI", "Pasaporte", "OTROS"],
   sexo: ["F", "M"],
@@ -198,7 +204,8 @@ function renderTable() {
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
 
-  headRow.innerHTML = `<th>Sel</th><th>#</th>`;
+  // CAMBIO SOLICITADO: Quitamos la columna "Sel" y mantenemos solo "#"
+  headRow.innerHTML = `<th>#</th>`;
   
   // CAMBIO SOLICITADO: Solo mostramos las columnas visibles
   visibleColumns.forEach(columnName => {
@@ -206,7 +213,8 @@ function renderTable() {
     if (columnIndex === -1) return; // Si la columna no existe, saltar
     
     const th = document.createElement('th');
-    th.textContent = columnName.trim();
+    // CAMBIO SOLICITADO: Usar nombre abreviado para mostrar
+    th.textContent = columnDisplayNames[columnName] || columnName;
     th.title = getHeaderTooltip(columnName);
     th.dataset.columnIndex = columnIndex;
     th.addEventListener('click', () => sortTableByColumn(columnIndex));
@@ -224,14 +232,38 @@ function renderTable() {
   documentNumbersMap.clear();
   let invalidCellsCount = 0;
 
+  // CAMBIO SOLICITADO: Variable para manejar filas seleccionadas
+  let selectedRows = [];
+
   body.forEach((row, rowIndex) => {
     const tr = document.createElement('tr');
     tr.classList.add('editable-row');
     if (editingIndex === rowIndex + 1) tr.classList.add('editing');
     
-    tr.addEventListener('click', () => editRow(rowIndex + 1));
+    // CAMBIO SOLICITADO: Reemplazar checkbox por selección con clic
+    tr.addEventListener('click', function(e) {
+      // Si se hizo clic en un input o select dentro de la celda, no seleccionar la fila
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+        return;
+      }
+      
+      // Alternar selección de fila
+      if (tr.classList.contains('selected-row')) {
+        tr.classList.remove('selected-row');
+        const index = selectedRows.indexOf(rowIndex + 1);
+        if (index > -1) {
+          selectedRows.splice(index, 1);
+        }
+      } else {
+        tr.classList.add('selected-row');
+        selectedRows.push(rowIndex + 1);
+      }
+      
+      // Actualizar estado del botón de eliminar
+      updateDeleteButtonState();
+    });
 
-    tr.innerHTML += `<td><input type="checkbox" class="rowCheckbox" data-index="${rowIndex + 1}" tabindex="${(rowIndex * 100) + 0}" onclick="event.stopPropagation()"></td>`;
+    // CAMBIO SOLICITADO: Quitamos el checkbox y mantenemos solo el número
     tr.innerHTML += `<td>${rowIndex + 1}</td>`;
 
     let tabIndexCounter = (rowIndex * 100) + 1;
@@ -341,6 +373,16 @@ function renderTable() {
   document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
   table.appendChild(tbody);
   container.appendChild(table);
+  
+  // Actualizar estado inicial del botón de eliminar
+  updateDeleteButtonState();
+}
+
+// CAMBIO SOLICITADO: Función para actualizar estado del botón eliminar
+function updateDeleteButtonState() {
+  const deleteBtn = document.getElementById('deleteBtn');
+  const hasSelectedRows = document.querySelectorAll('.selected-row').length > 0;
+  deleteBtn.disabled = !hasSelectedRows;
 }
 
 // Validación de celdas
@@ -375,24 +417,39 @@ function validateCell(columnName, value, tipoDoc = "") {
 // Tooltips para headers
 function getHeaderTooltip(headerName) {
   const tips = {
-    numero_documento: "DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
-    menor: "0 = NO, 1 = SI",
-    ocupa_butaca: "0 = NO, 1 = SI",
-    tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS",
-    sexo: "F = F, M = M",
-    observaciones: "Notas adicionales sobre el pasajero"
+    "numero_documento": "Número de Documento - DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+    "N°": "Número de Documento - DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+    "observaciones": "Notas adicionales sobre el pasajero",
+    "Obs.": "Notas adicionales sobre el pasajero",
+    "apellido": "Apellido del pasajero",
+    "nombre": "Nombre del pasajero",
+    "menor": "0 = NO, 1 = SI",
+    "ocupa_butaca": "0 = NO, 1 = SI",
+    "tipo_documento": "Valores válidos: DNI, Pasaporte, OTROS",
+    "sexo": "F = Femenino, M = Masculino"
   };
   return tips[headerName] || "";
 }
 
-// Funciones de acciones
+// Funciones de acciones - MODIFICADA para usar filas seleccionadas
 function removeSelectedRows() {
-  const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-  const indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+  const selectedRows = document.querySelectorAll('.selected-row');
+  if (selectedRows.length === 0) {
+    alert('No hay filas seleccionadas para eliminar.');
+    return;
+  }
+  
+  // Obtener índices de las filas seleccionadas
+  const indexesToRemove = Array.from(selectedRows).map(tr => {
+    // El primer td es el número de fila
+    return parseInt(tr.querySelector('td:first-child').textContent);
+  });
+  
   if (indexesToRemove.length === 0) {
     alert('No hay filas seleccionadas para eliminar.');
     return;
   }
+  
   indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
   renderTable();
 }
@@ -425,12 +482,17 @@ function sortTableByHeader() {
   if (tableData.length <= 1) return;
   
   const header = tableData[0];
-  const columnNames = visibleColumns; // CAMBIO SOLICITADO: Solo mostrar columnas visibles
+  const columnNames = visibleColumns.map(col => columnDisplayNames[col] || col);
   
   const columnToSort = prompt(`Ingrese el nombre de la columna para ordenar:\n${columnNames.join(', ')}`);
   if (!columnToSort) return;
   
-  const columnIndex = getColumnIndex(columnToSort);
+  // Convertir nombre mostrado a nombre real de columna
+  let realColumnName = columnToSort;
+  if (columnToSort === "N°") realColumnName = "numero_documento";
+  if (columnToSort === "Obs.") realColumnName = "observaciones";
+  
+  const columnIndex = getColumnIndex(realColumnName);
   if (columnIndex === -1) {
     alert('Columna no válida');
     return;
@@ -448,7 +510,7 @@ function confirmDownload() {
 
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
   const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-  // CAMBIO SOLICITADO: Guardamos TODAS las columnas (no solo las visibles)
+  // CAMBIO SOLICITADO: Guardamos TODAS las columnas con sus nombres originales
   const csvContent = tableData.map(row => row.join(';')).join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
