@@ -1,122 +1,128 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lista de Pasajeros</title>
-  <link rel="stylesheet" href="estilos.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Lista de Pasajeros</title>
+    <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-
-  <h1>Lista de Pasajeros</h1>
-
-  <div id="controls">
-    <input type="file" id="csvFile" accept=".csv">
-    <button onclick="openAddPassengerModal()">Agregar Pasajeros</button>
-    <button onclick="removeSelectedRows()">Eliminar Pasajeros</button>
-    <button onclick="openSaveModal()" id="saveBtn">Guardar Como</button>
-  </div>
-
-  <div id="tableContainer"></div>
-
-  <!-- Modal para guardar -->
-  <div id="saveModal" class="modal">
-    <div class="modal-content">
-      <h3>Nombre del archivo</h3>
-      <input type="text" id="fileNameInputModal" placeholder="Nombre sin .csv">
-      <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
-        <button class="primary-btn" onclick="confirmDownload()">Aceptar</button>
-        <button class="secondary-btn" onclick="closeSaveModal()">Cancelar</button>
-      </div>
+    <h1>Editor de Lista de Pasajeros</h1>
+    
+    <!-- Controles principales -->
+    <div id="controls">
+        <input type="file" id="csvFile" accept=".csv">
+        <button onclick="openAddPassengerModal()">Agregar Pasajero</button>
+        <button onclick="removeSelectedRows()" id="deleteBtn" disabled>Eliminar Seleccionados</button>
+        <button onclick="sortTableByHeader()">Ordenar por Columna</button>
+        <button onclick="openSaveModal()" id="saveBtn">Guardar CSV</button>
     </div>
-  </div>
-
-  <!-- Modal para agregar/editar pasajeros -->
-  <div id="addPassengerModal" class="form-modal">
-    <div class="form-content">
-      <div class="form-header">
-        <h2 id="formTitle">Agregar Nuevo Pasajero</h2>
-        <button class="close-modal-btn" onclick="closeAddPassengerModal()">×</button>
-      </div>
-      
-      <form id="passengerForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="apellido" class="required-field">Apellido:</label>
-            <input type="text" id="apellido" required tabindex="1">
-          </div>
-
-          <div class="form-group">
-            <label for="nombre" class="required-field">Nombre:</label>
-            <input type="text" id="nombre" required tabindex="2">
-          </div>
-
-          <div class="form-group">
-            <label for="tipo_documento" class="required-field">Tipo Documento:</label>
-            <select id="tipo_documento" tabindex="3">
-              <option value="DNI">DNI</option>
-              <option value="Pasaporte">Pasaporte</option>
-              <option value="OTROS">Otros</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="numero_documento" class="required-field">Número Documento:</label>
-            <input type="text" id="numero_documento" required tabindex="4">
-          </div>
-
-          <div class="form-group">
-            <label for="sexo">Sexo:</label>
-            <select id="sexo" tabindex="5">
-              <option value="F">F</option>
-              <option value="M">M</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="menor">Menor: (Tiene menos de 18 años)</label>
-            <select id="menor" tabindex="6">
-              <option value="0">No</option>
-              <option value="1">Sí</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="nacionalidad">Nacionalidad: (Pais de Nacimiento)</label>
-            <select id="nacionalidad" tabindex="7"></select>
-          </div>
-
-          <div class="form-group">
-            <label for="tripulante">Tripulante: (No, para pasajeros)</label>
-            <select id="tripulante" tabindex="8">
-              <option value="0">No</option>
-              <option value="1">Sí</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="ocupa_butaca">Ocupa Butaca:(No, Solo menores de 5 años)</label>
-            <select id="ocupa_butaca" tabindex="9">
-              <option value="1">Sí</option>
-              <option value="0">No</option>
-            </select>
-          </div>
-
-          <div class="form-group" style="grid-column: span 2">
-            <label for="observaciones">Observaciones:</label>
-            <input type="text" id="observaciones" tabindex="10">
-          </div>
-
-          <div class="form-actions">
-            <button type="button" class="primary-btn" onclick="savePassenger()" tabindex="11" id="savePassengerBtn">Agregar Pasajero</button>
-            <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()" tabindex="12">Cancelar</button>
-          </div>
+    
+    <!-- Contenedor de la tabla -->
+    <div id="tableContainer"></div>
+    
+    <!-- Modal para agregar/editar pasajero -->
+    <div id="addPassengerModal" class="form-modal">
+        <div class="form-content">
+            <div class="form-header">
+                <h2 id="formTitle">Agregar Nuevo Pasajero</h2>
+                <button class="close-modal-btn" onclick="closeAddPassengerModal()">&times;</button>
+            </div>
+            
+            <div class="form-grid">
+                <!-- Apellido y Nombre -->
+                <div class="form-group">
+                    <label for="apellido" class="required-field">Apellido</label>
+                    <input type="text" id="apellido" placeholder="Ingrese apellido" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nombre" class="required-field">Nombre</label>
+                    <input type="text" id="nombre" placeholder="Ingrese nombre" required>
+                </div>
+                
+                <!-- Tipo de Documento y Número -->
+                <div class="form-group">
+                    <label for="tipo_documento" class="required-field">Tipo Documento</label>
+                    <select id="tipo_documento">
+                        <option value="DNI">DNI</option>
+                        <option value="Pasaporte">Pasaporte</option>
+                        <option value="OTROS">OTROS</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="numero_documento" class="required-field">Número Documento</label>
+                    <input type="text" id="numero_documento" placeholder="Ej: 12345678" required>
+                </div>
+                
+                <!-- Sexo y Menor -->
+                <div class="form-group">
+                    <label for="sexo">Sexo</label>
+                    <select id="sexo">
+                        <option value="F">Femenino</option>
+                        <option value="M">Masculino</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="menor">Menor</label>
+                    <select id="menor">
+                        <option value="0">No</option>
+                        <option value="1">Sí</option>
+                    </select>
+                </div>
+                
+                <!-- Nacionalidad -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="nacionalidad">Nacionalidad</label>
+                    <select id="nacionalidad"></select>
+                </div>
+                
+                <!-- Tripulante y Ocupa Butaca -->
+                <div class="form-group">
+                    <label for="tripulante">Tripulante</label>
+                    <select id="tripulante">
+                        <option value="0">No</option>
+                        <option value="1">Sí</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ocupa_butaca">Ocupa Butaca</label>
+                    <select id="ocupa_butaca">
+                        <option value="0">No</option>
+                        <option value="1">Sí</option>
+                    </select>
+                </div>
+                
+                <!-- Observaciones -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="observaciones">Observaciones</label>
+                    <input type="text" id="observaciones" placeholder="Observaciones adicionales">
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="primary-btn" onclick="savePassenger()" id="savePassengerBtn">Agregar Pasajero</button>
+                <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()">Cancelar</button>
+            </div>
         </div>
-      </form>
     </div>
-  </div>
-
-  <script src="function.js"></script>
+    
+    <!-- Modal para guardar archivo -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <h3>Guardar Archivo CSV</h3>
+            <label for="fileNameInputModal">Nombre del archivo (sin extensión):</label>
+            <input type="text" id="fileNameInputModal" placeholder="lista_pasajeros" value="lista_pasajeros">
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeSaveModal()" style="background-color: #95a5a6;">Cancelar</button>
+                <button onclick="confirmDownload()" style="background-color: #2ecc71;">Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="function.js"></script>
 </body>
 </html>
