@@ -423,6 +423,15 @@ td:nth-child(4) { /* Columna Obs. (cuarta columna después del número) */
   max-width: 200px;
 }
 
+/* Estilos para descripción documento */
+#descripcion_documento_group small {
+  display: block;
+  margin-top: 4px;
+  font-style: italic;
+  color: #666;
+  font-size: 0.8rem;
+}
+
 /* Ajustes para móviles */
 @media (max-width: 768px) {
   .error-message {
@@ -433,5 +442,9 @@ td:nth-child(4) { /* Columna Obs. (cuarta columna después del número) */
   
   td, th {
     padding: 8px 4px;
+  }
+  
+  #descripcion_documento_group {
+    grid-column: span 1 !important;
   }
 }
