@@ -525,13 +525,23 @@ function confirmDownload() {
 
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
   const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+  
   // Guardamos TODAS las columnas con sus nombres originales
   const csvContent = tableData.map(row => row.join(';')).join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  
+  // CORRECCIÓN: Agregar BOM (Byte Order Mark) para UTF-8
+  // Esto asegura que Windows reconozca correctamente los caracteres especiales
+  const BOM = '\uFEFF';
+  const csvWithBOM = BOM + csvContent;
+  
+  // Cambiar el tipo MIME para especificar UTF-8 con BOM
+  const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = fileName;
   a.click();
+  
+  URL.revokeObjectURL(url);
   closeSaveModal();
 }
