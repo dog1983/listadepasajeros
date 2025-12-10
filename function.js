@@ -1,3 +1,4 @@
+/* function.js */
 // Variables globales
 let tableData = [];
 let editingIndex = null;
@@ -19,11 +20,14 @@ const defaultHeader = [
   "observaciones"
 ];
 
+// CAMBIO SOLICITADO: Columnas que se mostrarán en la tabla principal
+const visibleColumns = ["apellido", "nombre", "numero_documento", "observaciones"];
+
 const validValues = {
   tipo_documento: ["DNI", "Pasaporte", "OTROS"],
   sexo: ["F", "M"],
   menor: ["0", "1"],
-  nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
+  nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticana", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
   tripulante: ["0", "1"],
   ocupa_butaca: ["0", "1"]
 };
@@ -174,7 +178,13 @@ function parseCSV(text) {
   return [header, ...body];
 }
 
-// Renderizado de la tabla
+// CAMBIO SOLICITADO: Función para obtener el índice de una columna en los datos
+function getColumnIndex(columnName) {
+  const header = tableData[0];
+  return header.indexOf(columnName);
+}
+
+// Renderizado de la tabla - MODIFICADO para mostrar solo 4 columnas
 function renderTable() {
   const container = document.getElementById('tableContainer');
   const table = document.createElement('table');
@@ -189,14 +199,18 @@ function renderTable() {
   const headRow = document.createElement('tr');
 
   headRow.innerHTML = `<th>Sel</th><th>#</th>`;
-  header.forEach((title, i) => {
-    if (i === 3) return;
+  
+  // CAMBIO SOLICITADO: Solo mostramos las columnas visibles
+  visibleColumns.forEach(columnName => {
+    const columnIndex = getColumnIndex(columnName);
+    if (columnIndex === -1) return; // Si la columna no existe, saltar
+    
     const th = document.createElement('th');
-    th.textContent = title.trim();
-    th.title = getHeaderTooltip(title);
-    th.dataset.columnIndex = i;
-    th.addEventListener('click', () => sortTableByColumn(i));
-    if (currentSortColumn === i) {
+    th.textContent = columnName.trim();
+    th.title = getHeaderTooltip(columnName);
+    th.dataset.columnIndex = columnIndex;
+    th.addEventListener('click', () => sortTableByColumn(columnIndex));
+    if (currentSortColumn === columnIndex) {
       th.style.backgroundColor = '#d4e6f1';
       th.innerHTML += sortDirection === 1 ? ' ↑' : ' ↓';
     }
@@ -222,12 +236,13 @@ function renderTable() {
 
     let tabIndexCounter = (rowIndex * 100) + 1;
 
-    row.forEach((cell, colIndex) => {
-      if (colIndex === 3) return;
-
+    // CAMBIO SOLICITADO: Solo procesamos y mostramos las columnas visibles
+    visibleColumns.forEach(columnName => {
+      const columnIndex = getColumnIndex(columnName);
+      if (columnIndex === -1) return; // Si la columna no existe, saltar
+      
       const td = document.createElement('td');
-      const columnName = header[colIndex];
-      const cellValue = cell.trim();
+      const cellValue = row[columnIndex]?.trim() || '';
 
       // Registrar número de documento para validar duplicados
       if (columnName === 'numero_documento') {
@@ -267,7 +282,7 @@ function renderTable() {
         });
 
         select.addEventListener('change', e => {
-          tableData[rowIndex + 1][colIndex] = e.target.value;
+          tableData[rowIndex + 1][columnIndex] = e.target.value;
           renderTable();
         });
 
@@ -281,7 +296,7 @@ function renderTable() {
         input.value = cellValue;
 
         input.addEventListener('input', e => {
-          tableData[rowIndex + 1][colIndex] = e.target.value.trim();
+          tableData[rowIndex + 1][columnIndex] = e.target.value.trim();
         });
 
         input.addEventListener('blur', () => renderTable());
@@ -290,8 +305,8 @@ function renderTable() {
         cellContent.appendChild(input);
       }
 
-      // Validación por celda
-      const validationError = validateCell(columnName, row[colIndex], row[2]);
+      // Validación por celda - SOLO para las columnas visibles
+      const validationError = validateCell(columnName, row[columnIndex], row[getColumnIndex('tipo_documento')]);
       if (validationError) {
         td.classList.add('invalid-cell');
         
@@ -364,7 +379,8 @@ function getHeaderTooltip(headerName) {
     menor: "0 = NO, 1 = SI",
     ocupa_butaca: "0 = NO, 1 = SI",
     tipo_documento: "Valores válidos: DNI, Pasaporte, OTROS",
-    sexo: "F = F, M = M"
+    sexo: "F = F, M = M",
+    observaciones: "Notas adicionales sobre el pasajero"
   };
   return tips[headerName] || "";
 }
@@ -409,13 +425,13 @@ function sortTableByHeader() {
   if (tableData.length <= 1) return;
   
   const header = tableData[0];
-  const columnNames = header.filter((_, i) => i !== 3); // Excluir descripcion_documento
+  const columnNames = visibleColumns; // CAMBIO SOLICITADO: Solo mostrar columnas visibles
   
   const columnToSort = prompt(`Ingrese el nombre de la columna para ordenar:\n${columnNames.join(', ')}`);
   if (!columnToSort) return;
   
-  const columnIndex = header.findIndex(col => col.toLowerCase() === columnToSort.toLowerCase());
-  if (columnIndex === -1 || columnIndex === 3) {
+  const columnIndex = getColumnIndex(columnToSort);
+  if (columnIndex === -1) {
     alert('Columna no válida');
     return;
   }
@@ -432,6 +448,7 @@ function confirmDownload() {
 
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
   const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+  // CAMBIO SOLICITADO: Guardamos TODAS las columnas (no solo las visibles)
   const csvContent = tableData.map(row => row.join(';')).join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
