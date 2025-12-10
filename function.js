@@ -1,4 +1,3 @@
-/* function.js */
 // Variables globales
 let tableData = [];
 let editingIndex = null;
@@ -20,10 +19,10 @@ const defaultHeader = [
   "observaciones"
 ];
 
-// CAMBIO SOLICITADO: Columnas que se mostrarán en la tabla principal
+// Columnas que se mostrarán en la tabla principal
 const visibleColumns = ["apellido", "nombre", "numero_documento", "observaciones"];
 
-// CAMBIO SOLICITADO: Mapeo de nombres de columnas para mostrar en la tabla
+// Mapeo de nombres de columnas para mostrar en la tabla
 const columnDisplayNames = {
   "numero_documento": "N°",
   "observaciones": "Obs."
@@ -54,6 +53,8 @@ window.onload = function() {
     tableData = [defaultHeader];
     renderTable();
   }
+  
+  // Poblar nacionalidades
   populateNationalities();
   
   // Configurar evento para el input de archivo
@@ -71,13 +72,31 @@ window.onload = function() {
 
 function populateNationalities() {
   const select = document.getElementById('nacionalidad');
+  
+  if (!select) {
+    console.error('Elemento #nacionalidad no encontrado');
+    return;
+  }
+  
+  // Limpiar select
   select.innerHTML = '';
+  
+  // Agregar opción por defecto primero
+  const defaultOption = document.createElement('option');
+  defaultOption.value = defaults.nacionalidad;
+  defaultOption.textContent = defaults.nacionalidad;
+  defaultOption.selected = true;
+  select.appendChild(defaultOption);
+  
+  // Agregar todos los países ordenados
   validValues.nacionalidad.forEach(country => {
-    const option = document.createElement('option');
-    option.value = country;
-    option.textContent = country;
-    if (country === defaults.nacionalidad) option.selected = true;
-    select.appendChild(option);
+    // No agregar el país por defecto otra vez
+    if (country !== defaults.nacionalidad) {
+      const option = document.createElement('option');
+      option.value = country;
+      option.textContent = country;
+      select.appendChild(option);
+    }
   });
 }
 
@@ -184,13 +203,13 @@ function parseCSV(text) {
   return [header, ...body];
 }
 
-// CAMBIO SOLICITADO: Función para obtener el índice de una columna en los datos
+// Función para obtener el índice de una columna en los datos
 function getColumnIndex(columnName) {
   const header = tableData[0];
   return header.indexOf(columnName);
 }
 
-// Renderizado de la tabla - MODIFICADO para mostrar solo 4 columnas
+// Renderizado de la tabla
 function renderTable() {
   const container = document.getElementById('tableContainer');
   const table = document.createElement('table');
@@ -204,16 +223,16 @@ function renderTable() {
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
 
-  // CAMBIO SOLICITADO: Quitamos la columna "Sel" y mantenemos solo "#"
+  // Sin columna "Sel", solo "#"
   headRow.innerHTML = `<th>#</th>`;
   
-  // CAMBIO SOLICITADO: Solo mostramos las columnas visibles
+  // Solo mostramos las columnas visibles
   visibleColumns.forEach(columnName => {
     const columnIndex = getColumnIndex(columnName);
     if (columnIndex === -1) return; // Si la columna no existe, saltar
     
     const th = document.createElement('th');
-    // CAMBIO SOLICITADO: Usar nombre abreviado para mostrar
+    // Usar nombre abreviado para mostrar
     th.textContent = columnDisplayNames[columnName] || columnName;
     th.title = getHeaderTooltip(columnName);
     th.dataset.columnIndex = columnIndex;
@@ -232,15 +251,12 @@ function renderTable() {
   documentNumbersMap.clear();
   let invalidCellsCount = 0;
 
-  // CAMBIO SOLICITADO: Variable para manejar filas seleccionadas
-  let selectedRows = [];
-
   body.forEach((row, rowIndex) => {
     const tr = document.createElement('tr');
     tr.classList.add('editable-row');
     if (editingIndex === rowIndex + 1) tr.classList.add('editing');
     
-    // CAMBIO SOLICITADO: Reemplazar checkbox por selección con clic
+    // Reemplazar checkbox por selección con clic
     tr.addEventListener('click', function(e) {
       // Si se hizo clic en un input o select dentro de la celda, no seleccionar la fila
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
@@ -250,25 +266,22 @@ function renderTable() {
       // Alternar selección de fila
       if (tr.classList.contains('selected-row')) {
         tr.classList.remove('selected-row');
-        const index = selectedRows.indexOf(rowIndex + 1);
-        if (index > -1) {
-          selectedRows.splice(index, 1);
-        }
       } else {
+        // Opcional: Deseleccionar otras filas primero
+        // document.querySelectorAll('.selected-row').forEach(r => r.classList.remove('selected-row'));
         tr.classList.add('selected-row');
-        selectedRows.push(rowIndex + 1);
       }
       
       // Actualizar estado del botón de eliminar
       updateDeleteButtonState();
     });
 
-    // CAMBIO SOLICITADO: Quitamos el checkbox y mantenemos solo el número
+    // Solo el número de fila
     tr.innerHTML += `<td>${rowIndex + 1}</td>`;
 
     let tabIndexCounter = (rowIndex * 100) + 1;
 
-    // CAMBIO SOLICITADO: Solo procesamos y mostramos las columnas visibles
+    // Solo procesamos y mostramos las columnas visibles
     visibleColumns.forEach(columnName => {
       const columnIndex = getColumnIndex(columnName);
       if (columnIndex === -1) return; // Si la columna no existe, saltar
@@ -338,7 +351,8 @@ function renderTable() {
       }
 
       // Validación por celda - SOLO para las columnas visibles
-      const validationError = validateCell(columnName, row[columnIndex], row[getColumnIndex('tipo_documento')]);
+      const tipoDocIndex = getColumnIndex('tipo_documento');
+      const validationError = validateCell(columnName, row[columnIndex], row[tipoDocIndex]);
       if (validationError) {
         td.classList.add('invalid-cell');
         
@@ -378,7 +392,7 @@ function renderTable() {
   updateDeleteButtonState();
 }
 
-// CAMBIO SOLICITADO: Función para actualizar estado del botón eliminar
+// Función para actualizar estado del botón eliminar
 function updateDeleteButtonState() {
   const deleteBtn = document.getElementById('deleteBtn');
   const hasSelectedRows = document.querySelectorAll('.selected-row').length > 0;
@@ -431,7 +445,7 @@ function getHeaderTooltip(headerName) {
   return tips[headerName] || "";
 }
 
-// Funciones de acciones - MODIFICADA para usar filas seleccionadas
+// Funciones de acciones
 function removeSelectedRows() {
   const selectedRows = document.querySelectorAll('.selected-row');
   if (selectedRows.length === 0) {
@@ -481,7 +495,6 @@ function sortTableByColumn(columnIndex) {
 function sortTableByHeader() {
   if (tableData.length <= 1) return;
   
-  const header = tableData[0];
   const columnNames = visibleColumns.map(col => columnDisplayNames[col] || col);
   
   const columnToSort = prompt(`Ingrese el nombre de la columna para ordenar:\n${columnNames.join(', ')}`);
@@ -502,7 +515,7 @@ function sortTableByHeader() {
 }
 
 function confirmDownload() {
-  // Verificar nuevamente antes de guardar (por si acaso)
+  // Verificar nuevamente antes de guardar
   if (document.getElementById('saveBtn').disabled) {
     alert('No se puede guardar mientras existan errores en los datos');
     return;
@@ -510,7 +523,7 @@ function confirmDownload() {
 
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
   const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-  // CAMBIO SOLICITADO: Guardamos TODAS las columnas con sus nombres originales
+  // Guardamos TODAS las columnas con sus nombres originales
   const csvContent = tableData.map(row => row.join(';')).join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
