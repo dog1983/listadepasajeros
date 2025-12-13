@@ -52,7 +52,7 @@ h1 {
   cursor: not-allowed;
 }
 
-/* Tabla - MODIFICADO para scroll horizontal en móviles */
+/* Tabla - ESCRITORIO */
 #tableContainer {
   background-color: white;
   border-radius: 8px;
@@ -60,13 +60,13 @@ h1 {
   padding: 10px;
   margin-bottom: 20px;
   width: 100%;
-  overflow: visible; /* Cambiado de auto a visible para escritorio */
 }
 
-/* En escritorio: tabla normal */
+/* En escritorio: tabla normal que se ajusta al contenido */
 #tableContainer table {
   border-collapse: collapse;
   width: 100%;
+  table-layout: auto; /* Ajuste automático al contenido */
 }
 
 #tableContainer th, 
@@ -74,7 +74,7 @@ h1 {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: center;
-  white-space: nowrap; /* No romper texto */
+  white-space: nowrap; /* No romper texto en escritorio */
 }
 
 #tableContainer th {
@@ -420,93 +420,93 @@ td.invalid-cell {
 }
 
 /* ============================================= */
-/* ESTILOS ESPECIALES PARA MÓVILES (≤768px) */
+/* ESTILOS PARA MÓVILES (≤768px) - VERSIÓN SIMPLE */
 /* ============================================= */
 
 @media (max-width: 768px) {
-  /* Forzar scroll horizontal en el contenedor de la tabla */
+  /* Scroll horizontal SIEMPRE disponible en móviles */
   #tableContainer {
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
-    position: relative;
+    -webkit-overflow-scrolling: touch;
   }
   
-  /* La tabla se expande según su contenido */
+  /* La tabla se expande automáticamente según su contenido */
   #tableContainer table {
-    width: auto;
-    min-width: 100%;
+    width: auto; /* Ancho según contenido */
+    min-width: 100%; /* Pero mínimo el 100% del contenedor */
+    table-layout: auto; /* Ajuste automático CRUCIAL */
   }
   
-  /* Headers y celdas mantienen nowrap para no romper texto */
+  /* Celdas se ajustan al contenido - SIN anchos fijos */
   #tableContainer th,
   #tableContainer td {
-    white-space: nowrap;
-    min-width: 100px; /* Ancho mínimo para cada celda */
-    position: relative;
-  }
-  
-  /* Reducir padding en móviles */
-  #tableContainer th, 
-  #tableContainer td {
+    white-space: nowrap; /* No romper texto dentro de celdas */
+    width: auto; /* Ancho según contenido */
     padding: 8px 6px;
     font-size: 0.9rem;
   }
   
-  /* Columna # - FIJADA A LA IZQUIERDA */
+  /* Columna # - ANCHO FIJO para número de fila */
   #tableContainer th:first-child,
   #tableContainer td:first-child {
     position: sticky;
     left: 0;
     background-color: #f2f2f2;
     z-index: 20;
-    min-width: 50px;
-    max-width: 60px;
+    width: 50px !important; /* Ancho fijo */
+    min-width: 50px !important;
+    max-width: 50px !important;
     text-align: center;
     font-weight: bold;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
   }
   
-  /* Fondo especial para filas seleccionadas en columna fija */
+  /* Fondo especial para filas seleccionadas */
   #tableContainer .selected-row td:first-child {
     background-color: #e3f2fd !important;
   }
   
-  /* Columna APELLIDO - FIJADA A LA IZQUIERDA (después de #) */
+  /* Columna APELLIDO - También fija pero con ancho ajustable */
   #tableContainer th:nth-child(2),
   #tableContainer td:nth-child(2) {
     position: sticky;
     left: 50px; /* Después de la columna # */
     background-color: white;
     z-index: 15;
-    min-width: 120px;
+    min-width: 100px; /* Mínimo para apellido */
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
   }
   
-  /* Fondo especial para filas seleccionadas en columna apellido */
+  /* Fondo especial para filas seleccionadas */
   #tableContainer .selected-row td:nth-child(2) {
     background-color: #e3f2fd !important;
   }
   
-  /* Headers fijos deben tener z-index más alto */
+  /* Headers fijos con z-index más alto */
   #tableContainer th:first-child,
   #tableContainer th:nth-child(2) {
     z-index: 25;
   }
   
-  /* Ajustar tamaño de fuente en móviles */
-  #tableContainer {
-    font-size: 0.9rem;
-  }
+  /* Las columnas 3 y 4 (N° y Obs.) se expanden automáticamente */
+  /* No necesitan estilos especiales - se ajustarán al contenido */
   
-  /* Inputs y selects más pequeños en móviles */
+  /* Inputs dentro de celdas - se expanden con el contenido */
   #tableContainer input[type="text"], 
   #tableContainer select {
     padding: 6px;
     font-size: 0.85rem;
-    min-width: 50px;
+    width: 100%;
+    min-width: 80px; /* Mínimo para poder escribir */
+    box-sizing: border-box;
   }
   
-  /* Scrollbar personalizada para móviles */
+  /* Cuando un input tiene texto largo, la celda se expandirá */
+  #tableContainer td input:focus {
+    min-width: 120px; /* Se expande más al enfocar */
+  }
+  
+  /* Scrollbar visible */
   #tableContainer::-webkit-scrollbar {
     height: 6px;
   }
@@ -525,13 +525,60 @@ td.invalid-cell {
     background: #2980b9;
   }
   
-  /* Ajustes para el formulario en móviles */
+  /* Formulario en móviles */
   #descripcion_documento_group {
     grid-column: span 1 !important;
   }
 }
 
-/* Para pantallas muy pequeñas (≤480px) */
+/* ============================================= */
+/* ESTILOS ESPECIALES PARA CONTENIDO LARGO */
+/* ============================================= */
+
+/* Para textos muy largos en escritorio: truncar con ellipsis */
+@media (min-width: 769px) {
+  #tableContainer td {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Al hacer hover, mostrar texto completo */
+  #tableContainer td:hover {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-word;
+    z-index: 100;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    position: relative;
+    max-width: 500px; /* Máximo al expandirse */
+  }
+}
+
+/* Para contenido MUY largo en móviles: permitir wrap después de mucho texto */
+@media (max-width: 768px) {
+  #tableContainer td {
+    max-width: 250px; /* Máximo antes de truncar */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Si el contenido es demasiado largo, mostrar tooltip al tocar */
+  #tableContainer td:active {
+    overflow: visible;
+    white-space: normal;
+    position: relative;
+    z-index: 30;
+    background-color: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  }
+}
+
+/* ============================================= */
+/* AJUSTES PARA PANTALLAS MUY PEQUEÑAS (≤480px) */
+/* ============================================= */
+
 @media (max-width: 480px) {
   body {
     padding: 10px;
@@ -552,7 +599,7 @@ td.invalid-cell {
     font-size: 0.85rem;
   }
   
-  /* Tabla aún más compacta */
+  /* Tabla más compacta */
   #tableContainer {
     padding: 5px;
   }
@@ -561,29 +608,29 @@ td.invalid-cell {
   #tableContainer td {
     padding: 6px 4px;
     font-size: 0.85rem;
-    min-width: 80px;
   }
   
   /* Columnas fijas más angostas */
   #tableContainer th:first-child,
   #tableContainer td:first-child {
-    min-width: 40px;
-    max-width: 45px;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
     left: 0;
   }
   
   #tableContainer th:nth-child(2),
   #tableContainer td:nth-child(2) {
-    min-width: 100px;
     left: 40px;
+    min-width: 80px;
   }
   
-  /* Inputs y selects más compactos */
+  /* Inputs más compactos pero aún expandibles */
   #tableContainer input[type="text"], 
   #tableContainer select {
     padding: 4px;
     font-size: 0.8rem;
-    min-width: 40px;
+    min-width: 60px;
   }
   
   /* Mensajes de error más pequeños */
@@ -593,21 +640,19 @@ td.invalid-cell {
   }
 }
 
-/* Para hover mostrar texto completo en escritorio */
-@media (min-width: 769px) {
-  #tableContainer td {
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  #tableContainer td:hover {
-    overflow: visible;
-    white-space: normal;
-    word-break: break-word;
-    z-index: 100;
-    background-color: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    position: relative;
-  }
-}
+/* ============================================= */
+/* CLASES UTILITARIAS PARA AJUSTE DE COLUMNAS */
+/* ============================================= */
+
+/* Para forzar que una columna tenga ancho mínimo específico */
+.col-min-80 { min-width: 80px !important; }
+.col-min-100 { min-width: 100px !important; }
+.col-min-120 { min-width: 120px !important; }
+.col-min-150 { min-width: 150px !important; }
+
+/* Para forzar que una columna tenga ancho máximo */
+.col-max-200 { max-width: 200px !important; }
+.col-max-300 { max-width: 300px !important; }
+
+/* Clase para columnas que deben ajustarse completamente */
+.col-auto { width: auto !important; min-width: unset !important; }
