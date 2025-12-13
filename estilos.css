@@ -52,29 +52,32 @@ h1 {
   cursor: not-allowed;
 }
 
-/* Tabla */
+/* Tabla - MODIFICADO para ajuste automático de columnas */
 #tableContainer {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  overflow-x: auto;
+  overflow-x: auto; /* Scroll horizontal si es necesario */
   padding: 10px;
   margin-bottom: 20px;
 }
 
-table {
+/* La tabla ocupa el 100% pero las celdas se ajustan al contenido */
+#tableContainer table {
   border-collapse: collapse;
   width: 100%;
-  table-layout: auto;
+  /* table-layout: auto; */ /* Por defecto ya es auto, lo dejamos así */
 }
 
-th, td {
+#tableContainer th, 
+#tableContainer td {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: center;
+  white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
 }
 
-th {
+#tableContainer th {
   background-color: #f2f2f2;
   position: sticky;
   top: 0;
@@ -82,21 +85,23 @@ th {
   cursor: pointer;
 }
 
-th:hover {
+#tableContainer th:hover {
   background-color: #e0e0e0;
 }
 
-input[type="text"], select {
+/* Los inputs y selects dentro de la tabla ocupan el 100% del ancho disponible */
+#tableContainer input[type="text"], 
+#tableContainer select {
   width: 100%;
   padding: 8px;
   box-sizing: border-box;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 0.9rem;
+  min-width: 60px; /* Ancho mínimo */
 }
 
-select {
-  min-width: 80px;
+#tableContainer select {
   padding: 6px;
 }
 
@@ -383,6 +388,8 @@ tr.editable-row:hover {
   padding: 2px 5px;
   background-color: #ffebee;
   border-radius: 0 0 4px 4px;
+  white-space: normal; /* Los mensajes de error pueden romperse en varias líneas */
+  word-break: break-word;
 }
 
 /* Ajustar celdas con error */
@@ -402,27 +409,6 @@ td.invalid-cell {
   background-color: #bbdefb !important;
 }
 
-/* Ajuste para la tabla sin columna de selección */
-table th:first-child,
-table td:first-child {
-  width: 50px; /* Ancho fijo para la columna de número */
-  text-align: center;
-  font-weight: bold;
-}
-
-/* Ajustar ancho de columnas específicas */
-th[title*="Número de Documento"],
-td:nth-child(2) { /* Columna N° (segunda columna después del número) */
-  min-width: 120px;
-  max-width: 150px;
-}
-
-th[title*="observaciones"],
-td:nth-child(4) { /* Columna Obs. (cuarta columna después del número) */
-  min-width: 100px;
-  max-width: 200px;
-}
-
 /* Estilos para descripción documento */
 #descripcion_documento_group small {
   display: block;
@@ -432,19 +418,71 @@ td:nth-child(4) { /* Columna Obs. (cuarta columna después del número) */
   font-size: 0.8rem;
 }
 
+/* MEJORA: Mostrar texto completo al hacer hover en celdas largas */
+#tableContainer td {
+  max-width: 300px; /* Ancho máximo antes de truncar */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
+#tableContainer td:hover {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
+  z-index: 100;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+/* Para inputs y selects dentro de celdas */
+#tableContainer td input,
+#tableContainer td select {
+  min-width: 80px; /* Ancho mínimo para inputs/selects */
+}
+
+/* Ajustes específicos para columnas */
+#tableContainer td:first-child {
+  /* Columna # - un poco más ancha y centrada */
+  width: 50px;
+  min-width: 50px;
+  max-width: 80px;
+  text-align: center;
+  font-weight: bold;
+}
+
 /* Ajustes para móviles */
 @media (max-width: 768px) {
   .error-message {
     font-size: 0.7rem;
-    white-space: normal;
-    word-break: break-word;
   }
   
-  td, th {
+  #tableContainer th, 
+  #tableContainer td {
     padding: 8px 4px;
+    font-size: 0.9rem;
+  }
+  
+  #tableContainer td:first-child {
+    width: 40px;
+    min-width: 40px;
+    max-width: 60px;
   }
   
   #descripcion_documento_group {
     grid-column: span 1 !important;
+  }
+}
+
+/* Para pantallas muy pequeñas, forzar scroll horizontal */
+@media (max-width: 480px) {
+  #tableContainer {
+    font-size: 0.85rem;
+  }
+  
+  #tableContainer th, 
+  #tableContainer td {
+    padding: 6px 3px;
   }
 }
