@@ -52,21 +52,21 @@ h1 {
   cursor: not-allowed;
 }
 
-/* Tabla - MODIFICADO para ajuste automático de columnas */
+/* Tabla - MODIFICADO para scroll horizontal en móviles */
 #tableContainer {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  overflow-x: auto; /* Scroll horizontal si es necesario */
   padding: 10px;
   margin-bottom: 20px;
+  width: 100%;
+  overflow: visible; /* Cambiado de auto a visible para escritorio */
 }
 
-/* La tabla ocupa el 100% pero las celdas se ajustan al contenido */
+/* En escritorio: tabla normal */
 #tableContainer table {
   border-collapse: collapse;
   width: 100%;
-  /* table-layout: auto; */ /* Por defecto ya es auto, lo dejamos así */
 }
 
 #tableContainer th, 
@@ -74,7 +74,7 @@ h1 {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: center;
-  white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
+  white-space: nowrap; /* No romper texto */
 }
 
 #tableContainer th {
@@ -83,13 +83,14 @@ h1 {
   top: 0;
   font-weight: 600;
   cursor: pointer;
+  z-index: 10;
 }
 
 #tableContainer th:hover {
   background-color: #e0e0e0;
 }
 
-/* Los inputs y selects dentro de la tabla ocupan el 100% del ancho disponible */
+/* Los inputs y selects dentro de la tabla */
 #tableContainer input[type="text"], 
 #tableContainer select {
   width: 100%;
@@ -98,7 +99,7 @@ h1 {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 0.9rem;
-  min-width: 60px; /* Ancho mínimo */
+  min-width: 60px;
 }
 
 #tableContainer select {
@@ -388,7 +389,7 @@ tr.editable-row:hover {
   padding: 2px 5px;
   background-color: #ffebee;
   border-radius: 0 0 4px 4px;
-  white-space: normal; /* Los mensajes de error pueden romperse en varias líneas */
+  white-space: normal;
   word-break: break-word;
 }
 
@@ -418,71 +419,195 @@ td.invalid-cell {
   font-size: 0.8rem;
 }
 
-/* MEJORA: Mostrar texto completo al hacer hover en celdas largas */
-#tableContainer td {
-  max-width: 300px; /* Ancho máximo antes de truncar */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  position: relative;
-}
+/* ============================================= */
+/* ESTILOS ESPECIALES PARA MÓVILES (≤768px) */
+/* ============================================= */
 
-#tableContainer td:hover {
-  overflow: visible;
-  white-space: normal;
-  word-break: break-word;
-  z-index: 100;
-  background-color: white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  position: relative;
-}
-
-/* Para inputs y selects dentro de celdas */
-#tableContainer td input,
-#tableContainer td select {
-  min-width: 80px; /* Ancho mínimo para inputs/selects */
-}
-
-/* Ajustes específicos para columnas */
-#tableContainer td:first-child {
-  /* Columna # - un poco más ancha y centrada */
-  width: 50px;
-  min-width: 50px;
-  max-width: 80px;
-  text-align: center;
-  font-weight: bold;
-}
-
-/* Ajustes para móviles */
 @media (max-width: 768px) {
-  .error-message {
-    font-size: 0.7rem;
+  /* Forzar scroll horizontal en el contenedor de la tabla */
+  #tableContainer {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+    position: relative;
   }
   
+  /* La tabla se expande según su contenido */
+  #tableContainer table {
+    width: auto;
+    min-width: 100%;
+  }
+  
+  /* Headers y celdas mantienen nowrap para no romper texto */
+  #tableContainer th,
+  #tableContainer td {
+    white-space: nowrap;
+    min-width: 100px; /* Ancho mínimo para cada celda */
+    position: relative;
+  }
+  
+  /* Reducir padding en móviles */
   #tableContainer th, 
   #tableContainer td {
-    padding: 8px 4px;
+    padding: 8px 6px;
     font-size: 0.9rem;
   }
   
+  /* Columna # - FIJADA A LA IZQUIERDA */
+  #tableContainer th:first-child,
   #tableContainer td:first-child {
-    width: 40px;
-    min-width: 40px;
+    position: sticky;
+    left: 0;
+    background-color: #f2f2f2;
+    z-index: 20;
+    min-width: 50px;
     max-width: 60px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
   }
   
+  /* Fondo especial para filas seleccionadas en columna fija */
+  #tableContainer .selected-row td:first-child {
+    background-color: #e3f2fd !important;
+  }
+  
+  /* Columna APELLIDO - FIJADA A LA IZQUIERDA (después de #) */
+  #tableContainer th:nth-child(2),
+  #tableContainer td:nth-child(2) {
+    position: sticky;
+    left: 50px; /* Después de la columna # */
+    background-color: white;
+    z-index: 15;
+    min-width: 120px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  }
+  
+  /* Fondo especial para filas seleccionadas en columna apellido */
+  #tableContainer .selected-row td:nth-child(2) {
+    background-color: #e3f2fd !important;
+  }
+  
+  /* Headers fijos deben tener z-index más alto */
+  #tableContainer th:first-child,
+  #tableContainer th:nth-child(2) {
+    z-index: 25;
+  }
+  
+  /* Ajustar tamaño de fuente en móviles */
+  #tableContainer {
+    font-size: 0.9rem;
+  }
+  
+  /* Inputs y selects más pequeños en móviles */
+  #tableContainer input[type="text"], 
+  #tableContainer select {
+    padding: 6px;
+    font-size: 0.85rem;
+    min-width: 50px;
+  }
+  
+  /* Scrollbar personalizada para móviles */
+  #tableContainer::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  #tableContainer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  #tableContainer::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 3px;
+  }
+  
+  #tableContainer::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+  }
+  
+  /* Ajustes para el formulario en móviles */
   #descripcion_documento_group {
     grid-column: span 1 !important;
   }
 }
 
-/* Para pantallas muy pequeñas, forzar scroll horizontal */
+/* Para pantallas muy pequeñas (≤480px) */
 @media (max-width: 480px) {
-  #tableContainer {
+  body {
+    padding: 10px;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  #controls {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  #controls button, #controls input[type="file"] {
+    padding: 8px 12px;
     font-size: 0.85rem;
+  }
+  
+  /* Tabla aún más compacta */
+  #tableContainer {
+    padding: 5px;
   }
   
   #tableContainer th, 
   #tableContainer td {
-    padding: 6px 3px;
+    padding: 6px 4px;
+    font-size: 0.85rem;
+    min-width: 80px;
+  }
+  
+  /* Columnas fijas más angostas */
+  #tableContainer th:first-child,
+  #tableContainer td:first-child {
+    min-width: 40px;
+    max-width: 45px;
+    left: 0;
+  }
+  
+  #tableContainer th:nth-child(2),
+  #tableContainer td:nth-child(2) {
+    min-width: 100px;
+    left: 40px;
+  }
+  
+  /* Inputs y selects más compactos */
+  #tableContainer input[type="text"], 
+  #tableContainer select {
+    padding: 4px;
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
+  
+  /* Mensajes de error más pequeños */
+  .error-message {
+    font-size: 0.7rem;
+    padding: 1px 3px;
+  }
+}
+
+/* Para hover mostrar texto completo en escritorio */
+@media (min-width: 769px) {
+  #tableContainer td {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  #tableContainer td:hover {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-word;
+    z-index: 100;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    position: relative;
   }
 }
