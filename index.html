@@ -2,133 +2,715 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Lista de Pasajeros</title>
-    <link rel="stylesheet" href="estilos.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Editor de Lista de Pasajeros | Móvil + PC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            background: #f4f7fc;
+            padding: 2rem 1.5rem;
+            color: #1e2a3a;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e4668, #2c6e9e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        button, .file-label {
+            background: #2c6e9e;
+            border: none;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        button:hover {
+            background: #1e4f72;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #b0c4de;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        input[type="file"] {
+            background: #eef2f5;
+            border-radius: 2rem;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #cbd5e1;
+        }
+
+        #tableContainer {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.9rem 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #e2edf2;
+        }
+
+        th {
+            background: #e9f0f5;
+            font-weight: 600;
+            color: #1e4668;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .checkbox-select {
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+            accent-color: #2c6e9e;
+        }
+
+        .modal, .form-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .form-content, .modal-content {
+            background: white;
+            border-radius: 2rem;
+            width: 90%;
+            max-width: 780px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.2s ease;
+        }
+
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 1.8rem;
+            border-bottom: 1px solid #e2edf2;
+        }
+
+        .form-header h2 {
+            font-size: 1.5rem;
+            color: #1e4668;
+        }
+
+        .close-modal-btn {
+            background: none;
+            font-size: 1.8rem;
+            padding: 0;
+            color: #7f8c8d;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal-btn:hover {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1.5rem 1.8rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #2c3e50;
+        }
+
+        .required-field::after {
+            content: "*";
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        input, select {
+            padding: 0.7rem 0.9rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2c6e9e;
+            box-shadow: 0 0 0 3px rgba(44,110,158,0.2);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1rem 1.8rem 1.8rem;
+            border-top: 1px solid #e2edf2;
+        }
+
+        .primary-btn {
+            background: #2c6e9e;
+        }
+        .secondary-btn {
+            background: #95a5a6;
+        }
+
+        .modal-content {
+            max-width: 450px;
+            padding: 1.8rem;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 1rem;
+        }
+
+        .modal-content input {
+            width: 100%;
+            margin: 0.8rem 0;
+        }
+
+        small {
+            font-size: 0.7rem;
+            color: #5d6f7e;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        footer {
+            margin-top: 1.5rem;
+            font-size: 0.75rem;
+            text-align: center;
+            color: #5a6e7c;
+        }
+    </style>
 </head>
 <body>
-    <h1>Editor de Lista de Pasajeros</h1>
-    
-    <!-- Controles principales -->
-    <div id="controls">
-        <input type="file" id="csvFile" accept=".csv">
-        <button onclick="openAddPassengerModal()">Agregar Pasajero</button>
-        <button onclick="removeSelectedRows()" id="deleteBtn" disabled>Eliminar Seleccionados</button>
-        <button onclick="openSaveModal()" id="saveBtn">Guardar CSV</button>
-    </div>
-    
-    <!-- Contenedor de la tabla -->
-    <div id="tableContainer"></div>
-    
-    <!-- Modal para agregar/editar pasajero -->
-    <div id="addPassengerModal" class="form-modal">
-        <div class="form-content">
-            <div class="form-header">
-                <h2 id="formTitle">Agregar Nuevo Pasajero</h2>
-                <button class="close-modal-btn" onclick="closeAddPassengerModal()">&times;</button>
+
+<h1>✈️ Editor de Lista de Pasajeros</h1>
+
+<div id="controls">
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="openAddPassengerModal()">➕ Agregar Pasajero</button>
+    <button onclick="removeSelectedRows()" id="deleteBtn" disabled>🗑️ Eliminar Seleccionados</button>
+    <button onclick="openSaveModal()" id="saveBtn">💾 Guardar CSV</button>
+</div>
+
+<div id="tableContainer"></div>
+
+<!-- Modal Agregar / Editar Pasajero -->
+<div id="addPassengerModal" class="form-modal">
+    <div class="form-content">
+        <div class="form-header">
+            <h2 id="formTitle">Agregar Nuevo Pasajero</h2>
+            <button class="close-modal-btn" onclick="closeAddPassengerModal()">&times;</button>
+        </div>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="required-field">Apellido</label>
+                <input type="text" id="apellido" placeholder="Apellido">
             </div>
-            
-            <div class="form-grid">
-                <!-- Apellido y Nombre -->
-                <div class="form-group">
-                    <label for="apellido" class="required-field">Apellido</label>
-                    <input type="text" id="apellido" placeholder="Ingrese apellido" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="nombre" class="required-field">Nombre</label>
-                    <input type="text" id="nombre" placeholder="Ingrese nombre" required>
-                </div>
-                
-                <!-- Tipo de Documento y Número -->
-                <div class="form-group">
-                    <label for="tipo_documento" class="required-field">Tipo Documento</label>
-                    <select id="tipo_documento" onchange="handleTipoDocumentoChange()">
-                        <option value="DNI">DNI</option>
-                        <option value="Pasaporte">Pasaporte</option>
-                        <option value="OTROS">OTROS</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="numero_documento" class="required-field">Número Documento</label>
-                    <input type="text" id="numero_documento" placeholder="Ej: 12345678" required>
-                </div>
-                
-                <!-- Descripción Documento (solo para OTROS) -->
-                <div class="form-group" id="descripcion_documento_group" style="display: none; grid-column: span 2;">
-                    <label for="descripcion_documento">Descripción Documento</label>
-                    <input type="text" id="descripcion_documento" placeholder="Ej: Cédula de Identidad, Licencia de Conducir, etc.">
-                    <small style="color: #666; font-size: 0.8rem;">Complete solo si seleccionó OTROS</small>
-                </div>
-                
-                <!-- Sexo y Menor -->
-                <div class="form-group">
-                    <label for="sexo">Sexo</label>
-                    <select id="sexo">
-                        <option value="F">Femenino</option>
-                        <option value="M">Masculino</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="menor">Menor</label>
-                    <select id="menor">
-                        <option value="0">No</option>
-                        <option value="1">Sí</option>
-                    </select>
-                </div>
-                
-                <!-- Nacionalidad -->
-                <div class="form-group" style="grid-column: span 2;">
-                    <label for="nacionalidad">Nacionalidad</label>
-                    <select id="nacionalidad"></select>
-                </div>
-                
-                <!-- Tripulante y Ocupa Butaca -->
-                <div class="form-group">
-                    <label for="tripulante">Tripulante</label>
-                    <select id="tripulante">
-                        <option value="0">No</option>
-                        <option value="1">Sí</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="ocupa_butaca">Ocupa Butaca</label>
-                    <select id="ocupa_butaca">
-                        <option value="0">No</option>
-                        <option value="1">Sí</option>
-                    </select>
-                </div>
-                
-                <!-- Observaciones -->
-                <div class="form-group" style="grid-column: span 2;">
-                    <label for="observaciones">Observaciones</label>
-                    <input type="text" id="observaciones" placeholder="Observaciones adicionales">
-                </div>
+            <div class="form-group">
+                <label class="required-field">Nombre</label>
+                <input type="text" id="nombre" placeholder="Nombre">
             </div>
-            
-            <div class="form-actions">
-                <button type="button" class="primary-btn" onclick="savePassenger()" id="savePassengerBtn">Agregar Pasajero</button>
-                <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()">Cancelar</button>
+            <div class="form-group">
+                <label class="required-field">Tipo Documento</label>
+                <select id="tipo_documento">
+                    <option value="DNI">DNI</option>
+                    <option value="Pasaporte">Pasaporte</option>
+                    <option value="OTROS">OTROS</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="required-field">Número Documento</label>
+                <input type="text" id="numero_documento" placeholder="Número">
+            </div>
+            <div class="form-group" id="descripcion_documento_group" style="display: none; grid-column: span 2;">
+                <label>Descripción Documento</label>
+                <input type="text" id="descripcion_documento" placeholder="Ej: Cédula, Licencia...">
+                <small>Solo si seleccionó OTROS</small>
+            </div>
+            <div class="form-group">
+                <label>Sexo</label>
+                <select id="sexo"><option value="F">Femenino</option><option value="M">Masculino</option></select>
+            </div>
+            <div class="form-group">
+                <label>Menor</label>
+                <select id="menor"><option value="0">No</option><option value="1">Sí</option></select>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Nacionalidad</label>
+                <select id="nacionalidad"></select>
+            </div>
+            <div class="form-group">
+                <label>Tripulante</label>
+                <select id="tripulante"><option value="0">No</option><option value="1">Sí</option></select>
+            </div>
+            <div class="form-group">
+                <label>Ocupa Butaca</label>
+                <select id="ocupa_butaca"><option value="0">No</option><option value="1">Sí</option></select>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Observaciones</label>
+                <input type="text" id="observaciones" placeholder="Observaciones">
             </div>
         </div>
-    </div>
-    
-    <!-- Modal para guardar archivo -->
-    <div id="saveModal" class="modal">
-        <div class="modal-content">
-            <h3>Guardar Archivo CSV</h3>
-            <label for="fileNameInputModal">Nombre del archivo (sin extensión):</label>
-            <input type="text" id="fileNameInputModal" placeholder="lista_pasajeros" value="lista_pasajeros">
-            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="closeSaveModal()" style="background-color: #95a5a6;">Cancelar</button>
-                <button onclick="confirmDownload()" style="background-color: #2ecc71;">Guardar</button>
-            </div>
+        
+        <div class="form-actions">
+            <button class="primary-btn" onclick="savePassenger()" id="savePassengerBtn">Guardar Pasajero</button>
+            <button class="secondary-btn" onclick="closeAddPassengerModal()">Cancelar</button>
         </div>
     </div>
+</div>
+
+<!-- Modal Guardar CSV -->
+<div id="saveModal" class="modal">
+    <div class="modal-content">
+        <h3>📁 Guardar archivo CSV</h3>
+        <label>Nombre del archivo (sin extensión):</label>
+        <input type="text" id="fileNameInputModal" placeholder="lista_pasajeros" value="lista_pasajeros">
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="closeSaveModal()" style="background:#95a5a6;">Cancelar</button>
+            <button onclick="confirmDownload()" style="background:#2c6e9e;">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<footer>💡 Doble clic en una fila para editar | Selecciona múltiples filas y elimínalas | Compatible con móvil</footer>
+
+<script>
+    // -------------------- DATA MODEL --------------------
+    let pasajeros = [];
+    let editIndex = null;
     
-    <script src="function.js"></script>
+    // Columnas del CSV (orden fijo)
+    const columns = [
+        "id", "apellido", "nombre", "tipo_documento", "numero_documento",
+        "descripcion_documento", "sexo", "menor", "nacionalidad",
+        "tripulante", "ocupa_butaca", "observaciones"
+    ];
+
+    // Nacionalidades
+    const nacionalidadesList = [
+        "Argentina", "Bolivia", "Brasil", "Chile", "Colombia", "Costa Rica", "Cuba", "Ecuador",
+        "El Salvador", "España", "Estados Unidos", "Guatemala", "Honduras", "México", "Nicaragua",
+        "Panamá", "Paraguay", "Perú", "Puerto Rico", "República Dominicana", "Uruguay", "Venezuela",
+        "Alemania", "Francia", "Italia", "Japón", "Canadá", "China", "Otro"
+    ];
+
+    function cargarNacionalidades() {
+        const selectNac = document.getElementById('nacionalidad');
+        if (!selectNac) return;
+        selectNac.innerHTML = '';
+        nacionalidadesList.forEach(pais => {
+            const option = document.createElement('option');
+            option.value = pais;
+            option.textContent = pais;
+            selectNac.appendChild(option);
+        });
+        selectNac.value = "Argentina";
+    }
+
+    function handleTipoDocumentoChange() {
+        const tipo = document.getElementById('tipo_documento').value;
+        const descGroup = document.getElementById('descripcion_documento_group');
+        if (tipo === "OTROS") {
+            descGroup.style.display = "flex";
+        } else {
+            descGroup.style.display = "none";
+            document.getElementById('descripcion_documento').value = "";
+        }
+    }
+    window.handleTipoDocumentoChange = handleTipoDocumentoChange;
+
+    // Renderizar tabla
+    function renderTable() {
+        const container = document.getElementById('tableContainer');
+        if (!container) return;
+        if (pasajeros.length === 0) {
+            container.innerHTML = `<div style="padding: 3rem; text-align: center; color: #6c7e8f;">📭 No hay pasajeros cargados. Carga un CSV o agrega uno nuevo.</div>`;
+            document.getElementById('deleteBtn').disabled = true;
+            return;
+        }
+
+        let html = `<table><thead><tr>
+            <th style="width: 35px"><input type="checkbox" id="selectAllCheckbox"></th>
+            <th>Apellido</th><th>Nombre</th><th>Tipo Doc</th><th>N° Documento</th>
+            <th>Desc. Doc</th><th>Sexo</th><th>Menor</th><th>Nacionalidad</th>
+            <th>Tripulante</th><th>Ocupa Butaca</th><th>Observaciones</th>
+        </tr></thead><tbody>`;
+
+        pasajeros.forEach((p, idx) => {
+            const menorText = p.menor == 1 ? "Sí" : "No";
+            const tripulanteText = p.tripulante == 1 ? "Sí" : "No";
+            const ocupaText = p.ocupa_butaca == 1 ? "Sí" : "No";
+            html += `<tr ondblclick="editPassenger(${idx})" style="cursor: pointer;">
+                <td><input type="checkbox" class="row-checkbox" data-idx="${idx}"></td>
+                <td>${escapeHtml(p.apellido || '')}</td>
+                <td>${escapeHtml(p.nombre || '')}</td>
+                <td>${escapeHtml(p.tipo_documento || '')}</td>
+                <td>${escapeHtml(p.numero_documento || '')}</td>
+                <td>${escapeHtml(p.descripcion_documento || '')}</td>
+                <td>${escapeHtml(p.sexo || '')}</td>
+                <td>${menorText}</td>
+                <td>${escapeHtml(p.nacionalidad || '')}</td>
+                <td>${tripulanteText}</td>
+                <td>${ocupaText}</td>
+                <td>${escapeHtml(p.observaciones || '')}</td>
+            </tr>`;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+
+        const selectAll = document.getElementById('selectAllCheckbox');
+        if (selectAll) {
+            selectAll.addEventListener('change', (e) => {
+                document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
+                toggleDeleteButton();
+            });
+        }
+        document.querySelectorAll('.row-checkbox').forEach(cb => {
+            cb.addEventListener('change', toggleDeleteButton);
+        });
+        toggleDeleteButton();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function toggleDeleteButton() {
+        const anyChecked = document.querySelectorAll('.row-checkbox:checked').length > 0;
+        document.getElementById('deleteBtn').disabled = !anyChecked;
+    }
+
+    function removeSelectedRows() {
+        const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+        if (checkboxes.length === 0) return;
+        if (!confirm(`¿Eliminar ${checkboxes.length} pasajero(s) seleccionado(s)?`)) return;
+        
+        const indicesAEliminar = Array.from(checkboxes).map(cb => parseInt(cb.dataset.idx)).sort((a,b)=>b-a);
+        for (let idx of indicesAEliminar) {
+            pasajeros.splice(idx, 1);
+        }
+        pasajeros.forEach((p, i) => { p.id = i+1; });
+        renderTable();
+    }
+
+    function openAddPassengerModal() {
+        editIndex = null;
+        document.getElementById('formTitle').innerText = "Agregar Nuevo Pasajero";
+        document.getElementById('savePassengerBtn').innerText = "Agregar Pasajero";
+        limpiarFormulario();
+        document.getElementById('addPassengerModal').style.display = "flex";
+        handleTipoDocumentoChange();
+    }
+
+    function editPassenger(index) {
+        const p = pasajeros[index];
+        if (!p) return;
+        editIndex = index;
+        document.getElementById('formTitle').innerText = "Editar Pasajero";
+        document.getElementById('savePassengerBtn').innerText = "Actualizar Pasajero";
+        
+        document.getElementById('apellido').value = p.apellido || '';
+        document.getElementById('nombre').value = p.nombre || '';
+        document.getElementById('tipo_documento').value = p.tipo_documento || 'DNI';
+        document.getElementById('numero_documento').value = p.numero_documento || '';
+        document.getElementById('descripcion_documento').value = p.descripcion_documento || '';
+        document.getElementById('sexo').value = p.sexo || 'F';
+        document.getElementById('menor').value = p.menor != undefined ? p.menor : 0;
+        document.getElementById('nacionalidad').value = p.nacionalidad || 'Argentina';
+        document.getElementById('tripulante').value = p.tripulante != undefined ? p.tripulante : 0;
+        document.getElementById('ocupa_butaca').value = p.ocupa_butaca != undefined ? p.ocupa_butaca : 0;
+        document.getElementById('observaciones').value = p.observaciones || '';
+        handleTipoDocumentoChange();
+        document.getElementById('addPassengerModal').style.display = "flex";
+    }
+    window.editPassenger = editPassenger;
+
+    function limpiarFormulario() {
+        document.getElementById('apellido').value = '';
+        document.getElementById('nombre').value = '';
+        document.getElementById('tipo_documento').value = 'DNI';
+        document.getElementById('numero_documento').value = '';
+        document.getElementById('descripcion_documento').value = '';
+        document.getElementById('sexo').value = 'F';
+        document.getElementById('menor').value = '0';
+        document.getElementById('nacionalidad').value = 'Argentina';
+        document.getElementById('tripulante').value = '0';
+        document.getElementById('ocupa_butaca').value = '0';
+        document.getElementById('observaciones').value = '';
+        handleTipoDocumentoChange();
+    }
+
+    function closeAddPassengerModal() {
+        document.getElementById('addPassengerModal').style.display = "none";
+        editIndex = null;
+    }
+
+    function savePassenger() {
+        const apellido = document.getElementById('apellido').value.trim();
+        const nombre = document.getElementById('nombre').value.trim();
+        const tipo_documento = document.getElementById('tipo_documento').value;
+        const numero_documento = document.getElementById('numero_documento').value.trim();
+        
+        if (!apellido) { alert("El apellido es obligatorio."); return; }
+        if (!nombre) { alert("El nombre es obligatorio."); return; }
+        if (!numero_documento) { alert("El número de documento es obligatorio."); return; }
+        if (tipo_documento === "OTROS") {
+            const desc = document.getElementById('descripcion_documento').value.trim();
+            if (!desc) { alert("Cuando selecciona OTROS, debe indicar una descripción del documento."); return; }
+        }
+
+        let descripcion_documento = document.getElementById('descripcion_documento').value.trim();
+        if (tipo_documento !== "OTROS") descripcion_documento = "";
+
+        const nuevoPasajero = {
+            id: editIndex !== null ? pasajeros[editIndex].id : (pasajeros.length + 1),
+            apellido: apellido,
+            nombre: nombre,
+            tipo_documento: tipo_documento,
+            numero_documento: numero_documento,
+            descripcion_documento: descripcion_documento,
+            sexo: document.getElementById('sexo').value,
+            menor: parseInt(document.getElementById('menor').value),
+            nacionalidad: document.getElementById('nacionalidad').value,
+            tripulante: parseInt(document.getElementById('tripulante').value),
+            ocupa_butaca: parseInt(document.getElementById('ocupa_butaca').value),
+            observaciones: document.getElementById('observaciones').value.trim()
+        };
+
+        if (editIndex !== null) {
+            pasajeros[editIndex] = nuevoPasajero;
+        } else {
+            pasajeros.push(nuevoPasajero);
+        }
+        renderTable();
+        closeAddPassengerModal();
+    }
+    window.savePassenger = savePassenger;
+
+    // ===================== MEJORA PARA MÓVIL: LECTURA ROBUSTA DE CSV =====================
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            let text = evt.target.result;
+            // 1. Eliminar BOM (carácter invisible al inicio)
+            if (text.charCodeAt(0) === 0xFEFF) {
+                text = text.slice(1);
+            }
+            // 2. Normalizar saltos de línea: unificar a \n
+            text = text.replace(/\r\n?/g, '\n');
+            // 3. Eliminar espacios en blanco extremos
+            text = text.trim();
+            
+            const lines = text.split('\n');
+            if (lines.length < 2) {
+                alert("Archivo vacío o sin datos.");
+                return;
+            }
+            // Limpiar cabeceras (eliminar comillas y espacios)
+            const headers = lines[0].split(',').map(h => h.replace(/^[\s"']+|[\s"']+$/g, ''));
+            const newPasajeros = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === "") continue;
+                
+                // Parseo manual respetando comillas (para campos con comas internas)
+                let valores = [];
+                let enComillas = false;
+                let campoActual = "";
+                for (let ch of line) {
+                    if (ch === '"') {
+                        enComillas = !enComillas;
+                    } else if (ch === ',' && !enComillas) {
+                        valores.push(campoActual.trim());
+                        campoActual = "";
+                    } else {
+                        campoActual += ch;
+                    }
+                }
+                valores.push(campoActual.trim());
+                
+                // Si la cantidad de valores no coincide, intentamos usar split simple como fallback
+                if (valores.length !== headers.length && headers.length > 0) {
+                    valores = line.split(',').map(v => v.replace(/^"|"$/g, '').trim());
+                }
+                
+                if (valores.length < headers.length) continue;
+                
+                let obj = {};
+                headers.forEach((h, idx) => {
+                    let val = valores[idx] || "";
+                    // Quitar comillas envolventes (por si quedaron)
+                    val = val.replace(/^"|"$/g, '');
+                    obj[h] = val;
+                });
+                
+                // Convertir campos numéricos
+                obj.menor = (obj.menor == "1" || obj.menor === 1 || obj.menor === true) ? 1 : 0;
+                obj.tripulante = (obj.tripulante == "1" || obj.tripulante === 1) ? 1 : 0;
+                obj.ocupa_butaca = (obj.ocupa_butaca == "1" || obj.ocupa_butaca === 1) ? 1 : 0;
+                if (!obj.id) obj.id = newPasajeros.length + 1;
+                
+                // Validación mínima para evitar objetos vacíos
+                if (obj.apellido || obj.nombre || obj.numero_documento) {
+                    newPasajeros.push(obj);
+                }
+            }
+            
+            if (newPasajeros.length > 0) {
+                pasajeros = newPasajeros;
+                renderTable();
+                alert(`✅ Se cargaron ${newPasajeros.length} pasajeros correctamente.`);
+            } else {
+                alert("❌ No se encontraron datos válidos en el archivo. Revisa que tenga columnas: " + columns.join(", "));
+            }
+        };
+        reader.onerror = () => alert("Error al leer el archivo.");
+        reader.readAsText(file, "UTF-8");
+        e.target.value = ''; // permitir recargar el mismo archivo
+    });
+    // =========================================================================
+
+    function openSaveModal() {
+        document.getElementById('saveModal').style.display = "flex";
+    }
+    function closeSaveModal() {
+        document.getElementById('saveModal').style.display = "none";
+    }
+    function confirmDownload() {
+        let fileName = document.getElementById('fileNameInputModal').value.trim();
+        if (!fileName) fileName = "lista_pasajeros";
+        if (!fileName.endsWith(".csv")) fileName += ".csv";
+        
+        const headers = columns.join(",");
+        const rows = pasajeros.map(p => {
+            return columns.map(col => {
+                let val = p[col] !== undefined ? p[col] : "";
+                if (typeof val === "string" && (val.includes(',') || val.includes('"'))) val = `"${val.replace(/"/g, '""')}"`;
+                return val;
+            }).join(",");
+        });
+        const csvContent = [headers, ...rows].join("\n");
+        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        closeSaveModal();
+    }
+    window.confirmDownload = confirmDownload;
+    window.openSaveModal = openSaveModal;
+    window.closeSaveModal = closeSaveModal;
+    window.openAddPassengerModal = openAddPassengerModal;
+    window.closeAddPassengerModal = closeAddPassengerModal;
+    window.removeSelectedRows = removeSelectedRows;
+
+    // Inicializar con datos de ejemplo
+    function init() {
+        cargarNacionalidades();
+        if (pasajeros.length === 0) {
+            pasajeros = [
+                { id:1, apellido:"García", nombre:"Ana", tipo_documento:"DNI", numero_documento:"12345678", descripcion_documento:"", sexo:"F", menor:0, nacionalidad:"Argentina", tripulante:0, ocupa_butaca:1, observaciones:"Pasajera regular" },
+                { id:2, apellido:"Pérez", nombre:"Luis", tipo_documento:"Pasaporte", numero_documento:"AB123456", descripcion_documento:"", sexo:"M", menor:0, nacionalidad:"México", tripulante:1, ocupa_butaca:0, observaciones:"Tripulante" }
+            ];
+            renderTable();
+        }
+    }
+    init();
+</script>
 </body>
 </html>
