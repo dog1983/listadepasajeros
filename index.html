@@ -3,128 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Editor de Lista de Pasajeros | Ordenable</title>
+    <title>Editor de Lista de Pasajeros</title>
     <style>
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
-
         body {
-            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-            background: #f4f7fc;
-            padding: 2rem 1.5rem;
-            color: #1e2a3a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
         }
-
         h1 {
-            font-size: 1.9rem;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #1e4668, #2c6e9e);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
+            text-align: center;
+            color: #2c3e50;
         }
-
         #controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-            margin-bottom: 2rem;
-            background: white;
-            padding: 1rem 1.5rem;
-            border-radius: 2rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: center;
         }
-
-        button {
-            background: #2c6e9e;
+        button, .file-label {
+            background-color: #3498db;
             border: none;
             color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 2rem;
-            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
+            font-size: 14px;
+            transition: background 0.2s;
         }
-
         button:hover {
-            background: #1e4f72;
-            transform: translateY(-1px);
+            background-color: #2980b9;
         }
-
         button:disabled {
-            background: #b0c4de;
+            background-color: #95a5a6;
             cursor: not-allowed;
-            transform: none;
         }
-
         input[type="file"] {
-            background: #eef2f5;
-            border-radius: 2rem;
-            padding: 0.4rem 0.8rem;
-            border: 1px solid #cbd5e1;
+            background-color: #ecf0f1;
+            border-radius: 6px;
+            padding: 6px;
         }
-
         #tableContainer {
-            background: white;
-            border-radius: 1.5rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
             overflow-x: auto;
-            padding: 0.5rem 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 14px;
         }
-
         th, td {
-            padding: 0.9rem 0.8rem;
+            padding: 10px 8px;
             text-align: left;
-            border-bottom: 1px solid #e2edf2;
+            border-bottom: 1px solid #ddd;
         }
-
         th {
-            background: #e9f0f5;
-            font-weight: 600;
-            color: #1e4668;
-            position: sticky;
-            top: 0;
+            background-color: #34495e;
+            color: white;
             cursor: pointer;
             user-select: none;
-            transition: background 0.2s;
+            position: relative;
         }
-
         th:hover {
-            background: #d4e2ec;
+            background-color: #2c3e50;
         }
-
         .sort-indicator {
             display: inline-block;
             margin-left: 6px;
-            font-size: 0.7rem;
+            font-size: 11px;
         }
-
         tr:hover {
-            background-color: #f8fafc;
+            background-color: #f5f5f5;
         }
-
         .checkbox-select {
-            width: 1.2rem;
-            height: 1.2rem;
+            width: 18px;
+            height: 18px;
             cursor: pointer;
-            accent-color: #2c6e9e;
         }
-
+        /* Modales */
         .modal, .form-modal {
             display: none;
             position: fixed;
@@ -133,640 +95,578 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(3px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
-
         .form-content, .modal-content {
             background: white;
-            border-radius: 2rem;
+            border-radius: 12px;
             width: 90%;
-            max-width: 780px;
+            max-width: 750px;
             max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
-            animation: fadeInUp 0.2s ease;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
-
         .form-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem 1.8rem;
-            border-bottom: 1px solid #e2edf2;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
         }
-
-        .form-header h2 {
-            font-size: 1.5rem;
-            color: #1e4668;
-        }
-
         .close-modal-btn {
             background: none;
-            font-size: 1.8rem;
-            padding: 0;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
             color: #7f8c8d;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-
-        .close-modal-btn:hover {
-            background: #ecf0f1;
-            color: #2c3e50;
-        }
-
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            padding: 1.5rem 1.8rem;
+            gap: 15px;
         }
-
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
         }
-
         .form-group label {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #2c3e50;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 13px;
         }
-
         .required-field::after {
             content: "*";
-            color: #e74c3c;
+            color: red;
             margin-left: 4px;
         }
-
         input, select {
-            padding: 0.7rem 0.9rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 1rem;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
             font-family: inherit;
-            font-size: 0.9rem;
-            transition: 0.2s;
         }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #2c6e9e;
-            box-shadow: 0 0 0 3px rgba(44,110,158,0.2);
-        }
-
         .form-actions {
+            margin-top: 20px;
             display: flex;
             justify-content: flex-end;
-            gap: 1rem;
-            padding: 1rem 1.8rem 1.8rem;
-            border-top: 1px solid #e2edf2;
+            gap: 10px;
         }
-
         .primary-btn {
-            background: #2c6e9e;
+            background-color: #2ecc71;
         }
         .secondary-btn {
-            background: #95a5a6;
+            background-color: #95a5a6;
         }
-
-        .modal-content {
-            max-width: 450px;
-            padding: 1.8rem;
-        }
-
-        .modal-content h3 {
-            margin-bottom: 1rem;
-        }
-
-        .modal-content input {
-            width: 100%;
-            margin: 0.8rem 0;
-        }
-
-        small {
-            font-size: 0.7rem;
-            color: #5d6f7e;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         footer {
-            margin-top: 1.5rem;
-            font-size: 0.75rem;
             text-align: center;
-            color: #5a6e7c;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #7f8c8d;
         }
     </style>
 </head>
 <body>
-
-<h1>✈️ Editor de Lista de Pasajeros</h1>
-
-<div id="controls">
-    <input type="file" id="csvFile" accept=".csv">
-    <button onclick="openAddPassengerModal()">➕ Agregar Pasajero</button>
-    <button onclick="removeSelectedRows()" id="deleteBtn" disabled>🗑️ Eliminar Seleccionados</button>
-    <button onclick="openSaveModal()" id="saveBtn">💾 Guardar CSV</button>
-</div>
-
-<div id="tableContainer"></div>
-
-<!-- Modal Agregar / Editar Pasajero -->
-<div id="addPassengerModal" class="form-modal">
-    <div class="form-content">
-        <div class="form-header">
-            <h2 id="formTitle">Agregar Nuevo Pasajero</h2>
-            <button class="close-modal-btn" onclick="closeAddPassengerModal()">&times;</button>
-        </div>
-        
-        <div class="form-grid">
-            <div class="form-group">
-                <label class="required-field">Apellido</label>
-                <input type="text" id="apellido" placeholder="Apellido">
+    <h1>Editor de Lista de Pasajeros</h1>
+    
+    <div id="controls">
+        <input type="file" id="csvFile" accept=".csv">
+        <button onclick="openAddPassengerModal()">Agregar Pasajero</button>
+        <button onclick="removeSelectedRows()" id="deleteBtn" disabled>Eliminar Seleccionados</button>
+        <button onclick="openSaveModal()" id="saveBtn">Guardar CSV</button>
+    </div>
+    
+    <div id="tableContainer"></div>
+    
+    <!-- Modal para agregar/editar pasajero -->
+    <div id="addPassengerModal" class="form-modal">
+        <div class="form-content">
+            <div class="form-header">
+                <h2 id="formTitle">Agregar Nuevo Pasajero</h2>
+                <button class="close-modal-btn" onclick="closeAddPassengerModal()">&times;</button>
             </div>
-            <div class="form-group">
-                <label class="required-field">Nombre</label>
-                <input type="text" id="nombre" placeholder="Nombre">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="required-field">Apellido</label>
+                    <input type="text" id="apellido" placeholder="Apellido">
+                </div>
+                <div class="form-group">
+                    <label class="required-field">Nombre</label>
+                    <input type="text" id="nombre" placeholder="Nombre">
+                </div>
+                <div class="form-group">
+                    <label class="required-field">Tipo Documento</label>
+                    <select id="tipo_documento" onchange="handleTipoDocumentoChange()">
+                        <option value="DNI">DNI</option>
+                        <option value="Pasaporte">Pasaporte</option>
+                        <option value="OTROS">OTROS</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="required-field">Número Documento</label>
+                    <input type="text" id="numero_documento" placeholder="Número">
+                </div>
+                <div class="form-group" id="descripcion_documento_group" style="display: none; grid-column: span 2;">
+                    <label>Descripción Documento</label>
+                    <input type="text" id="descripcion_documento" placeholder="Ej: Cédula, Licencia...">
+                    <small>Complete solo si seleccionó OTROS</small>
+                </div>
+                <div class="form-group">
+                    <label>Sexo</label>
+                    <select id="sexo">
+                        <option value="F">Femenino</option>
+                        <option value="M">Masculino</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Menor</label>
+                    <select id="menor">
+                        <option value="0">No</option>
+                        <option value="1">Sí</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Nacionalidad</label>
+                    <select id="nacionalidad"></select>
+                </div>
+                <div class="form-group">
+                    <label>Tripulante</label>
+                    <select id="tripulante">
+                        <option value="0">No</option>
+                        <option value="1">Sí</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ocupa Butaca</label>
+                    <select id="ocupa_butaca">
+                        <option value="0">No</option>
+                        <option value="1">Sí</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Observaciones</label>
+                    <input type="text" id="observaciones" placeholder="Observaciones">
+                </div>
             </div>
-            <div class="form-group">
-                <label class="required-field">Tipo Documento</label>
-                <select id="tipo_documento">
-                    <option value="DNI">DNI</option>
-                    <option value="Pasaporte">Pasaporte</option>
-                    <option value="OTROS">OTROS</option>
-                </select>
+            <div class="form-actions">
+                <button type="button" class="primary-btn" onclick="savePassenger()" id="savePassengerBtn">Agregar Pasajero</button>
+                <button type="button" class="secondary-btn" onclick="closeAddPassengerModal()">Cancelar</button>
             </div>
-            <div class="form-group">
-                <label class="required-field">Número Documento</label>
-                <input type="text" id="numero_documento" placeholder="Número">
-            </div>
-            <div class="form-group" id="descripcion_documento_group" style="display: none; grid-column: span 2;">
-                <label>Descripción Documento</label>
-                <input type="text" id="descripcion_documento" placeholder="Ej: Cédula, Licencia...">
-                <small>Solo si seleccionó OTROS</small>
-            </div>
-            <div class="form-group">
-                <label>Sexo</label>
-                <select id="sexo"><option value="F">Femenino</option><option value="M">Masculino</option></select>
-            </div>
-            <div class="form-group">
-                <label>Menor</label>
-                <select id="menor"><option value="0">No</option><option value="1">Sí</option></select>
-            </div>
-            <div class="form-group" style="grid-column: span 2;">
-                <label>Nacionalidad</label>
-                <select id="nacionalidad"></select>
-            </div>
-            <div class="form-group">
-                <label>Tripulante</label>
-                <select id="tripulante"><option value="0">No</option><option value="1">Sí</option></select>
-            </div>
-            <div class="form-group">
-                <label>Ocupa Butaca</label>
-                <select id="ocupa_butaca"><option value="0">No</option><option value="1">Sí</option></select>
-            </div>
-            <div class="form-group" style="grid-column: span 2;">
-                <label>Observaciones</label>
-                <input type="text" id="observaciones" placeholder="Observaciones">
-            </div>
-        </div>
-        
-        <div class="form-actions">
-            <button class="primary-btn" onclick="savePassenger()" id="savePassengerBtn">Guardar Pasajero</button>
-            <button class="secondary-btn" onclick="closeAddPassengerModal()">Cancelar</button>
         </div>
     </div>
-</div>
-
-<!-- Modal Guardar CSV -->
-<div id="saveModal" class="modal">
-    <div class="modal-content">
-        <h3>📁 Guardar archivo CSV</h3>
-        <label>Nombre del archivo (sin extensión):</label>
-        <input type="text" id="fileNameInputModal" placeholder="lista_pasajeros" value="lista_pasajeros">
-        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="closeSaveModal()" style="background:#95a5a6;">Cancelar</button>
-            <button onclick="confirmDownload()" style="background:#2c6e9e;">Guardar</button>
+    
+    <!-- Modal para guardar archivo -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <h3>Guardar Archivo CSV</h3>
+            <label>Nombre del archivo (sin extensión):</label>
+            <input type="text" id="fileNameInputModal" placeholder="lista_pasajeros" value="lista_pasajeros">
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeSaveModal()" style="background-color: #95a5a6;">Cancelar</button>
+                <button onclick="confirmDownload()" style="background-color: #2ecc71;">Guardar</button>
+            </div>
         </div>
     </div>
-</div>
+    
+    <footer>💡 Doble clic en fila para editar | Click en encabezados para ordenar | El ID es interno, no se guarda en CSV</footer>
 
-<footer>💡 Doble clic para editar | Haz clic en los encabezados para ordenar | Formato CSV: ;</footer>
-
-<script>
-    // -------------------- DATOS --------------------
-    let pasajeros = [];        // Cada objeto tiene { id, apellido, nombre, tipo_documento, descripcion_documento, numero_documento, sexo, menor, nacionalidad, tripulante, ocupa_butaca, observaciones }
-    let editIndex = null;
-    let nextId = 1;
-    
-    // Estado de ordenamiento
-    let sortColumn = null;     // nombre del campo (ej: "apellido")
-    let sortAsc = true;
-    
-    // Columnas del CSV (sin id, solo las que van al archivo)
-    const CSV_HEADERS = [
-        "apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento",
-        "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca", "observaciones"
-    ];
-    
-    // Mapeo de nombres de columna para mostrar (encabezados de tabla)
-    const columnDisplayNames = {
-        id: "ID",
-        apellido: "Apellido",
-        nombre: "Nombre",
-        tipo_documento: "Tipo Doc",
-        descripcion_documento: "Desc. Doc",
-        numero_documento: "N° Documento",
-        sexo: "Sexo",
-        menor: "Menor",
-        nacionalidad: "Nacionalidad",
-        tripulante: "Tripulante",
-        ocupa_butaca: "Ocupa Butaca",
-        observaciones: "Observaciones"
-    };
-    
-    // Nacionalidades
-    const nacionalidadesList = [
-        "ARGENTINA", "BOLIVIA", "BRASIL", "CHILE", "COLOMBIA", "COSTA RICA", "CUBA", "ECUADOR",
-        "EL SALVADOR", "ESPAÑA", "ESTADOS UNIDOS", "GUATEMALA", "HONDURAS", "MÉXICO", "NICARAGUA",
-        "PANAMÁ", "PARAGUAY", "PERÚ", "PUERTO RICO", "REPÚBLICA DOMINICANA", "URUGUAY", "VENEZUELA",
-        "ALEMANIA", "FRANCIA", "ITALIA", "JAPÓN", "CANADÁ", "CHINA", "OTRO"
-    ];
-    
-    function cargarNacionalidades() {
-        const selectNac = document.getElementById('nacionalidad');
-        if (!selectNac) return;
-        selectNac.innerHTML = '';
-        nacionalidadesList.forEach(pais => {
-            const option = document.createElement('option');
-            option.value = pais;
-            option.textContent = pais;
-            selectNac.appendChild(option);
-        });
-        selectNac.value = "ARGENTINA";
-    }
-    
-    function handleTipoDocumentoChange() {
-        const tipo = document.getElementById('tipo_documento').value;
-        const descGroup = document.getElementById('descripcion_documento_group');
-        if (tipo === "OTROS") {
-            descGroup.style.display = "flex";
-        } else {
-            descGroup.style.display = "none";
-            document.getElementById('descripcion_documento').value = "";
-        }
-    }
-    window.handleTipoDocumentoChange = handleTipoDocumentoChange;
-    
-    // Función de ordenamiento
-    function sortPasajeros() {
-        if (!sortColumn) return;
-        pasajeros.sort((a, b) => {
-            let valA = a[sortColumn];
-            let valB = b[sortColumn];
-            
-            // Manejar números (menor, tripulante, ocupa_butaca, id)
-            if (sortColumn === 'menor' || sortColumn === 'tripulante' || sortColumn === 'ocupa_butaca' || sortColumn === 'id') {
-                valA = Number(valA);
-                valB = Number(valB);
-            } else {
-                // Texto: convertir a string y minúsculas para comparación insensible
-                valA = (valA || '').toString().toLowerCase();
-                valB = (valB || '').toString().toLowerCase();
-            }
-            if (valA < valB) return sortAsc ? -1 : 1;
-            if (valA > valB) return sortAsc ? 1 : -1;
-            return 0;
-        });
-    }
-    
-    // Renderizar tabla (incluyendo ordenamiento)
-    function renderTable() {
-        // Aplicar ordenamiento si está definido
-        if (sortColumn) {
-            sortPasajeros();
-        }
+    <script>
+        // ---------------------------------- DATOS ----------------------------------
+        let pasajeros = [];        // cada objeto tendrá: id (interno), y los campos del CSV
+        let editIndex = null;
+        let nextId = 1;
         
-        const container = document.getElementById('tableContainer');
-        if (!container) return;
-        if (pasajeros.length === 0) {
-            container.innerHTML = `<div style="padding: 3rem; text-align: center; color: #6c7e8f;">📭 No hay pasajeros cargados. Carga un CSV o agrega uno nuevo.</div>`;
-            document.getElementById('deleteBtn').disabled = true;
-            return;
-        }
+        // Estado de ordenamiento
+        let sortColumn = null;
+        let sortAsc = true;
         
-        // Definir las columnas a mostrar en la tabla (incluyendo id)
+        // Columnas que se muestran en la tabla (incluye ID interno)
         const tableColumns = ["id", "apellido", "nombre", "tipo_documento", "numero_documento", "descripcion_documento", "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca", "observaciones"];
         
-        let html = `<table><thead><tr><th style="width: 35px"><input type="checkbox" id="selectAllCheckbox"></th>`;
+        // Columnas del CSV (sin ID, exactamente como en el archivo)
+        const csvHeaders = ["apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento", "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca", "observaciones"];
         
-        tableColumns.forEach(col => {
-            let displayName = columnDisplayNames[col] || col;
-            let indicator = (sortColumn === col) ? (sortAsc ? ' ▲' : ' ▼') : '';
-            html += `<th onclick="setSortColumn('${col}')">${displayName}<span class="sort-indicator">${indicator}</span></th>`;
-        });
-        html += `</tr></thead><tbody>`;
+        // Nombres bonitos para los encabezados
+        const displayNames = {
+            id: "ID",
+            apellido: "Apellido",
+            nombre: "Nombre",
+            tipo_documento: "Tipo Doc",
+            numero_documento: "N° Documento",
+            descripcion_documento: "Desc. Doc",
+            sexo: "Sexo",
+            menor: "Menor",
+            nacionalidad: "Nacionalidad",
+            tripulante: "Tripulante",
+            ocupa_butaca: "Ocupa Butaca",
+            observaciones: "Observaciones"
+        };
         
-        pasajeros.forEach((p, idx) => {
-            const menorText = p.menor == 1 ? "Sí" : "No";
-            const tripulanteText = p.tripulante == 1 ? "Sí" : "No";
-            const ocupaText = p.ocupa_butaca == 1 ? "Sí" : "No";
-            html += `<tr ondblclick="editPassenger(${idx})" style="cursor: pointer;">
-                <td><input type="checkbox" class="row-checkbox" data-idx="${idx}"></td>
-                <td>${escapeHtml(p.id)}</td>
-                <td>${escapeHtml(p.apellido || '')}</td>
-                <td>${escapeHtml(p.nombre || '')}</td>
-                <td>${escapeHtml(p.tipo_documento || '')}</td>
-                <td>${escapeHtml(p.numero_documento || '')}</td>
-                <td>${escapeHtml(p.descripcion_documento || '')}</td>
-                <td>${escapeHtml(p.sexo || '')}</td>
-                <td>${menorText}</td>
-                <td>${escapeHtml(p.nacionalidad || '')}</td>
-                <td>${tripulanteText}</td>
-                <td>${ocupaText}</td>
-                <td>${escapeHtml(p.observaciones || '')}</td>
-            </tr>`;
-        });
-        html += `</tbody></table>`;
-        container.innerHTML = html;
+        // Nacionalidades predefinidas
+        const nacionalidadesList = [
+            "ARGENTINA", "BOLIVIA", "BRASIL", "CHILE", "COLOMBIA", "COSTA RICA", "CUBA", "ECUADOR",
+            "EL SALVADOR", "ESPAÑA", "ESTADOS UNIDOS", "GUATEMALA", "HONDURAS", "MÉXICO", "NICARAGUA",
+            "PANAMÁ", "PARAGUAY", "PERÚ", "PUERTO RICO", "REPÚBLICA DOMINICANA", "URUGUAY", "VENEZUELA",
+            "ALEMANIA", "FRANCIA", "ITALIA", "JAPÓN", "CANADÁ", "CHINA", "OTRO"
+        ];
         
-        const selectAll = document.getElementById('selectAllCheckbox');
-        if (selectAll) {
-            selectAll.addEventListener('change', (e) => {
-                document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
-                toggleDeleteButton();
+        function cargarNacionalidades() {
+            const select = document.getElementById('nacionalidad');
+            if (!select) return;
+            select.innerHTML = '';
+            nacionalidadesList.forEach(pais => {
+                const option = document.createElement('option');
+                option.value = pais;
+                option.textContent = pais;
+                select.appendChild(option);
+            });
+            select.value = "ARGENTINA";
+        }
+        
+        function handleTipoDocumentoChange() {
+            const tipo = document.getElementById('tipo_documento').value;
+            const descGroup = document.getElementById('descripcion_documento_group');
+            if (tipo === "OTROS") {
+                descGroup.style.display = "flex";
+            } else {
+                descGroup.style.display = "none";
+                document.getElementById('descripcion_documento').value = "";
+            }
+        }
+        
+        // ---------- Funciones de ordenamiento ----------
+        function sortPasajeros() {
+            if (!sortColumn) return;
+            pasajeros.sort((a, b) => {
+                let valA = a[sortColumn];
+                let valB = b[sortColumn];
+                // Para campos numéricos
+                if (sortColumn === 'menor' || sortColumn === 'tripulante' || sortColumn === 'ocupa_butaca' || sortColumn === 'id') {
+                    valA = Number(valA);
+                    valB = Number(valB);
+                } else {
+                    valA = (valA || '').toString().toLowerCase();
+                    valB = (valB || '').toString().toLowerCase();
+                }
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
             });
         }
-        document.querySelectorAll('.row-checkbox').forEach(cb => {
-            cb.addEventListener('change', toggleDeleteButton);
-        });
-        toggleDeleteButton();
-    }
-    
-    function setSortColumn(column) {
-        if (sortColumn === column) {
-            sortAsc = !sortAsc;
-        } else {
-            sortColumn = column;
-            sortAsc = true;
-        }
-        renderTable();
-    }
-    window.setSortColumn = setSortColumn;
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    function toggleDeleteButton() {
-        const anyChecked = document.querySelectorAll('.row-checkbox:checked').length > 0;
-        document.getElementById('deleteBtn').disabled = !anyChecked;
-    }
-    
-    function removeSelectedRows() {
-        const checkboxes = document.querySelectorAll('.row-checkbox:checked');
-        if (checkboxes.length === 0) return;
-        if (!confirm(`¿Eliminar ${checkboxes.length} pasajero(s) seleccionado(s)?`)) return;
         
-        const indicesAEliminar = Array.from(checkboxes).map(cb => parseInt(cb.dataset.idx)).sort((a,b)=>b-a);
-        for (let idx of indicesAEliminar) {
-            pasajeros.splice(idx, 1);
-        }
-        // Reasignar IDs correlativos
-        pasajeros.forEach((p, i) => { p.id = i + 1; });
-        nextId = pasajeros.length + 1;
-        renderTable();
-    }
-    
-    function openAddPassengerModal() {
-        editIndex = null;
-        document.getElementById('formTitle').innerText = "Agregar Nuevo Pasajero";
-        document.getElementById('savePassengerBtn').innerText = "Agregar Pasajero";
-        limpiarFormulario();
-        document.getElementById('addPassengerModal').style.display = "flex";
-        handleTipoDocumentoChange();
-    }
-    
-    function editPassenger(index) {
-        const p = pasajeros[index];
-        if (!p) return;
-        editIndex = index;
-        document.getElementById('formTitle').innerText = "Editar Pasajero";
-        document.getElementById('savePassengerBtn').innerText = "Actualizar Pasajero";
-        
-        document.getElementById('apellido').value = p.apellido || '';
-        document.getElementById('nombre').value = p.nombre || '';
-        document.getElementById('tipo_documento').value = p.tipo_documento || 'DNI';
-        document.getElementById('numero_documento').value = p.numero_documento || '';
-        document.getElementById('descripcion_documento').value = p.descripcion_documento || '';
-        document.getElementById('sexo').value = p.sexo || 'F';
-        document.getElementById('menor').value = p.menor != undefined ? p.menor : 0;
-        document.getElementById('nacionalidad').value = p.nacionalidad || 'ARGENTINA';
-        document.getElementById('tripulante').value = p.tripulante != undefined ? p.tripulante : 0;
-        document.getElementById('ocupa_butaca').value = p.ocupa_butaca != undefined ? p.ocupa_butaca : 0;
-        document.getElementById('observaciones').value = p.observaciones || '';
-        handleTipoDocumentoChange();
-        document.getElementById('addPassengerModal').style.display = "flex";
-    }
-    window.editPassenger = editPassenger;
-    
-    function limpiarFormulario() {
-        document.getElementById('apellido').value = '';
-        document.getElementById('nombre').value = '';
-        document.getElementById('tipo_documento').value = 'DNI';
-        document.getElementById('numero_documento').value = '';
-        document.getElementById('descripcion_documento').value = '';
-        document.getElementById('sexo').value = 'F';
-        document.getElementById('menor').value = '0';
-        document.getElementById('nacionalidad').value = 'ARGENTINA';
-        document.getElementById('tripulante').value = '0';
-        document.getElementById('ocupa_butaca').value = '0';
-        document.getElementById('observaciones').value = '';
-        handleTipoDocumentoChange();
-    }
-    
-    function closeAddPassengerModal() {
-        document.getElementById('addPassengerModal').style.display = "none";
-        editIndex = null;
-    }
-    
-    function savePassenger() {
-        const apellido = document.getElementById('apellido').value.trim();
-        const nombre = document.getElementById('nombre').value.trim();
-        const tipo_documento = document.getElementById('tipo_documento').value;
-        const numero_documento = document.getElementById('numero_documento').value.trim();
-        
-        if (!apellido) { alert("El apellido es obligatorio."); return; }
-        if (!nombre) { alert("El nombre es obligatorio."); return; }
-        if (!numero_documento) { alert("El número de documento es obligatorio."); return; }
-        if (tipo_documento === "OTROS") {
-            const desc = document.getElementById('descripcion_documento').value.trim();
-            if (!desc) { alert("Cuando selecciona OTROS, debe indicar una descripción del documento."); return; }
+        function setSortColumn(column) {
+            if (sortColumn === column) {
+                sortAsc = !sortAsc;
+            } else {
+                sortColumn = column;
+                sortAsc = true;
+            }
+            renderTable();
         }
         
-        let descripcion_documento = document.getElementById('descripcion_documento').value.trim();
-        if (tipo_documento !== "OTROS") descripcion_documento = "";
-        
-        const nuevoPasajero = {
-            id: editIndex !== null ? pasajeros[editIndex].id : nextId++,
-            apellido: apellido,
-            nombre: nombre,
-            tipo_documento: tipo_documento,
-            descripcion_documento: descripcion_documento,
-            numero_documento: numero_documento,
-            sexo: document.getElementById('sexo').value,
-            menor: parseInt(document.getElementById('menor').value),
-            nacionalidad: document.getElementById('nacionalidad').value,
-            tripulante: parseInt(document.getElementById('tripulante').value),
-            ocupa_butaca: parseInt(document.getElementById('ocupa_butaca').value),
-            observaciones: document.getElementById('observaciones').value.trim()
-        };
-        
-        if (editIndex !== null) {
-            pasajeros[editIndex] = nuevoPasajero;
-        } else {
-            pasajeros.push(nuevoPasajero);
-        }
-        renderTable();
-        closeAddPassengerModal();
-    }
-    window.savePassenger = savePassenger;
-    
-    // ===================== LECTURA DE CSV (SOLO CAMPOS ORIGINALES, SIN ID) =====================
-    document.getElementById('csvFile').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            let text = evt.target.result;
-            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-            text = text.replace(/\r\n?/g, '\n').trim();
+        // ---------- Renderizado de la tabla ----------
+        function renderTable() {
+            if (sortColumn) sortPasajeros();
             
-            const lines = text.split('\n');
-            if (lines.length < 2) {
-                alert("Archivo vacío o sin datos.");
+            const container = document.getElementById('tableContainer');
+            if (!container) return;
+            if (pasajeros.length === 0) {
+                container.innerHTML = `<div style="padding: 40px; text-align: center; color: #7f8c8d;">No hay pasajeros cargados. Carga un CSV o agrega uno nuevo.</div>`;
+                document.getElementById('deleteBtn').disabled = true;
                 return;
             }
             
-            // Leer cabeceras (separador ;)
-            let headers = lines[0].split(';').map(h => h.replace(/^[\s"']+|[\s"']+$/g, '').toLowerCase());
-            // Verificar que las cabeceras coinciden con las esperadas (orden y nombres)
-            const expected = CSV_HEADERS.map(h => h.toLowerCase());
-            let ok = true;
-            for (let i = 0; i < expected.length; i++) {
-                if (headers[i] !== expected[i]) { ok = false; break; }
+            let html = `<table><thead><tr><th style="width:30px"><input type="checkbox" id="selectAllCheckbox"></th>`;
+            for (let col of tableColumns) {
+                let indicator = (sortColumn === col) ? (sortAsc ? ' ▲' : ' ▼') : '';
+                html += `<th onclick="setSortColumn('${col}')">${displayNames[col] || col}<span class="sort-indicator">${indicator}</span></th>`;
             }
-            if (!ok) {
-                alert(`Error: El archivo no tiene el formato esperado.\nSe esperaban: ${CSV_HEADERS.join("; ")}`);
-                return;
-            }
+            html += `</thead><tbody>`;
             
-            const newPasajeros = [];
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line === "") continue;
-                // Parseo simple por ; (sin comillas complejas por ahora)
-                let valores = line.split(';');
-                if (valores.length < headers.length) continue;
-                let obj = {};
-                headers.forEach((h, idx) => {
-                    let val = valores[idx] || "";
-                    val = val.replace(/^"|"$/g, '');
-                    obj[h] = val;
+            for (let i = 0; i < pasajeros.length; i++) {
+                const p = pasajeros[i];
+                const menorText = p.menor == 1 ? "Sí" : "No";
+                const tripulanteText = p.tripulante == 1 ? "Sí" : "No";
+                const ocupaText = p.ocupa_butaca == 1 ? "Sí" : "No";
+                html += `<tr ondblclick="editPassenger(${i})" style="cursor:pointer;">
+                    <td><input type="checkbox" class="row-checkbox" data-idx="${i}"></td>
+                    <td>${escapeHtml(p.id)}</td>
+                    <td>${escapeHtml(p.apellido || '')}</td>
+                    <td>${escapeHtml(p.nombre || '')}</td>
+                    <td>${escapeHtml(p.tipo_documento || '')}</td>
+                    <td>${escapeHtml(p.numero_documento || '')}</td>
+                    <td>${escapeHtml(p.descripcion_documento || '')}</td>
+                    <td>${escapeHtml(p.sexo || '')}</td>
+                    <td>${menorText}</td>
+                    <td>${escapeHtml(p.nacionalidad || '')}</td>
+                    <td>${tripulanteText}</td>
+                    <td>${ocupaText}</td>
+                    <td>${escapeHtml(p.observaciones || '')}</td>
+                </tr>`;
+            }
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+            
+            const selectAll = document.getElementById('selectAllCheckbox');
+            if (selectAll) {
+                selectAll.addEventListener('change', (e) => {
+                    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
+                    toggleDeleteButton();
                 });
-                // Convertir numéricos
-                obj.menor = (obj.menor == "1" || obj.menor === 1) ? 1 : 0;
-                obj.tripulante = (obj.tripulante == "1" || obj.tripulante === 1) ? 1 : 0;
-                obj.ocupa_butaca = (obj.ocupa_butaca == "1" || obj.ocupa_butaca === 1) ? 1 : 0;
-                if (obj.apellido || obj.nombre || obj.numero_documento) {
-                    newPasajeros.push(obj);
-                }
+            }
+            document.querySelectorAll('.row-checkbox').forEach(cb => {
+                cb.addEventListener('change', toggleDeleteButton);
+            });
+            toggleDeleteButton();
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function toggleDeleteButton() {
+            const anyChecked = document.querySelectorAll('.row-checkbox:checked').length > 0;
+            document.getElementById('deleteBtn').disabled = !anyChecked;
+        }
+        
+        function removeSelectedRows() {
+            const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+            if (checkboxes.length === 0) return;
+            if (!confirm(`¿Eliminar ${checkboxes.length} pasajero(s) seleccionado(s)?`)) return;
+            const indices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.idx)).sort((a,b)=>b-a);
+            for (let idx of indices) {
+                pasajeros.splice(idx, 1);
+            }
+            // Reasignar IDs internos
+            pasajeros.forEach((p, i) => p.id = i + 1);
+            nextId = pasajeros.length + 1;
+            renderTable();
+        }
+        
+        // ---------- Agregar / Editar ----------
+        function openAddPassengerModal() {
+            editIndex = null;
+            document.getElementById('formTitle').innerText = "Agregar Nuevo Pasajero";
+            document.getElementById('savePassengerBtn').innerText = "Agregar Pasajero";
+            limpiarFormulario();
+            document.getElementById('addPassengerModal').style.display = "flex";
+            handleTipoDocumentoChange();
+        }
+        
+        function editPassenger(index) {
+            const p = pasajeros[index];
+            if (!p) return;
+            editIndex = index;
+            document.getElementById('formTitle').innerText = "Editar Pasajero";
+            document.getElementById('savePassengerBtn').innerText = "Actualizar Pasajero";
+            document.getElementById('apellido').value = p.apellido || '';
+            document.getElementById('nombre').value = p.nombre || '';
+            document.getElementById('tipo_documento').value = p.tipo_documento || 'DNI';
+            document.getElementById('numero_documento').value = p.numero_documento || '';
+            document.getElementById('descripcion_documento').value = p.descripcion_documento || '';
+            document.getElementById('sexo').value = p.sexo || 'F';
+            document.getElementById('menor').value = p.menor != undefined ? p.menor : 0;
+            document.getElementById('nacionalidad').value = p.nacionalidad || 'ARGENTINA';
+            document.getElementById('tripulante').value = p.tripulante != undefined ? p.tripulante : 0;
+            document.getElementById('ocupa_butaca').value = p.ocupa_butaca != undefined ? p.ocupa_butaca : 0;
+            document.getElementById('observaciones').value = p.observaciones || '';
+            handleTipoDocumentoChange();
+            document.getElementById('addPassengerModal').style.display = "flex";
+        }
+        
+        function limpiarFormulario() {
+            document.getElementById('apellido').value = '';
+            document.getElementById('nombre').value = '';
+            document.getElementById('tipo_documento').value = 'DNI';
+            document.getElementById('numero_documento').value = '';
+            document.getElementById('descripcion_documento').value = '';
+            document.getElementById('sexo').value = 'F';
+            document.getElementById('menor').value = '0';
+            document.getElementById('nacionalidad').value = 'ARGENTINA';
+            document.getElementById('tripulante').value = '0';
+            document.getElementById('ocupa_butaca').value = '0';
+            document.getElementById('observaciones').value = '';
+            handleTipoDocumentoChange();
+        }
+        
+        function closeAddPassengerModal() {
+            document.getElementById('addPassengerModal').style.display = "none";
+            editIndex = null;
+        }
+        
+        function savePassenger() {
+            const apellido = document.getElementById('apellido').value.trim();
+            const nombre = document.getElementById('nombre').value.trim();
+            const tipo = document.getElementById('tipo_documento').value;
+            const numero = document.getElementById('numero_documento').value.trim();
+            
+            if (!apellido) { alert("El apellido es obligatorio."); return; }
+            if (!nombre) { alert("El nombre es obligatorio."); return; }
+            if (!numero) { alert("El número de documento es obligatorio."); return; }
+            if (tipo === "OTROS") {
+                const desc = document.getElementById('descripcion_documento').value.trim();
+                if (!desc) { alert("Debe indicar descripción del documento."); return; }
             }
             
-            if (newPasajeros.length > 0) {
-                // Asignar IDs internos correlativos
-                newPasajeros.forEach((p, idx) => { p.id = idx + 1; });
-                pasajeros = newPasajeros;
+            let descDoc = document.getElementById('descripcion_documento').value.trim();
+            if (tipo !== "OTROS") descDoc = "";
+            
+            const nuevo = {
+                id: editIndex !== null ? pasajeros[editIndex].id : nextId++,
+                apellido: apellido,
+                nombre: nombre,
+                tipo_documento: tipo,
+                numero_documento: numero,
+                descripcion_documento: descDoc,
+                sexo: document.getElementById('sexo').value,
+                menor: parseInt(document.getElementById('menor').value),
+                nacionalidad: document.getElementById('nacionalidad').value,
+                tripulante: parseInt(document.getElementById('tripulante').value),
+                ocupa_butaca: parseInt(document.getElementById('ocupa_butaca').value),
+                observaciones: document.getElementById('observaciones').value.trim()
+            };
+            
+            if (editIndex !== null) {
+                pasajeros[editIndex] = nuevo;
+            } else {
+                pasajeros.push(nuevo);
+            }
+            renderTable();
+            closeAddPassengerModal();
+        }
+        
+        // ---------- Carga de CSV (con separador punto y coma) ----------
+        document.getElementById('csvFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                let text = evt.target.result;
+                // Eliminar BOM
+                if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+                // Unificar saltos de línea (importante para móvil)
+                text = text.replace(/\r\n?/g, '\n');
+                text = text.trim();
+                
+                const lines = text.split('\n');
+                if (lines.length < 2) {
+                    alert("Archivo vacío o sin datos.");
+                    return;
+                }
+                
+                // Cabeceras: separadas por punto y coma
+                let headers = lines[0].split(';').map(h => h.replace(/^[\s"']+|[\s"']+$/g, '').toLowerCase());
+                // Validar que coinciden exactamente con csvHeaders
+                const expected = csvHeaders.map(h => h.toLowerCase());
+                let ok = headers.length === expected.length;
+                if (ok) {
+                    for (let i = 0; i < expected.length; i++) {
+                        if (headers[i] !== expected[i]) { ok = false; break; }
+                    }
+                }
+                if (!ok) {
+                    alert(`Error de formato. Se esperaban estas columnas:\n${csvHeaders.join("; ")}`);
+                    return;
+                }
+                
+                const nuevos = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line === "") continue;
+                    let valores = line.split(';');
+                    if (valores.length < headers.length) continue;
+                    let obj = {};
+                    headers.forEach((h, idx) => {
+                        let val = valores[idx] || "";
+                        val = val.replace(/^"|"$/g, '');
+                        obj[h] = val;
+                    });
+                    // Convertir numéricos
+                    obj.menor = (obj.menor == "1" || obj.menor === 1) ? 1 : 0;
+                    obj.tripulante = (obj.tripulante == "1" || obj.tripulante === 1) ? 1 : 0;
+                    obj.ocupa_butaca = (obj.ocupa_butaca == "1" || obj.ocupa_butaca === 1) ? 1 : 0;
+                    if (obj.apellido || obj.nombre || obj.numero_documento) {
+                        nuevos.push(obj);
+                    }
+                }
+                
+                if (nuevos.length === 0) {
+                    alert("No se encontraron datos válidos en el CSV.");
+                    return;
+                }
+                
+                // Asignar IDs internos
+                nuevos.forEach((p, idx) => p.id = idx + 1);
+                pasajeros = nuevos;
                 nextId = pasajeros.length + 1;
                 renderTable();
-                alert(`✅ Se cargaron ${newPasajeros.length} pasajeros.`);
-            } else {
-                alert("No se encontraron datos válidos.");
-            }
-        };
-        reader.onerror = () => alert("Error al leer el archivo.");
-        reader.readAsText(file, "UTF-8");
-        e.target.value = '';
-    });
-    // =========================================================================
-    
-    // Guardar CSV (sin la columna id, solo las columnas originales)
-    function openSaveModal() {
-        document.getElementById('saveModal').style.display = "flex";
-    }
-    function closeSaveModal() {
-        document.getElementById('saveModal').style.display = "none";
-    }
-    function confirmDownload() {
-        let fileName = document.getElementById('fileNameInputModal').value.trim();
-        if (!fileName) fileName = "lista_pasajeros";
-        if (!fileName.endsWith(".csv")) fileName += ".csv";
-        
-        const headersLine = CSV_HEADERS.join(";");
-        const rows = pasajeros.map(p => {
-            return CSV_HEADERS.map(col => {
-                let val = p[col] !== undefined ? p[col] : "";
-                if (typeof val === "string" && (val.includes(';') || val.includes('"'))) {
-                    val = `"${val.replace(/"/g, '""')}"`;
-                }
-                return val;
-            }).join(";");
+                alert(`✅ Cargados ${nuevos.length} pasajeros.`);
+            };
+            reader.onerror = () => alert("Error al leer el archivo.");
+            reader.readAsText(file, "UTF-8");
+            e.target.value = '';
         });
-        const csvContent = [headersLine, ...rows].join("\n");
-        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.setAttribute("download", fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        closeSaveModal();
-    }
-    window.confirmDownload = confirmDownload;
-    window.openSaveModal = openSaveModal;
-    window.closeSaveModal = closeSaveModal;
-    window.openAddPassengerModal = openAddPassengerModal;
-    window.closeAddPassengerModal = closeAddPassengerModal;
-    window.removeSelectedRows = removeSelectedRows;
-    
-    // Inicializar con datos de ejemplo (incluyendo ID interno)
-    function init() {
-        cargarNacionalidades();
-        if (pasajeros.length === 0) {
+        
+        // ---------- Guardar CSV (sin la columna ID) ----------
+        function openSaveModal() {
+            document.getElementById('saveModal').style.display = "flex";
+        }
+        function closeSaveModal() {
+            document.getElementById('saveModal').style.display = "none";
+        }
+        function confirmDownload() {
+            let fileName = document.getElementById('fileNameInputModal').value.trim();
+            if (!fileName) fileName = "lista_pasajeros";
+            if (!fileName.endsWith(".csv")) fileName += ".csv";
+            
+            const headerLine = csvHeaders.join(";");
+            const rows = pasajeros.map(p => {
+                return csvHeaders.map(col => {
+                    let val = p[col] !== undefined ? p[col] : "";
+                    if (typeof val === "string" && (val.includes(';') || val.includes('"'))) {
+                        val = `"${val.replace(/"/g, '""')}"`;
+                    }
+                    return val;
+                }).join(";");
+            });
+            const content = [headerLine, ...rows].join("\n");
+            const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            closeSaveModal();
+        }
+        
+        // Exponer funciones globales
+        window.setSortColumn = setSortColumn;
+        window.openAddPassengerModal = openAddPassengerModal;
+        window.closeAddPassengerModal = closeAddPassengerModal;
+        window.savePassenger = savePassenger;
+        window.editPassenger = editPassenger;
+        window.removeSelectedRows = removeSelectedRows;
+        window.openSaveModal = openSaveModal;
+        window.closeSaveModal = closeSaveModal;
+        window.confirmDownload = confirmDownload;
+        window.handleTipoDocumentoChange = handleTipoDocumentoChange;
+        
+        // Inicializar
+        function init() {
+            cargarNacionalidades();
+            // Datos de ejemplo (con ID interno)
             pasajeros = [
                 { id:1, apellido:"gomez", nombre:"damian", tipo_documento:"DNI", descripcion_documento:"", numero_documento:"29987304", sexo:"M", menor:0, nacionalidad:"ARGENTINA", tripulante:0, ocupa_butaca:1, observaciones:"" },
                 { id:2, apellido:"Pérez", nombre:"Ana", tipo_documento:"Pasaporte", descripcion_documento:"", numero_documento:"AB123456", sexo:"F", menor:0, nacionalidad:"URUGUAY", tripulante:0, ocupa_butaca:1, observaciones:"Pasajera frecuente" }
@@ -774,8 +674,7 @@
             nextId = 3;
             renderTable();
         }
-    }
-    init();
-</script>
+        init();
+    </script>
 </body>
 </html>
