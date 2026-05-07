@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Editor de Lista de Pasajeros | Formato CSV con ;</title>
+    <title>Editor de Lista de Pasajeros | Ordenable</title>
     <style>
         * {
             margin: 0;
@@ -99,6 +99,19 @@
             color: #1e4668;
             position: sticky;
             top: 0;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        th:hover {
+            background: #d4e2ec;
+        }
+
+        .sort-indicator {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 0.7rem;
         }
 
         tr:hover {
@@ -354,19 +367,39 @@
     </div>
 </div>
 
-<footer>💡 Doble clic en una fila para editar | Formato CSV: punto y coma (;) | Compatible con móvil</footer>
+<footer>💡 Doble clic para editar | Haz clic en los encabezados para ordenar | Formato CSV: ;</footer>
 
 <script>
-    // -------------------- DATA MODEL --------------------
-    // Los pasajeros se guardan con los mismos campos que el CSV (sin id interno)
-    let pasajeros = [];       // cada objeto tiene: apellido, nombre, tipo_documento, descripcion_documento, numero_documento, sexo, menor, nacionalidad, tripulante, ocupa_butaca, observaciones
+    // -------------------- DATOS --------------------
+    let pasajeros = [];        // Cada objeto tiene { id, apellido, nombre, tipo_documento, descripcion_documento, numero_documento, sexo, menor, nacionalidad, tripulante, ocupa_butaca, observaciones }
     let editIndex = null;
+    let nextId = 1;
     
-    // Cabeceras exactas del CSV (orden y nombres)
+    // Estado de ordenamiento
+    let sortColumn = null;     // nombre del campo (ej: "apellido")
+    let sortAsc = true;
+    
+    // Columnas del CSV (sin id, solo las que van al archivo)
     const CSV_HEADERS = [
         "apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento",
         "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca", "observaciones"
     ];
+    
+    // Mapeo de nombres de columna para mostrar (encabezados de tabla)
+    const columnDisplayNames = {
+        id: "ID",
+        apellido: "Apellido",
+        nombre: "Nombre",
+        tipo_documento: "Tipo Doc",
+        descripcion_documento: "Desc. Doc",
+        numero_documento: "N° Documento",
+        sexo: "Sexo",
+        menor: "Menor",
+        nacionalidad: "Nacionalidad",
+        tripulante: "Tripulante",
+        ocupa_butaca: "Ocupa Butaca",
+        observaciones: "Observaciones"
+    };
     
     // Nacionalidades
     const nacionalidadesList = [
@@ -375,7 +408,7 @@
         "PANAMÁ", "PARAGUAY", "PERÚ", "PUERTO RICO", "REPÚBLICA DOMINICANA", "URUGUAY", "VENEZUELA",
         "ALEMANIA", "FRANCIA", "ITALIA", "JAPÓN", "CANADÁ", "CHINA", "OTRO"
     ];
-
+    
     function cargarNacionalidades() {
         const selectNac = document.getElementById('nacionalidad');
         if (!selectNac) return;
@@ -388,7 +421,7 @@
         });
         selectNac.value = "ARGENTINA";
     }
-
+    
     function handleTipoDocumentoChange() {
         const tipo = document.getElementById('tipo_documento').value;
         const descGroup = document.getElementById('descripcion_documento_group');
@@ -400,9 +433,36 @@
         }
     }
     window.handleTipoDocumentoChange = handleTipoDocumentoChange;
-
-    // Renderizar tabla (sin columna id)
+    
+    // Función de ordenamiento
+    function sortPasajeros() {
+        if (!sortColumn) return;
+        pasajeros.sort((a, b) => {
+            let valA = a[sortColumn];
+            let valB = b[sortColumn];
+            
+            // Manejar números (menor, tripulante, ocupa_butaca, id)
+            if (sortColumn === 'menor' || sortColumn === 'tripulante' || sortColumn === 'ocupa_butaca' || sortColumn === 'id') {
+                valA = Number(valA);
+                valB = Number(valB);
+            } else {
+                // Texto: convertir a string y minúsculas para comparación insensible
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+            }
+            if (valA < valB) return sortAsc ? -1 : 1;
+            if (valA > valB) return sortAsc ? 1 : -1;
+            return 0;
+        });
+    }
+    
+    // Renderizar tabla (incluyendo ordenamiento)
     function renderTable() {
+        // Aplicar ordenamiento si está definido
+        if (sortColumn) {
+            sortPasajeros();
+        }
+        
         const container = document.getElementById('tableContainer');
         if (!container) return;
         if (pasajeros.length === 0) {
@@ -410,20 +470,26 @@
             document.getElementById('deleteBtn').disabled = true;
             return;
         }
-
-        let html = `</tr><thead><tr>
-            <th style="width: 35px"><input type="checkbox" id="selectAllCheckbox"></th>
-            <th>Apellido</th><th>Nombre</th><th>Tipo Doc</th><th>N° Documento</th>
-            <th>Desc. Doc</th><th>Sexo</th><th>Menor</th><th>Nacionalidad</th>
-            <th>Tripulante</th><th>Ocupa Butaca</th><th>Observaciones</th>
-        </tr></thead><tbody>`;
-
+        
+        // Definir las columnas a mostrar en la tabla (incluyendo id)
+        const tableColumns = ["id", "apellido", "nombre", "tipo_documento", "numero_documento", "descripcion_documento", "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca", "observaciones"];
+        
+        let html = `<table><thead><tr><th style="width: 35px"><input type="checkbox" id="selectAllCheckbox"></th>`;
+        
+        tableColumns.forEach(col => {
+            let displayName = columnDisplayNames[col] || col;
+            let indicator = (sortColumn === col) ? (sortAsc ? ' ▲' : ' ▼') : '';
+            html += `<th onclick="setSortColumn('${col}')">${displayName}<span class="sort-indicator">${indicator}</span></th>`;
+        });
+        html += `</tr></thead><tbody>`;
+        
         pasajeros.forEach((p, idx) => {
             const menorText = p.menor == 1 ? "Sí" : "No";
             const tripulanteText = p.tripulante == 1 ? "Sí" : "No";
             const ocupaText = p.ocupa_butaca == 1 ? "Sí" : "No";
             html += `<tr ondblclick="editPassenger(${idx})" style="cursor: pointer;">
                 <td><input type="checkbox" class="row-checkbox" data-idx="${idx}"></td>
+                <td>${escapeHtml(p.id)}</td>
                 <td>${escapeHtml(p.apellido || '')}</td>
                 <td>${escapeHtml(p.nombre || '')}</td>
                 <td>${escapeHtml(p.tipo_documento || '')}</td>
@@ -435,11 +501,11 @@
                 <td>${tripulanteText}</td>
                 <td>${ocupaText}</td>
                 <td>${escapeHtml(p.observaciones || '')}</td>
-             </tr>`;
+            </tr>`;
         });
         html += `</tbody></table>`;
         container.innerHTML = html;
-
+        
         const selectAll = document.getElementById('selectAllCheckbox');
         if (selectAll) {
             selectAll.addEventListener('change', (e) => {
@@ -452,7 +518,18 @@
         });
         toggleDeleteButton();
     }
-
+    
+    function setSortColumn(column) {
+        if (sortColumn === column) {
+            sortAsc = !sortAsc;
+        } else {
+            sortColumn = column;
+            sortAsc = true;
+        }
+        renderTable();
+    }
+    window.setSortColumn = setSortColumn;
+    
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -462,12 +539,12 @@
             return m;
         });
     }
-
+    
     function toggleDeleteButton() {
         const anyChecked = document.querySelectorAll('.row-checkbox:checked').length > 0;
         document.getElementById('deleteBtn').disabled = !anyChecked;
     }
-
+    
     function removeSelectedRows() {
         const checkboxes = document.querySelectorAll('.row-checkbox:checked');
         if (checkboxes.length === 0) return;
@@ -477,9 +554,12 @@
         for (let idx of indicesAEliminar) {
             pasajeros.splice(idx, 1);
         }
+        // Reasignar IDs correlativos
+        pasajeros.forEach((p, i) => { p.id = i + 1; });
+        nextId = pasajeros.length + 1;
         renderTable();
     }
-
+    
     function openAddPassengerModal() {
         editIndex = null;
         document.getElementById('formTitle').innerText = "Agregar Nuevo Pasajero";
@@ -488,7 +568,7 @@
         document.getElementById('addPassengerModal').style.display = "flex";
         handleTipoDocumentoChange();
     }
-
+    
     function editPassenger(index) {
         const p = pasajeros[index];
         if (!p) return;
@@ -511,7 +591,7 @@
         document.getElementById('addPassengerModal').style.display = "flex";
     }
     window.editPassenger = editPassenger;
-
+    
     function limpiarFormulario() {
         document.getElementById('apellido').value = '';
         document.getElementById('nombre').value = '';
@@ -526,12 +606,12 @@
         document.getElementById('observaciones').value = '';
         handleTipoDocumentoChange();
     }
-
+    
     function closeAddPassengerModal() {
         document.getElementById('addPassengerModal').style.display = "none";
         editIndex = null;
     }
-
+    
     function savePassenger() {
         const apellido = document.getElementById('apellido').value.trim();
         const nombre = document.getElementById('nombre').value.trim();
@@ -545,11 +625,12 @@
             const desc = document.getElementById('descripcion_documento').value.trim();
             if (!desc) { alert("Cuando selecciona OTROS, debe indicar una descripción del documento."); return; }
         }
-
+        
         let descripcion_documento = document.getElementById('descripcion_documento').value.trim();
         if (tipo_documento !== "OTROS") descripcion_documento = "";
-
+        
         const nuevoPasajero = {
+            id: editIndex !== null ? pasajeros[editIndex].id : nextId++,
             apellido: apellido,
             nombre: nombre,
             tipo_documento: tipo_documento,
@@ -562,7 +643,7 @@
             ocupa_butaca: parseInt(document.getElementById('ocupa_butaca').value),
             observaciones: document.getElementById('observaciones').value.trim()
         };
-
+        
         if (editIndex !== null) {
             pasajeros[editIndex] = nuevoPasajero;
         } else {
@@ -572,21 +653,16 @@
         closeAddPassengerModal();
     }
     window.savePassenger = savePassenger;
-
-    // ===================== LECTURA DE CSV CON SEPARADOR PUNTO Y COMA =====================
+    
+    // ===================== LECTURA DE CSV (SOLO CAMPOS ORIGINALES, SIN ID) =====================
     document.getElementById('csvFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(evt) {
             let text = evt.target.result;
-            // 1. Eliminar BOM
-            if (text.charCodeAt(0) === 0xFEFF) {
-                text = text.slice(1);
-            }
-            // 2. Normalizar saltos de línea a \n
-            text = text.replace(/\r\n?/g, '\n');
-            text = text.trim();
+            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+            text = text.replace(/\r\n?/g, '\n').trim();
             
             const lines = text.split('\n');
             if (lines.length < 2) {
@@ -594,19 +670,16 @@
                 return;
             }
             
-            // Leer cabeceras separadas por punto y coma
+            // Leer cabeceras (separador ;)
             let headers = lines[0].split(';').map(h => h.replace(/^[\s"']+|[\s"']+$/g, '').toLowerCase());
-            // Verificar que coincidan con las esperadas (al menos las principales)
-            const expectedHeaders = CSV_HEADERS.map(h => h.toLowerCase());
-            let compatible = true;
-            for (let i = 0; i < expectedHeaders.length; i++) {
-                if (headers[i] !== expectedHeaders[i]) {
-                    compatible = false;
-                    break;
-                }
+            // Verificar que las cabeceras coinciden con las esperadas (orden y nombres)
+            const expected = CSV_HEADERS.map(h => h.toLowerCase());
+            let ok = true;
+            for (let i = 0; i < expected.length; i++) {
+                if (headers[i] !== expected[i]) { ok = false; break; }
             }
-            if (!compatible) {
-                alert("El archivo CSV no tiene el formato esperado. Se esperaban estas columnas:\n" + CSV_HEADERS.join("; "));
+            if (!ok) {
+                alert(`Error: El archivo no tiene el formato esperado.\nSe esperaban: ${CSV_HEADERS.join("; ")}`);
                 return;
             }
             
@@ -614,54 +687,33 @@
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (line === "") continue;
-                
-                // Parsear respetando posibles comillas ( aunque en tu ejemplo no hay)
-                let valores = [];
-                let enComillas = false;
-                let campoActual = "";
-                for (let ch of line) {
-                    if (ch === '"') {
-                        enComillas = !enComillas;
-                    } else if (ch === ';' && !enComillas) {
-                        valores.push(campoActual.trim());
-                        campoActual = "";
-                    } else {
-                        campoActual += ch;
-                    }
-                }
-                valores.push(campoActual.trim());
-                
-                // Si por algún motivo el número de valores es menor, intentamos split simple
-                if (valores.length !== headers.length) {
-                    valores = line.split(';').map(v => v.replace(/^"|"$/g, '').trim());
-                }
-                
+                // Parseo simple por ; (sin comillas complejas por ahora)
+                let valores = line.split(';');
                 if (valores.length < headers.length) continue;
-                
                 let obj = {};
                 headers.forEach((h, idx) => {
                     let val = valores[idx] || "";
                     val = val.replace(/^"|"$/g, '');
                     obj[h] = val;
                 });
-                
-                // Convertir campos numéricos (menor, tripulante, ocupa_butaca)
+                // Convertir numéricos
                 obj.menor = (obj.menor == "1" || obj.menor === 1) ? 1 : 0;
                 obj.tripulante = (obj.tripulante == "1" || obj.tripulante === 1) ? 1 : 0;
                 obj.ocupa_butaca = (obj.ocupa_butaca == "1" || obj.ocupa_butaca === 1) ? 1 : 0;
-                
-                // Validar que tenga al menos apellido o nombre
                 if (obj.apellido || obj.nombre || obj.numero_documento) {
                     newPasajeros.push(obj);
                 }
             }
             
             if (newPasajeros.length > 0) {
+                // Asignar IDs internos correlativos
+                newPasajeros.forEach((p, idx) => { p.id = idx + 1; });
                 pasajeros = newPasajeros;
+                nextId = pasajeros.length + 1;
                 renderTable();
-                alert(`✅ Se cargaron ${newPasajeros.length} pasajeros correctamente.`);
+                alert(`✅ Se cargaron ${newPasajeros.length} pasajeros.`);
             } else {
-                alert("❌ No se encontraron datos válidos en el archivo.");
+                alert("No se encontraron datos válidos.");
             }
         };
         reader.onerror = () => alert("Error al leer el archivo.");
@@ -669,8 +721,8 @@
         e.target.value = '';
     });
     // =========================================================================
-
-    // Guardar CSV con separador punto y coma
+    
+    // Guardar CSV (sin la columna id, solo las columnas originales)
     function openSaveModal() {
         document.getElementById('saveModal').style.display = "flex";
     }
@@ -682,12 +734,10 @@
         if (!fileName) fileName = "lista_pasajeros";
         if (!fileName.endsWith(".csv")) fileName += ".csv";
         
-        // Generar contenido con separador ;
         const headersLine = CSV_HEADERS.join(";");
         const rows = pasajeros.map(p => {
             return CSV_HEADERS.map(col => {
                 let val = p[col] !== undefined ? p[col] : "";
-                // Si el valor contiene ; o " lo envolvemos entre comillas dobles
                 if (typeof val === "string" && (val.includes(';') || val.includes('"'))) {
                     val = `"${val.replace(/"/g, '""')}"`;
                 }
@@ -712,16 +762,16 @@
     window.openAddPassengerModal = openAddPassengerModal;
     window.closeAddPassengerModal = closeAddPassengerModal;
     window.removeSelectedRows = removeSelectedRows;
-
-    // Inicializar con datos de ejemplo (respetando el formato)
+    
+    // Inicializar con datos de ejemplo (incluyendo ID interno)
     function init() {
         cargarNacionalidades();
         if (pasajeros.length === 0) {
-            // Ejemplo basado en el formato que me diste
             pasajeros = [
-                { apellido:"gomez", nombre:"damian", tipo_documento:"DNI", descripcion_documento:"", numero_documento:"29987304", sexo:"M", menor:0, nacionalidad:"ARGENTINA", tripulante:0, ocupa_butaca:1, observaciones:"" },
-                { apellido:"Pérez", nombre:"Ana", tipo_documento:"Pasaporte", descripcion_documento:"", numero_documento:"AB123456", sexo:"F", menor:0, nacionalidad:"URUGUAY", tripulante:0, ocupa_butaca:1, observaciones:"Pasajera frecuente" }
+                { id:1, apellido:"gomez", nombre:"damian", tipo_documento:"DNI", descripcion_documento:"", numero_documento:"29987304", sexo:"M", menor:0, nacionalidad:"ARGENTINA", tripulante:0, ocupa_butaca:1, observaciones:"" },
+                { id:2, apellido:"Pérez", nombre:"Ana", tipo_documento:"Pasaporte", descripcion_documento:"", numero_documento:"AB123456", sexo:"F", menor:0, nacionalidad:"URUGUAY", tripulante:0, ocupa_butaca:1, observaciones:"Pasajera frecuente" }
             ];
+            nextId = 3;
             renderTable();
         }
     }
