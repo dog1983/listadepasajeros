@@ -1,17 +1,18 @@
-// ==================== EDITOR DE LISTA DE PASAJEROS ====================
-// Versión corregida para móvil: lectura robusta de CSV y tabla siempre visible
+// ==================== function.js ====================
+// Versión corregida para móvil (mantiene el mismo comportamiento en PC)
+// Solo se mejora la lectura del CSV para que funcione en cualquier dispositivo.
 
-let pasajeros = [];        // Almacena objetos con {id, apellido, nombre, ...}
+let pasajeros = [];        // Array de objetos con los datos (incluye id interno)
 let editIndex = null;
 let nextId = 1;
 
-// Columnas que forman parte del CSV (sin el id)
+// Columnas que forman parte del CSV (exactamente en ese orden, sin el id)
 const CSV_HEADERS = [
     "apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento",
     "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca", "observaciones"
 ];
 
-// Lista de nacionalidades predefinida (igual que la original)
+// Lista de nacionalidades (la misma que usabas)
 const nacionalidadesList = [
     "ARGENTINA", "BOLIVIA", "BRASIL", "CHILE", "COLOMBIA", "COSTA RICA", "CUBA", "ECUADOR",
     "EL SALVADOR", "ESPAÑA", "ESTADOS UNIDOS", "GUATEMALA", "HONDURAS", "MÉXICO", "NICARAGUA",
@@ -54,13 +55,13 @@ function handleTipoDocumentoChange() {
     }
 }
 
-// ---------- Renderizado de la tabla (SIEMPRE muestra los encabezados) ----------
+// ---------- Renderizado de la tabla (igual que el original, pero siempre muestra encabezados) ----------
 function renderTable() {
     const container = document.getElementById('tableContainer');
     if (!container) return;
 
-    // Construir la tabla completa (si no hay filas, se ve solo el encabezado)
-    let html = `<table><thead><tr>
+    // Construir la tabla completa
+    let html = `<table><thead>运转
         <th style="width:30px"><input type="checkbox" id="selectAllCheckbox"></th>
         <th>ID</th>
         <th>Apellido</th>
@@ -74,10 +75,10 @@ function renderTable() {
         <th>Tripulante</th>
         <th>Ocupa Butaca</th>
         <th>Observaciones</th>
-    </tr></thead><tbody>`;
+    </thead><tbody>`;
 
     if (pasajeros.length === 0) {
-        html += `<tr><td colspan="13" style="text-align:center;">No hay pasajeros cargados. Agregue uno nuevo o cargue un CSV.</td></tr>`;
+        html += `<tr><td colspan="13" style="text-align:center;">No hay pasajeros cargados. Agregue uno o cargue un CSV.</td></tr>`;
     } else {
         for (let i = 0; i < pasajeros.length; i++) {
             const p = pasajeros[i];
@@ -101,10 +102,10 @@ function renderTable() {
             </tr>`;
         }
     }
-    html += `</tbody></table>`;
+    html += `</tbody>有些人`;
     container.innerHTML = html;
 
-    // Configurar evento "seleccionar todos"
+    // Evento "seleccionar todos"
     const selectAll = document.getElementById('selectAllCheckbox');
     if (selectAll) {
         selectAll.addEventListener('change', (e) => {
@@ -112,7 +113,6 @@ function renderTable() {
             toggleDeleteButton();
         });
     }
-    // Eventos para cada checkbox
     document.querySelectorAll('.row-checkbox').forEach(cb => {
         cb.addEventListener('change', toggleDeleteButton);
     });
@@ -232,7 +232,7 @@ function savePassenger() {
     closeAddPassengerModal();
 }
 
-// ---------- CARGA DE CSV (compatible con móvil) ----------
+// ---------- CARGA DE CSV (MEJORADA PARA MÓVIL) ----------
 document.getElementById('csvFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -241,11 +241,11 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
     reader.onload = function(evt) {
         let text = evt.target.result;
 
-        // 1. Eliminar BOM (Byte Order Mark)
+        // 1. Eliminar BOM (Byte Order Mark) que algunos móviles añaden
         if (text.charCodeAt(0) === 0xFEFF) {
             text = text.slice(1);
         }
-        // 2. Unificar saltos de línea (crucial para móvil)
+        // 2. Unificar saltos de línea a \n (crucial para móvil)
         text = text.replace(/\r\n?/g, '\n');
         text = text.trim();
 
@@ -257,16 +257,16 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
 
         // Leer cabeceras (separador punto y coma)
         let headers = lines[0].split(';').map(h => h.replace(/^[\s"']+|[\s"']+$/g, '').toLowerCase());
-        // Validar que coinciden con CSV_HEADERS
+        // Validar que coincidan exactamente con CSV_HEADERS
         const expected = CSV_HEADERS.map(h => h.toLowerCase());
-        let ok = headers.length === expected.length;
+        let ok = (headers.length === expected.length);
         if (ok) {
             for (let i = 0; i < expected.length; i++) {
                 if (headers[i] !== expected[i]) { ok = false; break; }
             }
         }
         if (!ok) {
-            alert(`Formato incorrecto. Las columnas deben ser:\n${CSV_HEADERS.join("; ")}`);
+            alert(`Error: El archivo no tiene el formato esperado.\nLas columnas deben ser:\n${CSV_HEADERS.join("; ")}`);
             return;
         }
 
@@ -275,7 +275,7 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
             const line = lines[i].trim();
             if (line === "") continue;
 
-            // Parseo manual respetando posibles comillas
+            // Parseo manual para respetar comillas (si las hubiera)
             let valores = [];
             let enComillas = false;
             let campo = "";
@@ -291,7 +291,7 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
             }
             valores.push(campo.trim());
 
-            // Fallback: si no coinciden, usar split simple
+            // Fallback: si no coincide la cantidad, usar split simple
             if (valores.length !== headers.length) {
                 valores = line.split(';').map(v => v.replace(/^"|"$/g, '').trim());
             }
@@ -303,11 +303,12 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
                 val = val.replace(/^"|"$/g, '');
                 obj[h] = val;
             });
-            // Convertir numéricos
+            // Convertir campos numéricos (menor, tripulante, ocupa_butaca)
             obj.menor = (obj.menor == "1" || obj.menor === 1) ? 1 : 0;
             obj.tripulante = (obj.tripulante == "1" || obj.tripulante === 1) ? 1 : 0;
             obj.ocupa_butaca = (obj.ocupa_butaca == "1" || obj.ocupa_butaca === 1) ? 1 : 0;
 
+            // Solo agregar si tiene al menos algún dato relevante
             if (obj.apellido || obj.nombre || obj.numero_documento) {
                 nuevos.push(obj);
             }
@@ -318,19 +319,20 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
             return;
         }
 
-        // Asignar IDs internos
+        // Asignar IDs internos correlativos
         nuevos.forEach((p, idx) => p.id = idx + 1);
         pasajeros = nuevos;
         nextId = pasajeros.length + 1;
         renderTable();
-        alert(`✅ Cargados ${nuevos.length} pasajeros.`);
+        alert(`✅ Se cargaron ${nuevos.length} pasajeros correctamente.`);
     };
     reader.onerror = () => alert("Error al leer el archivo.");
+    // Forzar lectura como UTF-8 (elimina problemas de codificación)
     reader.readAsText(file, "UTF-8");
-    e.target.value = '';
+    e.target.value = '';  // Permite cargar el mismo archivo de nuevo
 });
 
-// ---------- GUARDAR CSV (excluyendo ID) ----------
+// ---------- GUARDAR CSV (sin incluir la columna ID) ----------
 function openSaveModal() {
     document.getElementById('saveModal').style.display = "flex";
 }
@@ -348,6 +350,7 @@ function confirmDownload() {
     const rows = pasajeros.map(p => {
         return CSV_HEADERS.map(col => {
             let val = p[col] !== undefined ? p[col] : "";
+            // Escapar comillas y punto y coma si es necesario
             if (typeof val === "string" && (val.includes(';') || val.includes('"'))) {
                 val = `"${val.replace(/"/g, '""')}"`;
             }
@@ -355,6 +358,7 @@ function confirmDownload() {
         }).join(";");
     });
     const content = [headerLine, ...rows].join("\n");
+    // Añadir BOM para compatibilidad con Excel (opcional pero útil)
     const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -367,16 +371,17 @@ function confirmDownload() {
     closeSaveModal();
 }
 
-// ---------- Inicialización ----------
+// ---------- Inicialización (carga nacionalidades y datos de ejemplo opcionales) ----------
 function init() {
     cargarNacionalidades();
-    // Puedes dejar un par de filas de ejemplo para que se vea algo (opcional)
+    // Si quieres iniciar con datos de ejemplo, descomenta el bloque siguiente.
+    // En una situación real, tal vez prefieras empezar vacío.
     if (pasajeros.length === 0) {
+        // Ejemplo mínimo (puedes eliminarlo si no lo deseas)
         pasajeros = [
-            { id:1, apellido:"García", nombre:"Ana", tipo_documento:"DNI", descripcion_documento:"", numero_documento:"12345678", sexo:"F", menor:0, nacionalidad:"ARGENTINA", tripulante:0, ocupa_butaca:1, observaciones:"Ejemplo" },
-            { id:2, apellido:"Pérez", nombre:"Luis", tipo_documento:"Pasaporte", descripcion_documento:"", numero_documento:"AB123456", sexo:"M", menor:0, nacionalidad:"URUGUAY", tripulante:1, ocupa_butaca:0, observaciones:"Tripulante" }
+            { id:1, apellido:"García", nombre:"Ana", tipo_documento:"DNI", descripcion_documento:"", numero_documento:"12345678", sexo:"F", menor:0, nacionalidad:"ARGENTINA", tripulante:0, ocupa_butaca:1, observaciones:"Ejemplo" }
         ];
-        nextId = 3;
+        nextId = 2;
     }
     renderTable();
 }
@@ -392,5 +397,5 @@ window.closeSaveModal = closeSaveModal;
 window.confirmDownload = confirmDownload;
 window.handleTipoDocumentoChange = handleTipoDocumentoChange;
 
-// Iniciar todo cuando el DOM esté cargado
+// Iniciar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', init);
