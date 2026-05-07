@@ -1,401 +1,706 @@
-// ==================== function.js ====================
-// Versión corregida para móvil (mantiene el mismo comportamiento en PC)
-// Solo se mejora la lectura del CSV para que funcione en cualquier dispositivo.
+// Variables globales
+let tableData = [];
+let editingIndex = null;
+let documentNumbersMap = new Map();
+let currentSortColumn = null;
+let sortDirection = 1; // 1 para ascendente, -1 para descendente
 
-let pasajeros = [];        // Array de objetos con los datos (incluye id interno)
-let editIndex = null;
-let nextId = 1;
-
-// Columnas que forman parte del CSV (exactamente en ese orden, sin el id)
-const CSV_HEADERS = [
-    "apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento",
-    "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca", "observaciones"
+const defaultHeader = [
+  "apellido",
+  "nombre",
+  "tipo_documento",
+  "descripcion_documento",
+  "numero_documento",
+  "sexo",
+  "menor",
+  "nacionalidad",
+  "tripulante",
+  "ocupa_butaca",
+  "observaciones"
 ];
 
-// Lista de nacionalidades (la misma que usabas)
-const nacionalidadesList = [
-    "ARGENTINA", "BOLIVIA", "BRASIL", "CHILE", "COLOMBIA", "COSTA RICA", "CUBA", "ECUADOR",
-    "EL SALVADOR", "ESPAÑA", "ESTADOS UNIDOS", "GUATEMALA", "HONDURAS", "MÉXICO", "NICARAGUA",
-    "PANAMÁ", "PARAGUAY", "PERÚ", "PUERTO RICO", "REPÚBLICA DOMINICANA", "URUGUAY", "VENEZUELA",
-    "ALEMANIA", "FRANCIA", "ITALIA", "JAPÓN", "CANADÁ", "CHINA", "OTRO"
+// Columnas que se mostrarán en la tabla principal
+const visibleColumns = ["apellido", "nombre", "numero_documento", "observaciones"];
+
+// Mapeo de nombres de columnas para mostrar en la tabla
+const columnDisplayNames = {
+  "numero_documento": "N°",
+  "observaciones": "Obs."
+};
+
+// Headers requeridos para validación al cargar CSV
+const requiredHeaders = [
+  "apellido",
+  "nombre", 
+  "tipo_documento",
+  "descripcion_documento",
+  "numero_documento",
+  "sexo",
+  "menor",
+  "nacionalidad",
+  "tripulante",
+  "ocupa_butaca"
 ];
 
-// ---------- Funciones auxiliares ----------
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
+const validValues = {
+  tipo_documento: ["DNI", "Pasaporte", "OTROS"],
+  sexo: ["F", "M"],
+  menor: ["0", "1"],
+  nacionalidad: ["Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Anguilla", "Antártida", "Antigua y Barbuda", "Antillas Holandesas", "Arabia Saudí", "Argelia", "Argentina", "Armenia", "Aruba", "ARY Macedonia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bahréin", "Bangladesh", "Barbados", "Bélgica", "Belice", "Benin", "Bermudas", "Bhután", "Bielorrusia", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticana", "Colombia", "Comoras", "Congo", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Gibraltar", "Granada", "Grecia", "Groenlandia", "Guadalupe", "Guam", "Guatemala", "Guayana Francesa", "Guinea", "Guinea Ecuatorial", "Guinea-Bissau", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irán", "Iraq", "Irlanda", "Isla Bouvet", "Isla de Navidad", "Isla Norfolk", "Islandia", "Islas Caimán", "Islas Cocos", "Islas Cook", "Islas Feroe", "Islas Georgias del Sur y Sandwich del Sur", "Islas Gland", "Islas Heard y McDonald", "Islas Malvinas", "Islas Marianas del Norte", "Islas Marshall", "Islas Pitcairn", "Islas Salomón", "Islas Turcas y Caicos", "Islas ultramarinas de Estados Unidos", "Islas Vírgenes Británicas", "Islas Vírgenes de los Estados Unidos", "Israel", "Italia", "Jamaica", "Japán", "Jordania", "Kazajstán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesotho", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macao", "Madagascar", "Malasia", "Malawi", "Maldivas", "Malí", "Malta", "Marruecos", "Martinica", "Mauricio", "Mauritania", "Mayotte", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montserrat", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Niue", "Noruega", "Nueva Caledonia", "Nueva Zelenda", "Omán", "Países Bajos", "Pakistán", "Palau", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polinesia Francesa", "Polonia", "Portugal", "Puerto Rico", "Qatar", "Reino Unido", "República Centroafricana", "República Checa", "República Democrática del Congo", "República Dominicana", "Reunión", "Ruanda", "Rumania", "Rusia", "Sahara Occidental", "Samoa", "Samoa Americana", "San Cristóbal y Nevis", "San Marino", "San Pedro y Miquelón", "San Vicente y las Granadinas", "Santa Helena", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia y Montenegro", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Suazilandia", "Sudáfrica", "Sudán", "Suecia", "Suiza", "Surinam", "Svalbard y Jan Mayen", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Territorio Británico del Océano Índico", "Territorios Australes Franceses", "Timor Oriental", "Togo", "Tokelau", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Wallis y Futuna", "Yemen", "Yibuti", "Zambia", "Zimbabue"].sort((a, b) => a.localeCompare(b)),
+  tripulante: ["0", "1"],
+  ocupa_butaca: ["0", "1"]
+};
 
-function cargarNacionalidades() {
-    const select = document.getElementById('nacionalidad');
-    if (!select) return;
-    select.innerHTML = '';
-    nacionalidadesList.forEach(pais => {
-        const option = document.createElement('option');
-        option.value = pais;
-        option.textContent = pais;
-        select.appendChild(option);
-    });
-    select.value = "ARGENTINA";
-}
+const defaults = {
+  tipo_documento: "DNI",
+  sexo: "F",
+  menor: "0",
+  nacionalidad: "Argentina",
+  tripulante: "0",
+  ocupa_butaca: "1",
+  observaciones: ""
+};
 
-function handleTipoDocumentoChange() {
-    const tipo = document.getElementById('tipo_documento').value;
-    const descGroup = document.getElementById('descripcion_documento_group');
-    if (tipo === "OTROS") {
-        descGroup.style.display = "flex";
-    } else {
-        descGroup.style.display = "none";
-        document.getElementById('descripcion_documento').value = "";
-    }
-}
-
-// ---------- Renderizado de la tabla (igual que el original, pero siempre muestra encabezados) ----------
-function renderTable() {
-    const container = document.getElementById('tableContainer');
-    if (!container) return;
-
-    // Construir la tabla completa
-    let html = `<table><thead>运转
-        <th style="width:30px"><input type="checkbox" id="selectAllCheckbox"></th>
-        <th>ID</th>
-        <th>Apellido</th>
-        <th>Nombre</th>
-        <th>Tipo Doc</th>
-        <th>N° Documento</th>
-        <th>Desc. Doc</th>
-        <th>Sexo</th>
-        <th>Menor</th>
-        <th>Nacionalidad</th>
-        <th>Tripulante</th>
-        <th>Ocupa Butaca</th>
-        <th>Observaciones</th>
-    </thead><tbody>`;
-
-    if (pasajeros.length === 0) {
-        html += `<tr><td colspan="13" style="text-align:center;">No hay pasajeros cargados. Agregue uno o cargue un CSV.</td></tr>`;
-    } else {
-        for (let i = 0; i < pasajeros.length; i++) {
-            const p = pasajeros[i];
-            const menorText = p.menor == 1 ? "Sí" : "No";
-            const tripulanteText = p.tripulante == 1 ? "Sí" : "No";
-            const ocupaText = p.ocupa_butaca == 1 ? "Sí" : "No";
-            html += `<tr ondblclick="editPassenger(${i})" style="cursor:pointer;">
-                <td><input type="checkbox" class="row-checkbox" data-idx="${i}"></td>
-                <td>${escapeHtml(p.id)}</td>
-                <td>${escapeHtml(p.apellido || '')}</td>
-                <td>${escapeHtml(p.nombre || '')}</td>
-                <td>${escapeHtml(p.tipo_documento || '')}</td>
-                <td>${escapeHtml(p.numero_documento || '')}</td>
-                <td>${escapeHtml(p.descripcion_documento || '')}</td>
-                <td>${escapeHtml(p.sexo || '')}</td>
-                <td>${menorText}</td>
-                <td>${escapeHtml(p.nacionalidad || '')}</td>
-                <td>${tripulanteText}</td>
-                <td>${ocupaText}</td>
-                <td>${escapeHtml(p.observaciones || '')}</td>
-            </tr>`;
-        }
-    }
-    html += `</tbody>有些人`;
-    container.innerHTML = html;
-
-    // Evento "seleccionar todos"
-    const selectAll = document.getElementById('selectAllCheckbox');
-    if (selectAll) {
-        selectAll.addEventListener('change', (e) => {
-            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
-            toggleDeleteButton();
-        });
-    }
-    document.querySelectorAll('.row-checkbox').forEach(cb => {
-        cb.addEventListener('change', toggleDeleteButton);
-    });
-    toggleDeleteButton();
-}
-
-function toggleDeleteButton() {
-    const anyChecked = document.querySelectorAll('.row-checkbox:checked').length > 0;
-    const delBtn = document.getElementById('deleteBtn');
-    if (delBtn) delBtn.disabled = !anyChecked;
-}
-
-// ---------- Eliminar seleccionados ----------
-function removeSelectedRows() {
-    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
-    if (checkboxes.length === 0) return;
-    if (!confirm(`¿Eliminar ${checkboxes.length} pasajero(s) seleccionado(s)?`)) return;
-    const indices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.idx)).sort((a,b)=>b-a);
-    for (let idx of indices) {
-        pasajeros.splice(idx, 1);
-    }
-    // Reasignar IDs internos
-    pasajeros.forEach((p, i) => p.id = i + 1);
-    nextId = pasajeros.length + 1;
+// Inicialización
+window.onload = function() {
+  if (tableData.length === 0) {
+    tableData = [defaultHeader];
     renderTable();
+  }
+  
+  // Poblar nacionalidades
+  populateNationalities();
+  
+  // Configurar evento para tipo_documento
+  document.getElementById('tipo_documento').addEventListener('change', handleTipoDocumentoChange);
+  
+  // Configurar evento para el input de archivo
+  document.getElementById('csvFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    
+    if (!file) {
+      return;
+    }
+    
+    // Validar extensión
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Por favor, seleccione un archivo CSV');
+      this.value = ''; // Limpiar input
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      try {
+        let text = event.target.result;
+        
+        // ----- INICIO DE LAS CORRECCIONES PARA MÓVIL -----
+        // 1. Eliminar BOM (Byte Order Mark) si existe
+        if (text.charCodeAt(0) === 0xFEFF) {
+          text = text.slice(1);
+        }
+        // 2. Normalizar saltos de línea: convertir \r\n o \r a \n
+        text = text.replace(/\r\n?/g, '\n');
+        // ----- FIN DE LAS CORRECCIONES -----
+        
+        const parsedData = parseCSV(text);
+        
+        // Si parseCSV devuelve solo el header por error, no actualizar
+        if (parsedData.length === 1 && parsedData[0] === defaultHeader) {
+          // Ya mostró el mensaje de error en parseCSV
+          e.target.value = ''; // Limpiar input
+          return;
+        }
+        
+        tableData = parsedData;
+        renderTable();
+        
+      } catch (error) {
+        console.error('Error al procesar el archivo:', error);
+        alert('Error al procesar el archivo CSV. Verifique el formato.');
+        e.target.value = ''; // Limpiar input
+      }
+    };
+    
+    reader.onerror = function() {
+      alert('Error al leer el archivo');
+      e.target.value = ''; // Limpiar input
+    };
+    
+    reader.readAsText(file, 'UTF-8');
+  });
+};
+
+// Función para validar headers del CSV
+function validateCSVHeaders(headers) {
+  // Convertir headers del archivo a minúsculas para comparación insensible
+  const lowerHeaders = headers.map(h => h.trim().toLowerCase());
+  
+  const errors = [];
+  const missingHeaders = [];
+  
+  // Validar cada header requerido
+  requiredHeaders.forEach(requiredHeader => {
+    const lowerRequired = requiredHeader.toLowerCase();
+    
+    // Verificar si el header existe (insensible a mayúsculas)
+    if (!lowerHeaders.includes(lowerRequired)) {
+      missingHeaders.push(requiredHeader);
+    }
+  });
+  
+  if (missingHeaders.length > 0) {
+    errors.push(`Columnas faltantes: ${missingHeaders.join(', ')}`);
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors: errors,
+    missingHeaders: missingHeaders
+  };
 }
 
-// ---------- Agregar / Editar ----------
+function parseCSV(text) {
+  // Separar líneas y celdas (el texto ya viene normalizado con \n)
+  const rows = text.trim().split('\n').map(row => {
+    return row.split(';').map(cell => cell.trim());
+  });
+  
+  if (rows.length === 0) {
+    alert('El archivo está vacío');
+    return [defaultHeader];
+  }
+  
+  let header = rows[0];
+  let body = rows.slice(1);
+  
+  // Validar headers
+  const validation = validateCSVHeaders(header);
+  if (!validation.isValid) {
+    const errorMessage = `El listado que intenta abrir tiene un formato incorrecto!\nNo coinciden las columnas.\n\nErrores:\n- ${validation.errors.join('\n- ')}\n\nColumnas requeridas (en orden):\n1. apellido\n2. nombre\n3. tipo_documento\n4. descripcion_documento\n5. numero_documento\n6. sexo\n7. menor\n8. nacionalidad\n9. tripulante\n10. ocupa_butaca\n\nColumnas opcionales:\n11. observaciones\n\nColumnas encontradas:\n${header.map((h, i) => `${i+1}. ${h}`).join('\n')}`;
+    
+    alert(errorMessage);
+    return [defaultHeader];
+  }
+  
+  // Verificar si tiene observaciones (opcional)
+  const lowerCaseHeader = header.map(h => h.toLowerCase());
+  const hasObservaciones = lowerCaseHeader.includes('observaciones');
+  
+  // Si no tiene observaciones, agregarla
+  if (!hasObservaciones) {
+    header.push('observaciones');
+    body.forEach(row => row.push('')); // Valor por defecto vacío
+  }
+  
+  // Asegurar que todas las filas tengan la misma longitud
+  const expectedLength = header.length;
+  body = body.map(row => {
+    if (row.length < expectedLength) {
+      // Agregar celdas vacías si faltan
+      return [...row, ...Array(expectedLength - row.length).fill('')];
+    } else if (row.length > expectedLength) {
+      // Truncar si hay celdas extras (caso de punto y coma al final)
+      return row.slice(0, expectedLength);
+    }
+    return row;
+  });
+  
+  return [header, ...body];
+}
+
+function populateNationalities() {
+  const select = document.getElementById('nacionalidad');
+  
+  if (!select) {
+    console.error('Elemento #nacionalidad no encontrado');
+    return;
+  }
+  
+  // Limpiar select
+  select.innerHTML = '';
+  
+  // Agregar opción por defecto primero
+  const defaultOption = document.createElement('option');
+  defaultOption.value = defaults.nacionalidad;
+  defaultOption.textContent = defaults.nacionalidad;
+  defaultOption.selected = true;
+  select.appendChild(defaultOption);
+  
+  // Agregar todos los países ordenados
+  validValues.nacionalidad.forEach(country => {
+    // No agregar el país por defecto otra vez
+    if (country !== defaults.nacionalidad) {
+      const option = document.createElement('option');
+      option.value = country;
+      option.textContent = country;
+      select.appendChild(option);
+    }
+  });
+}
+
+// Funciones para el modal de agregar/editar pasajero
 function openAddPassengerModal() {
-    editIndex = null;
-    document.getElementById('formTitle').innerText = "Agregar Nuevo Pasajero";
-    document.getElementById('savePassengerBtn').innerText = "Agregar Pasajero";
-    limpiarFormulario();
-    document.getElementById('addPassengerModal').style.display = "flex";
-    handleTipoDocumentoChange();
+  editingIndex = null;
+  document.getElementById('formTitle').textContent = 'Agregar Nuevo Pasajero';
+  document.getElementById('savePassengerBtn').textContent = 'Agregar Pasajero';
+  
+  // Resetear todos los campos
+  document.getElementById('apellido').value = '';
+  document.getElementById('nombre').value = '';
+  document.getElementById('tipo_documento').value = defaults.tipo_documento;
+  document.getElementById('descripcion_documento').value = '';
+  document.getElementById('numero_documento').value = '';
+  document.getElementById('sexo').value = defaults.sexo;
+  document.getElementById('menor').value = defaults.menor;
+  document.getElementById('nacionalidad').value = defaults.nacionalidad;
+  document.getElementById('tripulante').value = defaults.tripulante;
+  document.getElementById('ocupa_butaca').value = defaults.ocupa_butaca;
+  document.getElementById('observaciones').value = defaults.observaciones;
+  
+  // Ocultar descripcion_documento inicialmente (solo se muestra para OTROS)
+  document.getElementById('descripcion_documento_group').style.display = 'none';
+  
+  document.getElementById('addPassengerModal').style.display = 'block';
+  document.getElementById('apellido').focus();
 }
 
-function editPassenger(index) {
-    const p = pasajeros[index];
-    if (!p) return;
-    editIndex = index;
-    document.getElementById('formTitle').innerText = "Editar Pasajero";
-    document.getElementById('savePassengerBtn').innerText = "Actualizar Pasajero";
-    document.getElementById('apellido').value = p.apellido || '';
-    document.getElementById('nombre').value = p.nombre || '';
-    document.getElementById('tipo_documento').value = p.tipo_documento || 'DNI';
-    document.getElementById('numero_documento').value = p.numero_documento || '';
-    document.getElementById('descripcion_documento').value = p.descripcion_documento || '';
-    document.getElementById('sexo').value = p.sexo || 'F';
-    document.getElementById('menor').value = p.menor !== undefined ? p.menor : 0;
-    document.getElementById('nacionalidad').value = p.nacionalidad || 'ARGENTINA';
-    document.getElementById('tripulante').value = p.tripulante !== undefined ? p.tripulante : 0;
-    document.getElementById('ocupa_butaca').value = p.ocupa_butaca !== undefined ? p.ocupa_butaca : 0;
-    document.getElementById('observaciones').value = p.observaciones || '';
-    handleTipoDocumentoChange();
-    document.getElementById('addPassengerModal').style.display = "flex";
-}
-
-function limpiarFormulario() {
-    document.getElementById('apellido').value = '';
-    document.getElementById('nombre').value = '';
-    document.getElementById('tipo_documento').value = 'DNI';
-    document.getElementById('numero_documento').value = '';
-    document.getElementById('descripcion_documento').value = '';
-    document.getElementById('sexo').value = 'F';
-    document.getElementById('menor').value = '0';
-    document.getElementById('nacionalidad').value = 'ARGENTINA';
-    document.getElementById('tripulante').value = '0';
-    document.getElementById('ocupa_butaca').value = '0';
-    document.getElementById('observaciones').value = '';
-    handleTipoDocumentoChange();
+function editRow(rowIndex) {
+  // Deseleccionar filas al editar
+  document.querySelectorAll('.selected-row').forEach(row => row.classList.remove('selected-row'));
+  updateDeleteButtonState();
+  
+  editingIndex = rowIndex;
+  const rowData = tableData[rowIndex];
+  
+  document.getElementById('formTitle').textContent = 'Editar Pasajero';
+  document.getElementById('savePassengerBtn').textContent = 'Guardar Cambios';
+  
+  document.getElementById('apellido').value = rowData[0] || '';
+  document.getElementById('nombre').value = rowData[1] || '';
+  document.getElementById('tipo_documento').value = rowData[2] || defaults.tipo_documento;
+  document.getElementById('descripcion_documento').value = rowData[3] || ''; // descripcion_documento
+  document.getElementById('numero_documento').value = rowData[4] || '';
+  document.getElementById('sexo').value = rowData[5] || defaults.sexo;
+  document.getElementById('menor').value = rowData[6] || defaults.menor;
+  document.getElementById('nacionalidad').value = rowData[7] || defaults.nacionalidad;
+  document.getElementById('tripulante').value = rowData[8] || defaults.tripulante;
+  document.getElementById('ocupa_butaca').value = rowData[9] || defaults.ocupa_butaca;
+  document.getElementById('observaciones').value = rowData[10] || defaults.observaciones;
+  
+  // Mostrar/ocultar descripcion_documento según tipo_documento
+  const tipoDoc = rowData[2] || defaults.tipo_documento;
+  if (tipoDoc === 'OTROS') {
+    document.getElementById('descripcion_documento_group').style.display = 'block';
+  } else {
+    document.getElementById('descripcion_documento_group').style.display = 'none';
+  }
+  
+  document.getElementById('addPassengerModal').style.display = 'block';
+  document.getElementById('apellido').focus();
 }
 
 function closeAddPassengerModal() {
-    document.getElementById('addPassengerModal').style.display = "none";
-    editIndex = null;
+  document.getElementById('addPassengerModal').style.display = 'none';
+  editingIndex = null;
+}
+
+// Función para manejar cambio en tipo_documento
+function handleTipoDocumentoChange() {
+  const tipoDocumento = document.getElementById('tipo_documento').value;
+  const descripcionGroup = document.getElementById('descripcion_documento_group');
+  
+  if (tipoDocumento === 'OTROS') {
+    descripcionGroup.style.display = 'block';
+    // Enfocar el campo de descripción después de un breve delay
+    setTimeout(() => {
+      document.getElementById('descripcion_documento').focus();
+    }, 100);
+  } else {
+    descripcionGroup.style.display = 'none';
+    document.getElementById('descripcion_documento').value = '';
+  }
 }
 
 function savePassenger() {
-    const apellido = document.getElementById('apellido').value.trim();
-    const nombre = document.getElementById('nombre').value.trim();
-    const tipo = document.getElementById('tipo_documento').value;
-    const numero = document.getElementById('numero_documento').value.trim();
+  const tipoDocumento = document.getElementById('tipo_documento').value;
+  const descripcionDocumento = document.getElementById('descripcion_documento').value.trim();
+  
+  const newRow = [
+    document.getElementById('apellido').value.trim(),
+    document.getElementById('nombre').value.trim(),
+    tipoDocumento,
+    tipoDocumento === 'OTROS' ? descripcionDocumento : '', // descripcion_documento solo para OTROS
+    document.getElementById('numero_documento').value.trim(),
+    document.getElementById('sexo').value || defaults.sexo,
+    document.getElementById('menor').value || defaults.menor,
+    document.getElementById('nacionalidad').value || defaults.nacionalidad,
+    document.getElementById('tripulante').value || defaults.tripulante,
+    document.getElementById('ocupa_butaca').value || defaults.ocupa_butaca,
+    document.getElementById('observaciones').value.trim() || defaults.observaciones
+  ];
 
-    if (!apellido) { alert("El apellido es obligatorio."); return; }
-    if (!nombre) { alert("El nombre es obligatorio."); return; }
-    if (!numero) { alert("El número de documento es obligatorio."); return; }
-    if (tipo === "OTROS") {
-        const desc = document.getElementById('descripcion_documento').value.trim();
-        if (!desc) { alert("Debe indicar una descripción del documento."); return; }
-    }
+  // Validación básica (solo campos obligatorios)
+  if (!newRow[0] || !newRow[1] || !newRow[4]) {
+    alert('Por favor complete los campos obligatorios (Apellido, Nombre y Número de Documento)');
+    return;
+  }
 
-    let descDoc = document.getElementById('descripcion_documento').value.trim();
-    if (tipo !== "OTROS") descDoc = "";
-
-    const nuevo = {
-        id: editIndex !== null ? pasajeros[editIndex].id : nextId++,
-        apellido: apellido,
-        nombre: nombre,
-        tipo_documento: tipo,
-        numero_documento: numero,
-        descripcion_documento: descDoc,
-        sexo: document.getElementById('sexo').value,
-        menor: parseInt(document.getElementById('menor').value),
-        nacionalidad: document.getElementById('nacionalidad').value,
-        tripulante: parseInt(document.getElementById('tripulante').value),
-        ocupa_butaca: parseInt(document.getElementById('ocupa_butaca').value),
-        observaciones: document.getElementById('observaciones').value.trim()
-    };
-
-    if (editIndex !== null) {
-        pasajeros[editIndex] = nuevo;
-    } else {
-        pasajeros.push(nuevo);
-    }
-    renderTable();
-    closeAddPassengerModal();
+  if (tableData.length === 0) tableData = [defaultHeader];
+  
+  if (editingIndex !== null) {
+    // Modo edición
+    tableData[editingIndex] = newRow;
+  } else {
+    // Modo creación
+    tableData.push(newRow);
+  }
+  
+  renderTable();
+  closeAddPassengerModal();
 }
 
-// ---------- CARGA DE CSV (MEJORADA PARA MÓVIL) ----------
-document.getElementById('csvFile').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-        let text = evt.target.result;
-
-        // 1. Eliminar BOM (Byte Order Mark) que algunos móviles añaden
-        if (text.charCodeAt(0) === 0xFEFF) {
-            text = text.slice(1);
-        }
-        // 2. Unificar saltos de línea a \n (crucial para móvil)
-        text = text.replace(/\r\n?/g, '\n');
-        text = text.trim();
-
-        const lines = text.split('\n');
-        if (lines.length < 2) {
-            alert("Archivo vacío o sin datos.");
-            return;
-        }
-
-        // Leer cabeceras (separador punto y coma)
-        let headers = lines[0].split(';').map(h => h.replace(/^[\s"']+|[\s"']+$/g, '').toLowerCase());
-        // Validar que coincidan exactamente con CSV_HEADERS
-        const expected = CSV_HEADERS.map(h => h.toLowerCase());
-        let ok = (headers.length === expected.length);
-        if (ok) {
-            for (let i = 0; i < expected.length; i++) {
-                if (headers[i] !== expected[i]) { ok = false; break; }
-            }
-        }
-        if (!ok) {
-            alert(`Error: El archivo no tiene el formato esperado.\nLas columnas deben ser:\n${CSV_HEADERS.join("; ")}`);
-            return;
-        }
-
-        const nuevos = [];
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line === "") continue;
-
-            // Parseo manual para respetar comillas (si las hubiera)
-            let valores = [];
-            let enComillas = false;
-            let campo = "";
-            for (let ch of line) {
-                if (ch === '"') {
-                    enComillas = !enComillas;
-                } else if (ch === ';' && !enComillas) {
-                    valores.push(campo.trim());
-                    campo = "";
-                } else {
-                    campo += ch;
-                }
-            }
-            valores.push(campo.trim());
-
-            // Fallback: si no coincide la cantidad, usar split simple
-            if (valores.length !== headers.length) {
-                valores = line.split(';').map(v => v.replace(/^"|"$/g, '').trim());
-            }
-            if (valores.length < headers.length) continue;
-
-            let obj = {};
-            headers.forEach((h, idx) => {
-                let val = valores[idx] || "";
-                val = val.replace(/^"|"$/g, '');
-                obj[h] = val;
-            });
-            // Convertir campos numéricos (menor, tripulante, ocupa_butaca)
-            obj.menor = (obj.menor == "1" || obj.menor === 1) ? 1 : 0;
-            obj.tripulante = (obj.tripulante == "1" || obj.tripulante === 1) ? 1 : 0;
-            obj.ocupa_butaca = (obj.ocupa_butaca == "1" || obj.ocupa_butaca === 1) ? 1 : 0;
-
-            // Solo agregar si tiene al menos algún dato relevante
-            if (obj.apellido || obj.nombre || obj.numero_documento) {
-                nuevos.push(obj);
-            }
-        }
-
-        if (nuevos.length === 0) {
-            alert("No se encontraron datos válidos en el archivo CSV.");
-            return;
-        }
-
-        // Asignar IDs internos correlativos
-        nuevos.forEach((p, idx) => p.id = idx + 1);
-        pasajeros = nuevos;
-        nextId = pasajeros.length + 1;
-        renderTable();
-        alert(`✅ Se cargaron ${nuevos.length} pasajeros correctamente.`);
-    };
-    reader.onerror = () => alert("Error al leer el archivo.");
-    // Forzar lectura como UTF-8 (elimina problemas de codificación)
-    reader.readAsText(file, "UTF-8");
-    e.target.value = '';  // Permite cargar el mismo archivo de nuevo
-});
-
-// ---------- GUARDAR CSV (sin incluir la columna ID) ----------
+// Funciones para el modal de guardar
 function openSaveModal() {
-    document.getElementById('saveModal').style.display = "flex";
+  document.getElementById('saveModal').style.display = 'flex';
+  document.getElementById('fileNameInputModal').focus();
 }
 
 function closeSaveModal() {
-    document.getElementById('saveModal').style.display = "none";
+  document.getElementById('saveModal').style.display = 'none';
+}
+
+// Función para obtener el índice de una columna en los datos
+function getColumnIndex(columnName) {
+  const header = tableData[0];
+  return header.indexOf(columnName);
+}
+
+// Renderizado de la tabla - MODIFICADO: Sin anchos fijos
+function renderTable() {
+  const container = document.getElementById('tableContainer');
+  const table = document.createElement('table');
+  container.innerHTML = '';
+
+  if (tableData.length === 0) return;
+
+  const header = tableData[0];
+  const body = tableData.slice(1);
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+
+  // Sin columna "Sel", solo "#"
+  const thNum = document.createElement('th');
+  thNum.textContent = '#';
+  thNum.style.textAlign = 'center';
+  headRow.appendChild(thNum);
+  
+  // Solo mostramos las columnas visibles
+  visibleColumns.forEach(columnName => {
+    const columnIndex = getColumnIndex(columnName);
+    if (columnIndex === -1) return; // Si la columna no existe, saltar
+    
+    const th = document.createElement('th');
+    // Usar nombre abreviado para mostrar
+    th.textContent = columnDisplayNames[columnName] || columnName;
+    th.title = getHeaderTooltip(columnName);
+    th.dataset.columnIndex = columnIndex;
+    
+    th.addEventListener('click', () => sortTableByColumn(columnIndex));
+    if (currentSortColumn === columnIndex) {
+      th.style.backgroundColor = '#d4e6f1';
+      th.innerHTML += sortDirection === 1 ? ' ↑' : ' ↓';
+    }
+    headRow.appendChild(th);
+  });
+
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  documentNumbersMap.clear();
+  let invalidCellsCount = 0;
+
+  body.forEach((row, rowIndex) => {
+    const tr = document.createElement('tr');
+    tr.classList.add('editable-row');
+    if (editingIndex === rowIndex + 1) tr.classList.add('editing');
+    
+    // Eventos para selección y edición
+    tr.addEventListener('click', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+        return;
+      }
+      
+      if (tr.classList.contains('selected-row')) {
+        tr.classList.remove('selected-row');
+      } else {
+        tr.classList.add('selected-row');
+      }
+      
+      updateDeleteButtonState();
+    });
+    
+    tr.addEventListener('dblclick', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+        return;
+      }
+      editRow(rowIndex + 1);
+    });
+
+    // Celda para número de fila
+    const tdNum = document.createElement('td');
+    tdNum.textContent = rowIndex + 1;
+    tdNum.style.textAlign = 'center';
+    tdNum.style.fontWeight = 'bold';
+    tr.appendChild(tdNum);
+
+    let tabIndexCounter = (rowIndex * 100) + 1;
+
+    // Celdas para columnas visibles
+    visibleColumns.forEach(columnName => {
+      const columnIndex = getColumnIndex(columnName);
+      if (columnIndex === -1) return;
+      
+      const td = document.createElement('td');
+      const cellValue = row[columnIndex]?.trim() || '';
+
+      // Registrar número de documento para validar duplicados
+      if (columnName === 'numero_documento') {
+        if (documentNumbersMap.has(cellValue)) {
+          documentNumbersMap.get(cellValue).push(rowIndex + 1);
+        } else {
+          documentNumbersMap.set(cellValue, [rowIndex + 1]);
+        }
+      }
+
+      // Contenedor para el contenido de la celda
+      const cellContent = document.createElement('div');
+      cellContent.style.display = 'flex';
+      cellContent.style.flexDirection = 'column';
+      cellContent.style.width = '100%';
+
+      if (validValues[columnName]) {
+        const select = document.createElement('select');
+        select.setAttribute('tabindex', tabIndexCounter++);
+        select.style.width = '100%';
+        select.style.minWidth = '60px'; // Ancho mínimo
+        select.style.boxSizing = 'border-box';
+        
+        const options = validValues[columnName];
+
+        options.forEach(value => {
+          const option = document.createElement('option');
+          option.value = value;
+          
+          if (columnName === 'sexo') {
+            option.textContent = value === 'F' ? 'F' : 'M';
+          } else if (columnName === 'menor') {
+            option.textContent = value === '1' ? 'Sí' : 'No';
+          } else if (["tripulante", "ocupa_butaca"].includes(columnName)) {
+            option.textContent = value === "1" ? "Sí" : "No";
+          } else {
+            option.textContent = value;
+          }
+          
+          if (cellValue.toUpperCase() === value.toUpperCase()) option.selected = true;
+          select.appendChild(option);
+        });
+
+        select.addEventListener('change', e => {
+          tableData[rowIndex + 1][columnIndex] = e.target.value;
+          renderTable();
+        });
+
+        select.addEventListener('click', e => e.stopPropagation());
+
+        cellContent.appendChild(select);
+      } else {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.setAttribute('tabindex', tabIndexCounter++);
+        input.value = cellValue;
+        input.style.width = '100%';
+        input.style.minWidth = '60px'; // Ancho mínimo
+        input.style.boxSizing = 'border-box';
+
+        input.addEventListener('input', e => {
+          tableData[rowIndex + 1][columnIndex] = e.target.value.trim();
+        });
+
+        input.addEventListener('blur', () => renderTable());
+        input.addEventListener('click', e => e.stopPropagation());
+
+        cellContent.appendChild(input);
+      }
+
+      // Validación por celda
+      const tipoDocIndex = getColumnIndex('tipo_documento');
+      const validationError = validateCell(columnName, row[columnIndex], row[tipoDocIndex]);
+      if (validationError) {
+        td.classList.add('invalid-cell');
+        
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = validationError;
+        
+        cellContent.appendChild(errorSpan);
+        invalidCellsCount++;
+      }
+
+      // Validación de documento duplicado
+      if (columnName === 'numero_documento' && documentNumbersMap.get(cellValue)?.length > 1) {
+        td.classList.add('invalid-cell');
+        
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = "Error: Número de documento duplicado";
+        
+        cellContent.appendChild(errorSpan);
+        invalidCellsCount++;
+      }
+
+      td.appendChild(cellContent);
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  // Bloquear guardado si hay errores
+  document.getElementById('saveBtn').disabled = invalidCellsCount > 0;
+  table.appendChild(tbody);
+  container.appendChild(table);
+  
+  // Actualizar estado del botón de eliminar
+  updateDeleteButtonState();
+}
+
+// Función para actualizar estado del botón eliminar
+function updateDeleteButtonState() {
+  const deleteBtn = document.getElementById('deleteBtn');
+  const hasSelectedRows = document.querySelectorAll('.selected-row').length > 0;
+  deleteBtn.disabled = !hasSelectedRows;
+}
+
+// Validación de celdas
+function validateCell(columnName, value, tipoDoc = "") {
+  value = (value || "").trim();
+  tipoDoc = (tipoDoc || "").trim().toUpperCase();
+
+  switch(columnName) {
+    case 'apellido':
+      if (!value) return "Error: Apellido es requerido";
+      if (value.length > 100) return "Error: Máximo 100 caracteres";
+      break;
+    case 'nombre':
+      if (!value) return "Error: Nombre es requerido";
+      if (value.length > 100) return "Error: Máximo 100 caracteres";
+      break;
+    case 'numero_documento':
+      if (!value) return "Error: Número de documento es requerido";
+      if (tipoDoc === "DNI" && !/^\d{7,8}$/.test(value)) 
+        return "Error: DNI debe tener 7 u 8 dígitos";
+      if ((tipoDoc === "PASAPORTE" || tipoDoc === "OTROS") && 
+         (value.length < 5 || value.length > 100)) {
+        return "Error: Documento debe tener entre 5 y 100 caracteres";
+      }
+      break;
+    default:
+      return "";
+  }
+  return "";
+}
+
+// Tooltips para headers
+function getHeaderTooltip(headerName) {
+  const tips = {
+    "numero_documento": "Número de Documento - DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+    "N°": "Número de Documento - DNI: 7-8 dígitos | Pasaporte: 5-100 caracteres",
+    "observaciones": "Notas adicionales sobre el pasajero",
+    "Obs.": "Notas adicionales sobre el pasajero",
+    "apellido": "Apellido del pasajero",
+    "nombre": "Nombre del pasajero",
+    "menor": "0 = NO, 1 = SI",
+    "ocupa_butaca": "0 = NO, 1 = SI",
+    "tipo_documento": "Valores válidos: DNI, Pasaporte, OTROS",
+    "sexo": "F = Femenino, M = Masculino"
+  };
+  return tips[headerName] || "";
+}
+
+// Funciones de acciones
+function removeSelectedRows() {
+  const selectedRows = document.querySelectorAll('.selected-row');
+  if (selectedRows.length === 0) {
+    alert('No hay filas seleccionadas para eliminar.');
+    return;
+  }
+  
+  // Obtener índices de las filas seleccionadas
+  const indexesToRemove = Array.from(selectedRows).map(tr => {
+    // El primer td es el número de fila
+    return parseInt(tr.querySelector('td:first-child').textContent);
+  });
+  
+  if (indexesToRemove.length === 0) {
+    alert('No hay filas seleccionadas para eliminar.');
+    return;
+  }
+  
+  indexesToRemove.sort((a, b) => b - a).forEach(index => tableData.splice(index, 1));
+  renderTable();
+}
+
+function sortTableByColumn(columnIndex) {
+  if (tableData.length <= 1) return;
+  
+  // Si es la misma columna, invertir la dirección
+  if (currentSortColumn === columnIndex) {
+    sortDirection *= -1;
+  } else {
+    currentSortColumn = columnIndex;
+    sortDirection = 1;
+  }
+  
+  const header = tableData[0];
+  const body = tableData.slice(1);
+  
+  body.sort((a, b) => {
+    const valA = a[columnIndex]?.toString().toLowerCase() || '';
+    const valB = b[columnIndex]?.toString().toLowerCase() || '';
+    return valA.localeCompare(valB) * sortDirection;
+  });
+  
+  tableData = [header, ...body];
+  renderTable();
 }
 
 function confirmDownload() {
-    let fileName = document.getElementById('fileNameInputModal').value.trim();
-    if (!fileName) fileName = "lista_pasajeros";
-    if (!fileName.endsWith(".csv")) fileName += ".csv";
+  // Verificar nuevamente antes de guardar
+  if (document.getElementById('saveBtn').disabled) {
+    alert('No se puede guardar mientras existan errores en los datos');
+    return;
+  }
 
-    const headerLine = CSV_HEADERS.join(";");
-    const rows = pasajeros.map(p => {
-        return CSV_HEADERS.map(col => {
-            let val = p[col] !== undefined ? p[col] : "";
-            // Escapar comillas y punto y coma si es necesario
-            if (typeof val === "string" && (val.includes(';') || val.includes('"'))) {
-                val = `"${val.replace(/"/g, '""')}"`;
-            }
-            return val;
-        }).join(";");
-    });
-    const content = [headerLine, ...rows].join("\n");
-    // Añadir BOM para compatibilidad con Excel (opcional pero útil)
-    const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    closeSaveModal();
+  const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
+  const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+  
+  // Guardamos TODAS las columnas con sus nombres originales
+  const csvContent = tableData.map(row => row.join(';')).join('\n');
+  
+  // CORRECCIÓN: Agregar BOM (Byte Order Mark) para UTF-8
+  const BOM = '\uFEFF';
+  const csvWithBOM = BOM + csvContent;
+  
+  const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  
+  URL.revokeObjectURL(url);
+  closeSaveModal();
 }
-
-// ---------- Inicialización (carga nacionalidades y datos de ejemplo opcionales) ----------
-function init() {
-    cargarNacionalidades();
-    // Si quieres iniciar con datos de ejemplo, descomenta el bloque siguiente.
-    // En una situación real, tal vez prefieras empezar vacío.
-    if (pasajeros.length === 0) {
-        // Ejemplo mínimo (puedes eliminarlo si no lo deseas)
-        pasajeros = [
-            { id:1, apellido:"García", nombre:"Ana", tipo_documento:"DNI", descripcion_documento:"", numero_documento:"12345678", sexo:"F", menor:0, nacionalidad:"ARGENTINA", tripulante:0, ocupa_butaca:1, observaciones:"Ejemplo" }
-        ];
-        nextId = 2;
-    }
-    renderTable();
-}
-
-// Exponer funciones globalmente para que el HTML las encuentre
-window.openAddPassengerModal = openAddPassengerModal;
-window.closeAddPassengerModal = closeAddPassengerModal;
-window.savePassenger = savePassenger;
-window.editPassenger = editPassenger;
-window.removeSelectedRows = removeSelectedRows;
-window.openSaveModal = openSaveModal;
-window.closeSaveModal = closeSaveModal;
-window.confirmDownload = confirmDownload;
-window.handleTipoDocumentoChange = handleTipoDocumentoChange;
-
-// Iniciar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', init);
