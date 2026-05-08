@@ -1,6 +1,6 @@
-// ==================== EDITOR DE PASAJEROS - CON DEPURACIÓN PARA MÓVIL ====================
+// ==================== EDITOR DE PASAJEROS - CORRECCIÓN DEFINITIVA PARA MÓVIL ====================
 (function() {
-  // Panel de depuración (se crea automáticamente)
+  // Panel de depuración
   var debugDiv = null;
   function log(msg) {
     if (!debugDiv) {
@@ -386,38 +386,68 @@
     closeSaveModal();
   }
 
-  // CARGA DE CSV CON DEPURACIÓN
+  // CARGA DE CSV CORREGIDA (usando ArrayBuffer para forzar UTF-8 y mejor normalización)
   function cargarCSV(file) {
     log('Archivo seleccionado: ' + file.name + ', tamaño: ' + file.size + ' bytes');
     var reader = new FileReader();
     reader.onload = function(e) {
-      log('Archivo leído correctamente, longitud: ' + e.target.result.length);
+      log('Archivo leído como ArrayBuffer. Longitud: ' + e.target.result.byteLength);
+      // Decodificar manualmente a UTF-8 (compatibilidad máxima)
+      var uint8Array = new Uint8Array(e.target.result);
+      var decoder = new TextDecoder('utf-8');
+      var text = decoder.decode(uint8Array);
+      log('Texto decodificado (primeros 200 chars): ' + text.substring(0,200));
       try {
-        var text = e.target.result;
-        log('Texto original (primeros 100 chars): ' + text.substring(0,100));
-        if (text.charCodeAt(0) === 0xFEFF) { text = text.slice(1); log('Se eliminó BOM'); }
-        text = text.replace(/\r\n?/g, '\n');
-        text = text.replace(/^[\x00-\x1F\x7F]+/, '');
+        // Normalización EXTREMA de saltos de línea (cualquier combinación de \r y \n)
+        text = text.replace(/\r\n/g, '\n');  // Windows
+        text = text.replace(/\r/g, '\n');    // Mac clásico
+        // Eliminar BOM
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        // Eliminar caracteres de control no deseados
+        text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        
         var lines = text.split('\n');
-        log('Líneas encontradas: ' + lines.length);
-        if (lines.length < 2) throw new Error('Archivo con menos de 2 líneas');
-        var headers = lines[0].split(';').map(function(h) { return h.trim().toLowerCase(); });
+        log('Líneas después de split: ' + lines.length);
+        // Mostrar primeras líneas
+        for (var k=0; k<Math.min(lines.length, 5); k++) {
+          log('Línea ' + k + ': "' + lines[k].substring(0,80) + '"');
+        }
+        if (lines.length < 2) {
+          log('ERROR: Solo ' + lines.length + ' línea(s). Contenido completo del archivo: ' + text);
+          alert('El archivo parece tener solo una línea. Verifica que tenga saltos de línea. Contenido: ' + text.substring(0,200));
+          return;
+        }
+        var headersLine = lines[0].trim();
+        if (headersLine === "") {
+          log('La primera línea está vacía, saltando...');
+          headersLine = lines[1].trim();
+          lines = lines.slice(1);
+        }
+        var headers = headersLine.split(';').map(function(h) { return h.trim().toLowerCase(); });
         log('Headers: ' + headers.join(', '));
+        // Validar headers requeridos
         var missing = [];
         for (var r=0; r<requiredHeaders.length; r++) {
           if (headers.indexOf(requiredHeaders[r]) === -1) missing.push(requiredHeaders[r]);
         }
         if (missing.length > 0) {
-          alert('Columnas faltantes: ' + missing.join(', '));
-          log('Error de columnas: ' + missing.join(', '));
+          var msg = 'Columnas faltantes: ' + missing.join(', ');
+          log(msg);
+          alert(msg);
           return;
         }
         var data = [headers];
         for (var l=1; l<lines.length; l++) {
-          if (!lines[l].trim()) continue;
-          var cols = lines[l].split(';');
+          var line = lines[l].trim();
+          if (line === "") continue;
+          var cols = line.split(';');
           while (cols.length < headers.length) cols.push('');
           data.push(cols);
+        }
+        if (data.length === 1) {
+          log('No se encontraron filas de datos');
+          alert('El archivo no contiene datos (solo cabeceras)');
+          return;
         }
         tableData = data;
         renderTable();
@@ -432,7 +462,7 @@
       log('ERROR de lectura del archivo');
       alert('Error al leer el archivo');
     };
-    reader.readAsText(file, 'UTF-8');
+    reader.readAsArrayBuffer(file);  // Leer como ArrayBuffer para mejor control de codificación
   }
 
   // Exponer funciones
@@ -466,7 +496,7 @@
           } else {
             log('No se seleccionó ningún archivo');
           }
-          ev.target.value = ''; // limpiar para permitir cargar el mismo
+          ev.target.value = '';
         });
       } else {
         log('ERROR: No se encontró el input #csvFile');
