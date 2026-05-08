@@ -1,9 +1,8 @@
 // ============================================================
-// function.js - VERSIÓN DEFINITIVA PARA MÓVIL
-// Corrige el error "Archivo con menos de 2 líneas".
+// function.js - VERSIÓN ULTRA ROBUSTA PARA MÓVIL
 // ============================================================
 
-// Panel de depuración (opcional, puedes eliminarlo después de que todo funcione)
+// Panel de depuración (seguirá apareciendo)
 var debugDiv = null;
 function log(msg) {
   if (!debugDiv) {
@@ -30,7 +29,7 @@ function log(msg) {
   console.log(msg);
 }
 
-// Variables globales originales (sin cambios en la lógica)
+// Variables globales originales (sin cambios)
 let tableData = [];
 let editingIndex = null;
 let documentNumbersMap = new Map();
@@ -76,7 +75,7 @@ const nacionalidadesList = [
 validValues.nacionalidad = nacionalidadesList;
 
 // ------------------------------------------------------------
-// FUNCIONES AUXILIARES (NO SE MODIFICAN, SOLO SE MANTIENEN)
+// FUNCIONES AUXILIARES (sin cambios significativos)
 // ------------------------------------------------------------
 function getColumnIndex(columnName) {
   if (!tableData.length) return -1;
@@ -392,84 +391,107 @@ function confirmDownload() {
   closeSaveModal();
 }
 
-// ---------- PUNTO CRÍTICO: CARGA DE CSV CORREGIDA ----------
+// ------------------------------------------------------------
+// NUEVA FUNCIÓN DE CARGA ULTRAROBUSTA (CON HEXADECIMAL)
+// ------------------------------------------------------------
 function cargarCSV(file) {
-  log('📂 Archivo seleccionado: ' + file.name + ', tamaño: ' + file.size + ' bytes');
+  log('📂 Archivo: ' + file.name + ', tamaño: ' + file.size + ' bytes');
   const reader = new FileReader();
-  reader.onload = function(e) {
-    log('✅ Archivo leído correctamente (longitud: ' + e.target.result.length + ')');
-    try {
-      let text = e.target.result;
-      
-      // ---- NORMALIZACIÓN PROFUNDA DE SALTOS DE LÍNEA ----
-      log('🔧 Normalizando saltos de línea...');
-      // 1. Eliminar BOM si existe
-      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-      // 2. Reemplazar TODAS las variantes de salto de línea por \n
-      //    (Esto es lo que soluciona el error 'Archivo con menos de 2 líneas')
-      text = text.replace(/\r\n/g, '\n'); // Windows CRLF
-      text = text.replace(/\r/g, '\n');   // Mac antiguo CR
-      // 3. Limpiar caracteres no imprimibles
-      text = text.replace(/[\x00-\x1F\x7F]/g, '');
-      // 4. Eliminar líneas vacías al inicio y final
-      text = text.trim();
-      
-      log('📄 Texto después de normalizar (primeros 200 chars): ' + text.substring(0, 200));
-      
-      const lines = text.split('\n');
-      log(`🔢 Líneas divididas por \\n: ${lines.length}`);
-      if (lines.length < 2) throw new Error('Archivo con menos de 2 líneas incluso después de normalizar');
-      
-      const headers = lines[0].split(';').map(h => h.trim().toLowerCase());
-      log(`📑 Headers encontrados: ${headers.join(', ')}`);
-      
-      // Validar headers
-      const missing = [];
-      for (let i = 0; i < requiredHeaders.length; i++) {
-        if (headers.indexOf(requiredHeaders[i]) === -1) missing.push(requiredHeaders[i]);
-      }
-      if (missing.length > 0) {
-        alert('Error: Columnas faltantes en el CSV: ' + missing.join(', '));
-        log(`❌ Columnas faltantes: ${missing.join(', ')}`);
-        return;
-      }
-      
-      // Procesar datos
-      const data = [headers];
-      let emptyLines = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line === "") { emptyLines++; continue; }
-        const cols = line.split(';');
-        while (cols.length < headers.length) cols.push('');
-        data.push(cols.map(cell => cell.trim()));
-      }
-      
-      if (data.length <= 1) {
-        alert('El archivo CSV no contiene datos de pasajeros.');
-        log('⚠️ Sin filas de datos después del header.');
-        return;
-      }
-      
-      tableData = data;
-      renderTable();
-      log(`🎉 CSV cargado exitosamente. Registros: ${tableData.length - 1}, líneas vacías omitidas: ${emptyLines}`);
-      alert(`✅ CSV cargado correctamente. Se importaron ${tableData.length - 1} pasajeros.`);
-      
-    } catch (err) {
-      log('❌ ERROR FATAL al procesar: ' + err.message);
-      alert('Error al procesar el archivo CSV: ' + err.message);
+  reader.onload = function(evt) {
+    let text = evt.target.result;
+    log('✅ Longitud del texto: ' + text.length);
+    // Mostrar primeros 30 caracteres en hexadecimal para depurar
+    let hexPreview = '';
+    for (let i = 0; i < Math.min(30, text.length); i++) {
+      hexPreview += text.charCodeAt(i).toString(16) + ' ';
     }
+    log('🔎 Hexadecimal primeros bytes: ' + hexPreview);
+    // Si el texto está vacío o tiene menos de 2 caracteres, error
+    if (text.length < 2) {
+      log('❌ El texto leído está vacío o es muy corto.');
+      alert('El archivo está vacío o no se pudo leer correctamente.');
+      return;
+    }
+    // Eliminar BOM si existe
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    // NORMALIZACIÓN EXTREMA: reemplazar cualquier posible salto de línea por \n
+    // Incluye \r\n, \r, \n, y también \u2028 (separador de línea), \u2029 (separador de párrafo)
+    text = text.replace(/\r\n|\r|\u2028|\u2029/g, '\n');
+    // Eliminar caracteres de control no deseados (excepto \n y \t)
+    text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+    // Eliminar posibles espacios al inicio y final
+    text = text.trim();
+    log('📄 Texto normalizado (primeros 200): ' + text.substring(0,200));
+    
+    // Dividir en líneas usando \n
+    let lines = text.split('\n');
+    log('🔢 Líneas después de split: ' + lines.length);
+    
+    // Si solo hay una línea, intentar dividir también por punto y coma y detectar si hay múltiples filas
+    if (lines.length < 2) {
+      log('⚠️ Menos de 2 líneas detectadas. Intentando detectar filas por otro método...');
+      // Podría ser que todo el contenido esté en una sola línea con saltos de línea incrustados de otro tipo
+      // También podría ser que el archivo tenga filas separadas por \r que no fueron reemplazadas (doble verificación)
+      let altText = text.replace(/[\r\n]+/g, '\n');
+      lines = altText.split('\n');
+      log('🔢 Después de doble normalización: ' + lines.length);
+      if (lines.length < 2 && text.length > 0) {
+        // Último recurso: asumir que el archivo tiene una sola línea con encabezados y datos separados por ; 
+        // pero entonces no hay datos válidos (al menos debería haber dos filas)
+        log('❌ El archivo parece tener una sola línea. Verifica que tenga saltos de línea.');
+        alert('El archivo CSV no contiene saltos de línea. Asegúrate de que esté guardado con filas separadas por saltos de línea estándar.');
+        return;
+      }
+    }
+    
+    if (lines.length < 2) {
+      throw new Error('Archivo con menos de 2 líneas incluso después de todas las normalizaciones.');
+    }
+    
+    // Procesar cabeceras
+    const headers = lines[0].split(';').map(h => h.trim().toLowerCase());
+    log('📑 Headers: ' + headers.join(', '));
+    
+    const missing = [];
+    for (let i = 0; i < requiredHeaders.length; i++) {
+      if (headers.indexOf(requiredHeaders[i]) === -1) missing.push(requiredHeaders[i]);
+    }
+    if (missing.length > 0) {
+      alert('Columnas faltantes: ' + missing.join(', '));
+      log('❌ Faltan columnas: ' + missing.join(', '));
+      return;
+    }
+    
+    const data = [headers];
+    let emptyLines = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === "") { emptyLines++; continue; }
+      const cols = line.split(';');
+      while (cols.length < headers.length) cols.push('');
+      data.push(cols.map(cell => cell.trim()));
+    }
+    
+    if (data.length === 1) {
+      alert('No se encontraron filas de datos después del encabezado.');
+      log('⚠️ Sin datos.');
+      return;
+    }
+    
+    tableData = data;
+    renderTable();
+    log(`🎉 Cargados ${tableData.length - 1} pasajeros. Líneas vacías omitidas: ${emptyLines}`);
+    alert(`✅ Archivo cargado correctamente. ${tableData.length - 1} pasajeros importados.`);
   };
   reader.onerror = function() {
     log('💥 Error de lectura del archivo');
-    alert('Error al leer el archivo seleccionado.');
+    alert('No se pudo leer el archivo. Es posible que el navegador no tenga permisos.');
   };
   reader.readAsText(file, 'UTF-8');
 }
 // ------------------------------------------------------------
 
-// Exponer funciones globales para los botones del HTML
+// Exponer funciones globales
 window.openAddPassengerModal = openAddPassengerModal;
 window.closeAddPassengerModal = closeAddPassengerModal;
 window.savePassenger = savePassenger;
@@ -480,35 +502,31 @@ window.closeSaveModal = closeSaveModal;
 window.confirmDownload = confirmDownload;
 window.handleTipoDocumentoChange = handleTipoDocumentoChange;
 
-// Inicialización al cargar la página
+// Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-  log('Editor iniciado correctamente en modo móvil/PC');
+  log('Editor iniciado en modo móvil/PC ultra robusto');
   try {
     populateNationalities();
     if (tableData.length === 0) {
-      // Datos de ejemplo iniciales
-      tableData = [
-        defaultHeader,
-        ['García', 'Ana', 'DNI', '', '12345678', 'F', '0', 'Argentina', '0', '1', '']
-      ];
+      tableData = [defaultHeader, ['García', 'Ana', 'DNI', '', '12345678', 'F', '0', 'Argentina', '0', '1', '']];
       log('Datos de ejemplo cargados.');
     }
     renderTable();
     const fileInput = document.getElementById('csvFile');
     if (fileInput) {
       fileInput.addEventListener('change', function(ev) {
-        log('🖱️ Evento change del input file disparado.');
+        log('🖱️ Evento change disparado.');
         if (ev.target.files && ev.target.files[0]) {
           cargarCSV(ev.target.files[0]);
         } else {
-          log('⚠️ No se seleccionó ningún archivo.');
+          log('⚠️ No se seleccionó archivo.');
         }
         ev.target.value = '';
       });
     } else {
-      log('❌ Error: No se encontró el elemento con id "csvFile".');
+      log('❌ Elemento #csvFile no encontrado.');
     }
   } catch (err) {
-    log('❌ Error fatal en la inicialización: ' + err.message);
+    log('❌ Error fatal: ' + err.message);
   }
 });
