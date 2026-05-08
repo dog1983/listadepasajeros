@@ -1,7 +1,32 @@
-// ==================== EDITOR DE PASAJEROS - VERSIÓN COMPATIBLE CON MÓVIL ====================
-// Sin optional chaining, con manejo de errores visible
-
+// ==================== EDITOR DE PASAJEROS - CON DEPURACIÓN PARA MÓVIL ====================
 (function() {
+  // Panel de depuración (se crea automáticamente)
+  var debugDiv = null;
+  function log(msg) {
+    if (!debugDiv) {
+      debugDiv = document.createElement('div');
+      debugDiv.style.position = 'fixed';
+      debugDiv.style.bottom = '0';
+      debugDiv.style.left = '0';
+      debugDiv.style.right = '0';
+      debugDiv.style.backgroundColor = '#333';
+      debugDiv.style.color = '#0f0';
+      debugDiv.style.fontFamily = 'monospace';
+      debugDiv.style.fontSize = '12px';
+      debugDiv.style.padding = '8px';
+      debugDiv.style.maxHeight = '120px';
+      debugDiv.style.overflowY = 'auto';
+      debugDiv.style.zIndex = '9999';
+      debugDiv.style.borderTop = '2px solid #0f0';
+      document.body.appendChild(debugDiv);
+    }
+    var p = document.createElement('div');
+    p.textContent = new Date().toLocaleTimeString() + ': ' + msg;
+    debugDiv.appendChild(p);
+    debugDiv.scrollTop = debugDiv.scrollHeight;
+    console.log(msg);
+  }
+
   // Variables globales
   var tableData = [];
   var editingIndex = null;
@@ -25,7 +50,7 @@
     tipo_documento: ["DNI", "Pasaporte", "OTROS"],
     sexo: ["F", "M"],
     menor: ["0", "1"],
-    nacionalidad: [], // se llenará después
+    nacionalidad: [],
     tripulante: ["0", "1"],
     ocupa_butaca: ["0", "1"]
   };
@@ -40,55 +65,18 @@
     observaciones: ""
   };
 
-  // Lista de nacionalidades (solo algunas para no llenar)
   var nacionalidadesList = [
-    "Argentina", "Bolivia", "Brasil", "Chile", "Colombia", "Costa Rica", "Cuba", "Ecuador",
-    "El Salvador", "España", "Estados Unidos", "Guatemala", "Honduras", "México", "Nicaragua",
-    "Panamá", "Paraguay", "Perú", "Puerto Rico", "República Dominicana", "Uruguay", "Venezuela",
-    "Alemania", "Francia", "Italia", "Japón", "Canadá", "China", "Otro"
+    "Afganistán", "Albania", "Alemania", "Argentina", "Bolivia", "Brasil", "Chile", "Colombia",
+    "Costa Rica", "Cuba", "Ecuador", "El Salvador", "España", "Estados Unidos", "Guatemala",
+    "Honduras", "México", "Nicaragua", "Panamá", "Paraguay", "Perú", "Uruguay", "Venezuela"
   ].sort();
 
   validValues.nacionalidad = nacionalidadesList;
 
-  // Mostrar errores en un div flotante (para depuración en móvil)
-  function showError(msg) {
-    var div = document.getElementById('debugError');
-    if (!div) {
-      div = document.createElement('div');
-      div.id = 'debugError';
-      div.style.position = 'fixed';
-      div.style.bottom = '0';
-      div.style.left = '0';
-      div.style.right = '0';
-      div.style.backgroundColor = '#ff4444';
-      div.style.color = 'white';
-      div.style.padding = '10px';
-      div.style.fontSize = '12px';
-      div.style.zIndex = '9999';
-      div.style.textAlign = 'center';
-      document.body.appendChild(div);
-    }
-    div.innerHTML = msg;
-    setTimeout(function() { div.style.display = 'none'; }, 5000);
-  }
-
-  // Funciones auxiliares
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
-
   function getColumnIndex(columnName) {
     if (!tableData.length) return -1;
     var header = tableData[0];
-    for (var i = 0; i < header.length; i++) {
-      if (header[i] === columnName) return i;
-    }
+    for (var i = 0; i < header.length; i++) if (header[i] === columnName) return i;
     return -1;
   }
 
@@ -101,23 +89,21 @@
     defaultOption.textContent = defaults.nacionalidad;
     defaultOption.selected = true;
     select.appendChild(defaultOption);
-    for (var i = 0; i < nacionalidadesList.length; i++) {
-      var country = nacionalidadesList[i];
+    nacionalidadesList.forEach(function(country) {
       if (country !== defaults.nacionalidad) {
         var option = document.createElement('option');
         option.value = country;
         option.textContent = country;
         select.appendChild(option);
       }
-    }
+    });
   }
 
   function handleTipoDocumentoChange() {
     var tipo = document.getElementById('tipo_documento').value;
     var descGroup = document.getElementById('descripcion_documento_group');
-    if (tipo === 'OTROS') {
-      descGroup.style.display = 'block';
-    } else {
+    if (tipo === 'OTROS') descGroup.style.display = 'block';
+    else {
       descGroup.style.display = 'none';
       document.getElementById('descripcion_documento').value = '';
     }
@@ -129,13 +115,12 @@
     if (btn) btn.disabled = (selected === 0);
   }
 
-  // Renderizado de tabla (sin optional chaining)
   function renderTable() {
     var container = document.getElementById('tableContainer');
     if (!container) return;
     container.innerHTML = '';
     if (tableData.length === 0) {
-      container.innerHTML = '<div style="padding:20px;text-align:center;">No hay datos. Agregue pasajeros o cargue un CSV.</div>';
+      container.innerHTML = '<div style="padding:20px;text-align:center;">No hay datos.</div>';
       return;
     }
     var table = document.createElement('table');
@@ -152,9 +137,7 @@
       var th = document.createElement('th');
       th.textContent = columnDisplayNames[colName] || colName;
       th.setAttribute('data-column-index', idx);
-      th.addEventListener('click', (function(colIdx) {
-        return function() { sortTableByColumn(colIdx); };
-      })(idx));
+      th.addEventListener('click', (function(colIdx) { return function() { sortTableByColumn(colIdx); }; })(idx));
       headRow.appendChild(th);
     }
     thead.appendChild(headRow);
@@ -190,20 +173,15 @@
         var cellValue = row[colIdx2] || '';
         if (colName2 === 'numero_documento') {
           var docNum = cellValue.toString().trim();
-          if (documentNumbersMap.has(docNum)) {
-            documentNumbersMap.get(docNum).push(i+1);
-          } else {
-            documentNumbersMap.set(docNum, [i+1]);
-          }
+          if (documentNumbersMap.has(docNum)) documentNumbersMap.get(docNum).push(i+1);
+          else documentNumbersMap.set(docNum, [i+1]);
         }
         var cellContent = document.createElement('div');
         cellContent.style.display = 'flex';
         cellContent.style.flexDirection = 'column';
         if (validValues[colName2]) {
           var select = document.createElement('select');
-          var options = validValues[colName2];
-          for (var opt = 0; opt < options.length; opt++) {
-            var optVal = options[opt];
+          validValues[colName2].forEach(function(optVal) {
             var option = document.createElement('option');
             option.value = optVal;
             if (colName2 === 'sexo') option.textContent = optVal === 'F' ? 'F' : 'M';
@@ -212,24 +190,19 @@
             else option.textContent = optVal;
             if (cellValue.toString().toUpperCase() === optVal.toUpperCase()) option.selected = true;
             select.appendChild(option);
-          }
-          select.addEventListener('change', (function(r, cIdx) {
-            return function(e) { tableData[r][cIdx] = e.target.value; renderTable(); };
-          })(i+1, colIdx2));
+          });
+          select.addEventListener('change', (function(r, cIdx) { return function(e) { tableData[r][cIdx] = e.target.value; renderTable(); }; })(i+1, colIdx2));
           select.addEventListener('click', function(e) { e.stopPropagation(); });
           cellContent.appendChild(select);
         } else {
           var input = document.createElement('input');
           input.type = 'text';
           input.value = cellValue;
-          input.addEventListener('input', (function(r, cIdx) {
-            return function(e) { tableData[r][cIdx] = e.target.value.trim(); };
-          })(i+1, colIdx2));
+          input.addEventListener('input', (function(r, cIdx) { return function(e) { tableData[r][cIdx] = e.target.value.trim(); }; })(i+1, colIdx2));
           input.addEventListener('blur', function() { renderTable(); });
           input.addEventListener('click', function(e) { e.stopPropagation(); });
           cellContent.appendChild(input);
         }
-        // Validaciones
         var tipoDocIdx = getColumnIndex('tipo_documento');
         var tipoDocVal = row[tipoDocIdx] || '';
         var errMsg = validateCell(colName2, cellValue, tipoDocVal);
@@ -281,10 +254,7 @@
   function sortTableByColumn(columnIndex) {
     if (tableData.length <= 1) return;
     if (currentSortColumn === columnIndex) sortDirection *= -1;
-    else {
-      currentSortColumn = columnIndex;
-      sortDirection = 1;
-    }
+    else { currentSortColumn = columnIndex; sortDirection = 1; }
     var header = tableData[0];
     var body = tableData.slice(1);
     body.sort(function(a, b) {
@@ -384,22 +354,15 @@
     if (!confirm('¿Eliminar ' + selected.length + ' fila(s)?')) return;
     var indices = [];
     for (var i = 0; i < selected.length; i++) {
-      var idx = parseInt(selected[i].getAttribute('data-row-index'));
-      indices.push(idx);
+      indices.push(parseInt(selected[i].getAttribute('data-row-index')));
     }
-    indices.sort(function(a,b) { return b - a; });
-    for (var j = 0; j < indices.length; j++) {
-      tableData.splice(indices[j], 1);
-    }
+    indices.sort(function(a,b){return b-a;});
+    for (var j=0; j<indices.length; j++) tableData.splice(indices[j],1);
     renderTable();
   }
 
-  function openSaveModal() {
-    document.getElementById('saveModal').style.display = 'flex';
-  }
-  function closeSaveModal() {
-    document.getElementById('saveModal').style.display = 'none';
-  }
+  function openSaveModal() { document.getElementById('saveModal').style.display = 'flex'; }
+  function closeSaveModal() { document.getElementById('saveModal').style.display = 'none'; }
   function confirmDownload() {
     if (document.getElementById('saveBtn').disabled) {
       alert('Hay errores en los datos, no se puede guardar');
@@ -409,9 +372,7 @@
     if (!fileName) fileName = 'lista_pasajeros';
     if (!fileName.endsWith('.csv')) fileName += '.csv';
     var lines = [];
-    for (var i = 0; i < tableData.length; i++) {
-      lines.push(tableData[i].join(';'));
-    }
+    for (var i=0; i<tableData.length; i++) lines.push(tableData[i].join(';'));
     var content = lines.join('\n');
     var blob = new Blob(['\uFEFF' + content], {type: 'text/csv;charset=utf-8;'});
     var link = document.createElement('a');
@@ -425,29 +386,34 @@
     closeSaveModal();
   }
 
-  // Carga de CSV (con correcciones para móvil)
+  // CARGA DE CSV CON DEPURACIÓN
   function cargarCSV(file) {
+    log('Archivo seleccionado: ' + file.name + ', tamaño: ' + file.size + ' bytes');
     var reader = new FileReader();
     reader.onload = function(e) {
+      log('Archivo leído correctamente, longitud: ' + e.target.result.length);
       try {
         var text = e.target.result;
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        log('Texto original (primeros 100 chars): ' + text.substring(0,100));
+        if (text.charCodeAt(0) === 0xFEFF) { text = text.slice(1); log('Se eliminó BOM'); }
         text = text.replace(/\r\n?/g, '\n');
         text = text.replace(/^[\x00-\x1F\x7F]+/, '');
         var lines = text.split('\n');
-        if (lines.length < 2) throw new Error('Archivo vacío');
+        log('Líneas encontradas: ' + lines.length);
+        if (lines.length < 2) throw new Error('Archivo con menos de 2 líneas');
         var headers = lines[0].split(';').map(function(h) { return h.trim().toLowerCase(); });
-        // Validar headers
+        log('Headers: ' + headers.join(', '));
         var missing = [];
-        for (var r = 0; r < requiredHeaders.length; r++) {
+        for (var r=0; r<requiredHeaders.length; r++) {
           if (headers.indexOf(requiredHeaders[r]) === -1) missing.push(requiredHeaders[r]);
         }
         if (missing.length > 0) {
           alert('Columnas faltantes: ' + missing.join(', '));
+          log('Error de columnas: ' + missing.join(', '));
           return;
         }
         var data = [headers];
-        for (var l = 1; l < lines.length; l++) {
+        for (var l=1; l<lines.length; l++) {
           if (!lines[l].trim()) continue;
           var cols = lines[l].split(';');
           while (cols.length < headers.length) cols.push('');
@@ -455,16 +421,21 @@
         }
         tableData = data;
         renderTable();
-        alert('CSV cargado correctamente. ' + (tableData.length-1) + ' registros.');
+        log('CSV cargado exitosamente. Registros: ' + (tableData.length-1));
+        alert('CSV cargado. ' + (tableData.length-1) + ' registros.');
       } catch (err) {
-        showError('Error al cargar CSV: ' + err.message);
+        log('ERROR al procesar: ' + err.message);
+        alert('Error al procesar CSV: ' + err.message);
       }
     };
-    reader.onerror = function() { alert('Error al leer archivo'); };
+    reader.onerror = function() {
+      log('ERROR de lectura del archivo');
+      alert('Error al leer el archivo');
+    };
     reader.readAsText(file, 'UTF-8');
   }
 
-  // Exponer funciones globales
+  // Exponer funciones
   window.openAddPassengerModal = openAddPassengerModal;
   window.closeAddPassengerModal = closeAddPassengerModal;
   window.savePassenger = savePassenger;
@@ -475,21 +446,33 @@
   window.confirmDownload = confirmDownload;
   window.handleTipoDocumentoChange = handleTipoDocumentoChange;
 
-  // Inicializar
+  // Inicialización
   document.addEventListener('DOMContentLoaded', function() {
+    log('Editor iniciado en móvil');
     try {
       populateNationalities();
       if (tableData.length === 0) {
-        // Datos de ejemplo
         tableData = [defaultHeader.slice(), ['García','Ana','DNI','','12345678','F','0','Argentina','0','1','']];
+        log('Datos de ejemplo cargados');
       }
       renderTable();
-      document.getElementById('csvFile').addEventListener('change', function(ev) {
-        if (ev.target.files && ev.target.files[0]) cargarCSV(ev.target.files[0]);
-        ev.target.value = '';
-      });
+      var fileInput = document.getElementById('csvFile');
+      if (fileInput) {
+        fileInput.addEventListener('change', function(ev) {
+          log('Evento change disparado');
+          if (ev.target.files && ev.target.files[0]) {
+            log('Archivo detectado: ' + ev.target.files[0].name);
+            cargarCSV(ev.target.files[0]);
+          } else {
+            log('No se seleccionó ningún archivo');
+          }
+          ev.target.value = ''; // limpiar para permitir cargar el mismo
+        });
+      } else {
+        log('ERROR: No se encontró el input #csvFile');
+      }
     } catch (err) {
-      showError('Error inicial: ' + err.message);
+      log('Error fatal en init: ' + err.message);
     }
   });
 })();
