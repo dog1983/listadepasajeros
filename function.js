@@ -1,9 +1,8 @@
-// ============================================================
-// function.js - VERSIÓN DEFINITIVA CON FALLBACK MANUAL
-// ============================================================
+// ========== VERSIÓN MÍNIMA PARA DIAGNÓSTICO ==========
+let tableData = [];
 
-// Panel de depuración (seguirá apareciendo)
-var debugDiv = null;
+// Panel de depuración
+let debugDiv = null;
 function log(msg) {
   if (!debugDiv) {
     debugDiv = document.createElement('div');
@@ -16,597 +15,117 @@ function log(msg) {
     debugDiv.style.fontFamily = 'monospace';
     debugDiv.style.fontSize = '12px';
     debugDiv.style.padding = '8px';
-    debugDiv.style.maxHeight = '120px';
+    debugDiv.style.maxHeight = '150px';
     debugDiv.style.overflowY = 'auto';
     debugDiv.style.zIndex = '9999';
     debugDiv.style.borderTop = '2px solid #0f0';
     document.body.appendChild(debugDiv);
   }
-  var p = document.createElement('div');
+  let p = document.createElement('div');
   p.textContent = new Date().toLocaleTimeString() + ': ' + msg;
   debugDiv.appendChild(p);
   debugDiv.scrollTop = debugDiv.scrollHeight;
   console.log(msg);
 }
 
-// Variables globales
-let tableData = [];
-let editingIndex = null;
-let documentNumbersMap = new Map();
-let currentSortColumn = null;
-let sortDirection = 1;
-
-const defaultHeader = [
-  "apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento",
-  "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca", "observaciones"
-];
-
-const visibleColumns = ["apellido", "nombre", "numero_documento", "observaciones"];
-const columnDisplayNames = { "numero_documento": "N°", "observaciones": "Obs." };
-const requiredHeaders = [
-  "apellido", "nombre", "tipo_documento", "descripcion_documento", "numero_documento",
-  "sexo", "menor", "nacionalidad", "tripulante", "ocupa_butaca"
-];
-
-const validValues = {
-  tipo_documento: ["DNI", "Pasaporte", "OTROS"],
-  sexo: ["F", "M"],
-  menor: ["0", "1"],
-  nacionalidad: [],
-  tripulante: ["0", "1"],
-  ocupa_butaca: ["0", "1"]
-};
-
-const defaults = {
-  tipo_documento: "DNI",
-  sexo: "F",
-  menor: "0",
-  nacionalidad: "Argentina",
-  tripulante: "0",
-  ocupa_butaca: "1",
-  observaciones: ""
-};
-
-const nacionalidadesList = [
-  "Afganistán", "Albania", "Alemania", "Andorra", "Argentina", "Bolivia", "Brasil", "Chile",
-  "Colombia", "Costa Rica", "Cuba", "Ecuador", "El Salvador", "España", "Estados Unidos",
-  "Guatemala", "Honduras", "México", "Nicaragua", "Panamá", "Paraguay", "Perú", "Uruguay", "Venezuela"
-].sort();
-validValues.nacionalidad = nacionalidadesList;
-
-// ------------------------------------------------------------
-// FUNCIONES AUXILIARES (sin cambios)
-// ------------------------------------------------------------
-function getColumnIndex(columnName) {
-  if (!tableData.length) return -1;
-  var header = tableData[0];
-  for (var i = 0; i < header.length; i++) if (header[i] === columnName) return i;
-  return -1;
-}
-
-function populateNationalities() {
-  const select = document.getElementById('nacionalidad');
-  if (!select) return;
-  select.innerHTML = '';
-  const defaultOption = document.createElement('option');
-  defaultOption.value = defaults.nacionalidad;
-  defaultOption.textContent = defaults.nacionalidad;
-  defaultOption.selected = true;
-  select.appendChild(defaultOption);
-  nacionalidadesList.forEach(country => {
-    if (country !== defaults.nacionalidad) {
-      const option = document.createElement('option');
-      option.value = country;
-      option.textContent = country;
-      select.appendChild(option);
-    }
-  });
-}
-
-function handleTipoDocumentoChange() {
-  const tipo = document.getElementById('tipo_documento').value;
-  const descGroup = document.getElementById('descripcion_documento_group');
-  if (tipo === 'OTROS') descGroup.style.display = 'block';
-  else {
-    descGroup.style.display = 'none';
-    document.getElementById('descripcion_documento').value = '';
-  }
-}
-
-function updateDeleteButtonState() {
-  const selected = document.querySelectorAll('.selected-row').length;
-  const btn = document.getElementById('deleteBtn');
-  if (btn) btn.disabled = (selected === 0);
-}
-
-function renderTable() {
+function renderSimpleTable() {
   const container = document.getElementById('tableContainer');
   if (!container) return;
   container.innerHTML = '';
-  if (tableData.length === 0) {
-    container.innerHTML = '<div style="padding:20px;text-align:center;">No hay datos.</div>';
+  if (!tableData.length) {
+    container.innerHTML = '<div>Sin datos</div>';
     return;
   }
   const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  const headRow = document.createElement('tr');
-  const thNum = document.createElement('th');
-  thNum.textContent = '#';
-  thNum.style.textAlign = 'center';
-  headRow.appendChild(thNum);
-  for (let v = 0; v < visibleColumns.length; v++) {
-    const colName = visibleColumns[v];
-    const idx = getColumnIndex(colName);
-    if (idx === -1) continue;
-    const th = document.createElement('th');
-    th.textContent = columnDisplayNames[colName] || colName;
-    th.setAttribute('data-column-index', idx);
-    th.addEventListener('click', (function(colIdx) { return function() { sortTableByColumn(colIdx); }; })(idx));
-    headRow.appendChild(th);
+  table.style.borderCollapse = 'collapse';
+  table.style.width = '100%';
+  // encabezados
+  const thead = table.createTHead();
+  const headerRow = thead.insertRow();
+  for (let i = 0; i < tableData[0].length; i++) {
+    let th = document.createElement('th');
+    th.textContent = tableData[0][i];
+    th.style.border = '1px solid #ccc';
+    th.style.padding = '8px';
+    headerRow.appendChild(th);
   }
-  thead.appendChild(headRow);
-  table.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  documentNumbersMap.clear();
-  let invalidCount = 0;
-  for (let i = 0; i < tableData.slice(1).length; i++) {
-    const row = tableData[i+1];
-    const tr = document.createElement('tr');
-    tr.className = 'editable-row';
-    tr.addEventListener('click', function(e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-      this.classList.toggle('selected-row');
-      updateDeleteButtonState();
-    });
-    tr.addEventListener('dblclick', function(e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-      const rowIdx = parseInt(this.getAttribute('data-row-index'));
-      editRow(rowIdx);
-    });
-    tr.setAttribute('data-row-index', i+1);
-    const tdNum = document.createElement('td');
-    tdNum.textContent = i+1;
-    tdNum.style.textAlign = 'center';
-    tdNum.style.fontWeight = 'bold';
-    tr.appendChild(tdNum);
-    for (let v2 = 0; v2 < visibleColumns.length; v2++) {
-      const colName2 = visibleColumns[v2];
-      const colIdx2 = getColumnIndex(colName2);
-      if (colIdx2 === -1) continue;
-      const td = document.createElement('td');
-      let cellValue = row[colIdx2] || '';
-      if (colName2 === 'numero_documento') {
-        const docNum = cellValue.toString().trim();
-        if (documentNumbersMap.has(docNum)) documentNumbersMap.get(docNum).push(i+1);
-        else documentNumbersMap.set(docNum, [i+1]);
-      }
-      const cellContent = document.createElement('div');
-      cellContent.style.display = 'flex';
-      cellContent.style.flexDirection = 'column';
-      if (validValues[colName2]) {
-        const select = document.createElement('select');
-        validValues[colName2].forEach(optVal => {
-          const option = document.createElement('option');
-          option.value = optVal;
-          if (colName2 === 'sexo') option.textContent = optVal === 'F' ? 'F' : 'M';
-          else if (colName2 === 'menor') option.textContent = optVal === '1' ? 'Sí' : 'No';
-          else if (colName2 === 'tripulante' || colName2 === 'ocupa_butaca') option.textContent = optVal === '1' ? 'Sí' : 'No';
-          else option.textContent = optVal;
-          if (cellValue.toString().toUpperCase() === optVal.toUpperCase()) option.selected = true;
-          select.appendChild(option);
-        });
-        select.addEventListener('change', (function(r, cIdx) { return function(e) { tableData[r][cIdx] = e.target.value; renderTable(); }; })(i+1, colIdx2));
-        select.addEventListener('click', function(e) { e.stopPropagation(); });
-        cellContent.appendChild(select);
-      } else {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = cellValue;
-        input.addEventListener('input', (function(r, cIdx) { return function(e) { tableData[r][cIdx] = e.target.value.trim(); }; })(i+1, colIdx2));
-        input.addEventListener('blur', function() { renderTable(); });
-        input.addEventListener('click', function(e) { e.stopPropagation(); });
-        cellContent.appendChild(input);
-      }
-      const tipoDocIdx = getColumnIndex('tipo_documento');
-      const tipoDocVal = row[tipoDocIdx] || '';
-      const errMsg = validateCell(colName2, cellValue, tipoDocVal);
-      if (errMsg) {
-        td.classList.add('invalid-cell');
-        const errSpan = document.createElement('span');
-        errSpan.className = 'error-message';
-        errSpan.textContent = errMsg;
-        cellContent.appendChild(errSpan);
-        invalidCount++;
-      }
-      if (colName2 === 'numero_documento' && documentNumbersMap.get(cellValue) && documentNumbersMap.get(cellValue).length > 1) {
-        td.classList.add('invalid-cell');
-        const dupSpan = document.createElement('span');
-        dupSpan.className = 'error-message';
-        dupSpan.textContent = 'Documento duplicado';
-        cellContent.appendChild(dupSpan);
-        invalidCount++;
-      }
-      td.appendChild(cellContent);
-      tr.appendChild(td);
+  // datos
+  const tbody = table.createTBody();
+  for (let i = 1; i < tableData.length; i++) {
+    const row = tbody.insertRow();
+    for (let j = 0; j < tableData[i].length; j++) {
+      let cell = row.insertCell();
+      cell.textContent = tableData[i][j];
+      cell.style.border = '1px solid #ccc';
+      cell.style.padding = '8px';
     }
-    tbody.appendChild(tr);
   }
-  table.appendChild(tbody);
   container.appendChild(table);
-  const saveBtn = document.getElementById('saveBtn');
-  if (saveBtn) saveBtn.disabled = (invalidCount > 0);
-  updateDeleteButtonState();
 }
 
-function validateCell(columnName, value, tipoDoc) {
-  const val = (value || "").trim();
-  const tipo = (tipoDoc || "").trim().toUpperCase();
-  if (columnName === 'apellido') {
-    if (!val) return "Apellido requerido";
-    if (val.length > 100) return "Máx 100 caracteres";
-  } else if (columnName === 'nombre') {
-    if (!val) return "Nombre requerido";
-    if (val.length > 100) return "Máx 100 caracteres";
-  } else if (columnName === 'numero_documento') {
-    if (!val) return "N° documento requerido";
-    if (tipo === "DNI" && !/^\d{7,8}$/.test(val)) return "DNI debe tener 7 u 8 dígitos";
-    if ((tipo === "PASAPORTE" || tipo === "OTROS") && (val.length < 5 || val.length > 100)) return "Documento 5-100 caracteres";
-  }
-  return "";
-}
-
-function sortTableByColumn(columnIndex) {
-  if (tableData.length <= 1) return;
-  if (currentSortColumn === columnIndex) sortDirection *= -1;
-  else { currentSortColumn = columnIndex; sortDirection = 1; }
-  const header = tableData[0];
-  const body = tableData.slice(1);
-  body.sort((a, b) => {
-    const valA = (a[columnIndex] || "").toString().toLowerCase();
-    const valB = (b[columnIndex] || "").toString().toLowerCase();
-    if (valA < valB) return -1 * sortDirection;
-    if (valA > valB) return 1 * sortDirection;
-    return 0;
-  });
-  tableData = [header].concat(body);
-  renderTable();
-}
-
-function editRow(rowIndex) {
-  const row = tableData[rowIndex];
-  if (!row) return;
-  editingIndex = rowIndex;
-  document.getElementById('formTitle').innerText = 'Editar Pasajero';
-  document.getElementById('savePassengerBtn').innerText = 'Guardar Cambios';
-  document.getElementById('apellido').value = row[0] || '';
-  document.getElementById('nombre').value = row[1] || '';
-  document.getElementById('tipo_documento').value = row[2] || defaults.tipo_documento;
-  document.getElementById('descripcion_documento').value = row[3] || '';
-  document.getElementById('numero_documento').value = row[4] || '';
-  document.getElementById('sexo').value = row[5] || defaults.sexo;
-  document.getElementById('menor').value = row[6] || defaults.menor;
-  document.getElementById('nacionalidad').value = row[7] || defaults.nacionalidad;
-  document.getElementById('tripulante').value = row[8] || defaults.tripulante;
-  document.getElementById('ocupa_butaca').value = row[9] || defaults.ocupa_butaca;
-  document.getElementById('observaciones').value = row[10] || defaults.observaciones;
-  const tipoDoc = row[2] || defaults.tipo_documento;
-  const descGroup = document.getElementById('descripcion_documento_group');
-  if (tipoDoc === 'OTROS') descGroup.style.display = 'block';
-  else descGroup.style.display = 'none';
-  document.getElementById('addPassengerModal').style.display = 'block';
-}
-
-function openAddPassengerModal() {
-  editingIndex = null;
-  document.getElementById('formTitle').innerText = 'Agregar Nuevo Pasajero';
-  document.getElementById('savePassengerBtn').innerText = 'Agregar Pasajero';
-  document.getElementById('apellido').value = '';
-  document.getElementById('nombre').value = '';
-  document.getElementById('tipo_documento').value = defaults.tipo_documento;
-  document.getElementById('descripcion_documento').value = '';
-  document.getElementById('numero_documento').value = '';
-  document.getElementById('sexo').value = defaults.sexo;
-  document.getElementById('menor').value = defaults.menor;
-  document.getElementById('nacionalidad').value = defaults.nacionalidad;
-  document.getElementById('tripulante').value = defaults.tripulante;
-  document.getElementById('ocupa_butaca').value = defaults.ocupa_butaca;
-  document.getElementById('observaciones').value = defaults.observaciones;
-  document.getElementById('descripcion_documento_group').style.display = 'none';
-  document.getElementById('addPassengerModal').style.display = 'block';
-}
-
-function closeAddPassengerModal() {
-  document.getElementById('addPassengerModal').style.display = 'none';
-  editingIndex = null;
-}
-
-function savePassenger() {
-  const apellido = document.getElementById('apellido').value.trim();
-  const nombre = document.getElementById('nombre').value.trim();
-  const tipoDoc = document.getElementById('tipo_documento').value;
-  const numDoc = document.getElementById('numero_documento').value.trim();
-  const descDoc = document.getElementById('descripcion_documento').value.trim();
-  if (!apellido || !nombre || !numDoc) {
-    alert('Apellido, Nombre y Número de Documento son obligatorios');
-    return;
-  }
-  if (tipoDoc === 'OTROS' && !descDoc) {
-    alert('Debe indicar una descripción del documento');
-    return;
-  }
-  const newRow = [
-    apellido, nombre, tipoDoc,
-    (tipoDoc === 'OTROS' ? descDoc : ''),
-    numDoc,
-    document.getElementById('sexo').value,
-    document.getElementById('menor').value,
-    document.getElementById('nacionalidad').value,
-    document.getElementById('tripulante').value,
-    document.getElementById('ocupa_butaca').value,
-    document.getElementById('observaciones').value.trim()
-  ];
-  if (tableData.length === 0) tableData = [defaultHeader];
-  if (editingIndex !== null) tableData[editingIndex] = newRow;
-  else tableData.push(newRow);
-  renderTable();
-  closeAddPassengerModal();
-}
-
-function removeSelectedRows() {
-  const selectedRows = document.querySelectorAll('.selected-row');
-  if (selectedRows.length === 0) return;
-  if (!confirm('¿Eliminar ' + selectedRows.length + ' fila(s)?')) return;
-  const indices = [];
-  for (let i = 0; i < selectedRows.length; i++) {
-    indices.push(parseInt(selectedRows[i].getAttribute('data-row-index')));
-  }
-  indices.sort((a,b) => b - a);
-  for (let j = 0; j < indices.length; j++) tableData.splice(indices[j], 1);
-  renderTable();
-}
-
-function openSaveModal() { document.getElementById('saveModal').style.display = 'flex'; }
-function closeSaveModal() { document.getElementById('saveModal').style.display = 'none'; }
-
-function confirmDownload() {
-  if (document.getElementById('saveBtn').disabled) {
-    alert('Hay errores en los datos, no se puede guardar');
-    return;
-  }
-  let fileName = document.getElementById('fileNameInputModal').value.trim();
-  if (!fileName) fileName = 'lista_pasajeros';
-  if (!fileName.endsWith('.csv')) fileName += '.csv';
-  const lines = [];
-  for (let i = 0; i < tableData.length; i++) lines.push(tableData[i].join(';'));
-  const content = lines.join('\n');
-  const blob = new Blob(['\uFEFF' + content], {type: 'text/csv;charset=utf-8;'});
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  closeSaveModal();
-}
-
-// ------------------------------------------------------------
-// CARGA DE ARCHIVO USANDO ArrayBuffer (más fiable)
-// ------------------------------------------------------------
 function cargarCSV(file) {
-  log('📂 Archivo: ' + file.name + ', tamaño: ' + file.size + ' bytes');
-  if (file.size === 0) {
-    alert('El archivo está vacío (0 bytes).');
-    log('❌ Archivo vacío.');
-    return;
-  }
+  log('Archivo: ' + file.name + ', tamaño: ' + file.size);
+  if (file.size === 0) { log('Archivo vacío'); return; }
   const reader = new FileReader();
-  reader.onload = function(evt) {
-    // Leer como ArrayBuffer y convertir a string manualmente (evita problemas de codificación)
-    const buffer = evt.target.result;
-    const uint8 = new Uint8Array(buffer);
-    let text = '';
-    for (let i = 0; i < uint8.length; i++) {
-      text += String.fromCharCode(uint8[i]);
+  reader.onload = function(e) {
+    let text = e.target.result;
+    log('Texto leído, longitud: ' + text.length);
+    log('Primeros 50 caracteres: ' + text.substring(0, 50));
+    // Mostrar códigos
+    let codes = '';
+    for (let i = 0; i < Math.min(20, text.length); i++) {
+      codes += text.charCodeAt(i) + ' ';
     }
-    log('✅ Longitud del texto decodificado: ' + text.length);
-    if (text.length === 0) {
-      alert('El contenido del archivo está vacío.');
-      return;
-    }
-    // Mostrar primeros 30 caracteres en hexadecimal
-    let hexPreview = '';
-    for (let i = 0; i < Math.min(30, text.length); i++) {
-      hexPreview += text.charCodeAt(i).toString(16) + ' ';
-    }
-    log('🔎 Hexadecimal primeros bytes: ' + hexPreview);
-    // Eliminar BOM si existe
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    log('Códigos ASCII primeros 20: ' + codes);
+    
     // Normalizar saltos de línea
-    text = text.replace(/\r\n|\r|\u2028|\u2029/g, '\n');
-    text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-    text = text.trim();
-    log('📄 Texto normalizado (primeros 200): ' + text.substring(0,200));
+    text = text.replace(/\r\n/g, '\n');
+    text = text.replace(/\r/g, '\n');
     const lines = text.split('\n');
-    log('🔢 Líneas obtenidas: ' + lines.length);
+    log('Líneas detectadas: ' + lines.length);
     if (lines.length < 2) {
-      alert('El archivo tiene menos de 2 líneas. Asegúrate de que tenga encabezados y al menos una fila de datos.');
+      log('Menos de 2 líneas, error');
+      alert('Menos de 2 líneas');
       return;
     }
-    const headers = lines[0].split(';').map(h => h.trim().toLowerCase());
-    log('📑 Headers: ' + headers.join(', '));
-    const missing = [];
-    for (let i = 0; i < requiredHeaders.length; i++) {
-      if (headers.indexOf(requiredHeaders[i]) === -1) missing.push(requiredHeaders[i]);
+    // Procesar CSV simple
+    const data = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === '') continue;
+      const cols = lines[i].split(';');
+      data.push(cols.map(c => c.trim()));
     }
-    if (missing.length > 0) {
-      alert('Columnas faltantes: ' + missing.join(', '));
-      return;
-    }
-    const data = [headers];
-    let emptyLines = 0;
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line === "") { emptyLines++; continue; }
-      const cols = line.split(';');
-      while (cols.length < headers.length) cols.push('');
-      data.push(cols.map(cell => cell.trim()));
-    }
-    if (data.length === 1) {
-      alert('No se encontraron filas de datos.');
-      return;
-    }
+    log('Filas procesadas (incluyendo header): ' + data.length);
+    if (data.length === 0) return;
     tableData = data;
-    renderTable();
-    log(`🎉 Cargados ${tableData.length - 1} pasajeros. Líneas vacías omitidas: ${emptyLines}`);
-    alert(`✅ Archivo cargado: ${tableData.length - 1} pasajeros.`);
+    renderSimpleTable();
+    log('Tabla actualizada');
   };
   reader.onerror = function(err) {
-    log('💥 Error de lectura: ' + err);
-    alert('No se pudo leer el archivo. Intente con la carga manual.');
+    log('Error lectura: ' + err);
   };
-  reader.readAsArrayBuffer(file);  // Leer como ArrayBuffer, más seguro
+  reader.readAsText(file, 'UTF-8');
 }
 
-// ------------------------------------------------------------
-// FALLBACK: CARGAR DESDE TEXTO PEGADO MANUALMENTE
-// ------------------------------------------------------------
-function mostrarModalCargaManual() {
-  // Crear modal si no existe
-  let modal = document.getElementById('manualCsvModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'manualCsvModal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-    modal.style.zIndex = '10000';
-    modal.style.display = 'flex';
-    modal.style.justifyContent = 'center';
-    modal.style.alignItems = 'center';
-    modal.innerHTML = `
-      <div style="background:white; padding:20px; border-radius:8px; width:90%; max-width:500px;">
-        <h3>Cargar CSV manualmente</h3>
-        <p>Abra el archivo CSV con un editor de texto, copie TODO su contenido y péguelo aquí.</p>
-        <textarea id="manualCsvText" rows="10" style="width:100%; font-family:monospace;"></textarea>
-        <div style="margin-top:15px; text-align:right;">
-          <button id="btnProcesarManual" style="margin-right:10px;">Procesar</button>
-          <button id="btnCerrarManual">Cancelar</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    document.getElementById('btnProcesarManual').addEventListener('click', function() {
-      const texto = document.getElementById('manualCsvText').value;
-      if (!texto.trim()) {
-        alert('Pegue el contenido del archivo CSV.');
-        return;
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+  log('Página cargada');
+  const fileInput = document.getElementById('csvFile');
+  if (fileInput) {
+    fileInput.addEventListener('change', function(ev) {
+      log('Evento change');
+      if (ev.target.files && ev.target.files[0]) {
+        cargarCSV(ev.target.files[0]);
+      } else {
+        log('No hay archivo');
       }
-      procesarTextoCSV(texto);
-      modal.style.display = 'none';
-    });
-    document.getElementById('btnCerrarManual').addEventListener('click', function() {
-      modal.style.display = 'none';
+      ev.target.value = '';
     });
   } else {
-    modal.style.display = 'flex';
-    document.getElementById('manualCsvText').value = '';
+    log('No se encontró input file');
   }
-}
-
-function procesarTextoCSV(text) {
-  log('📝 Procesando texto pegado, longitud: ' + text.length);
-  try {
-    let textNormalized = text.replace(/\r\n|\r|\u2028|\u2029/g, '\n');
-    textNormalized = textNormalized.trim();
-    const lines = textNormalized.split('\n');
-    if (lines.length < 2) throw new Error('El texto debe tener al menos dos líneas (encabezados + datos).');
-    const headers = lines[0].split(';').map(h => h.trim().toLowerCase());
-    const missing = [];
-    for (let i = 0; i < requiredHeaders.length; i++) {
-      if (headers.indexOf(requiredHeaders[i]) === -1) missing.push(requiredHeaders[i]);
-    }
-    if (missing.length > 0) {
-      alert('Columnas faltantes: ' + missing.join(', '));
-      return;
-    }
-    const data = [headers];
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line === "") continue;
-      const cols = line.split(';');
-      while (cols.length < headers.length) cols.push('');
-      data.push(cols.map(cell => cell.trim()));
-    }
-    if (data.length === 1) {
-      alert('No hay filas de datos.');
-      return;
-    }
-    tableData = data;
-    renderTable();
-    log(`🎉 Cargados ${tableData.length - 1} pasajeros desde texto pegado.`);
-    alert(`✅ Cargados ${tableData.length - 1} pasajeros.`);
-  } catch (err) {
-    alert('Error al procesar el texto: ' + err.message);
-  }
-}
-
-// ------------------------------------------------------------
-// Exponer funciones globales
-// ------------------------------------------------------------
-window.openAddPassengerModal = openAddPassengerModal;
-window.closeAddPassengerModal = closeAddPassengerModal;
-window.savePassenger = savePassenger;
-window.editRow = editRow;
-window.removeSelectedRows = removeSelectedRows;
-window.openSaveModal = openSaveModal;
-window.closeSaveModal = closeSaveModal;
-window.confirmDownload = confirmDownload;
-window.handleTipoDocumentoChange = handleTipoDocumentoChange;
-window.mostrarModalCargaManual = mostrarModalCargaManual;  // nuevo botón
-
-// ------------------------------------------------------------
-// Inicialización
-// ------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', function() {
-  log('Editor iniciado con fallback manual');
-  try {
-    populateNationalities();
-    if (tableData.length === 0) {
-      tableData = [defaultHeader, ['García', 'Ana', 'DNI', '', '12345678', 'F', '0', 'Argentina', '0', '1', '']];
-      log('Datos de ejemplo cargados.');
-    }
-    renderTable();
-    const fileInput = document.getElementById('csvFile');
-    if (fileInput) {
-      // Reemplazar el evento anterior
-      fileInput.addEventListener('change', function(ev) {
-        log('🖱️ Evento change disparado.');
-        if (ev.target.files && ev.target.files[0]) {
-          cargarCSV(ev.target.files[0]);
-        } else {
-          log('⚠️ No se seleccionó archivo.');
-        }
-        ev.target.value = '';
-      });
-    } else {
-      log('❌ Elemento #csvFile no encontrado.');
-    }
-    // Agregar botón de carga manual en los controles
-    const controls = document.getElementById('controls');
-    if (controls && !document.getElementById('btnCargaManual')) {
-      const btnManual = document.createElement('button');
-      btnManual.id = 'btnCargaManual';
-      btnManual.textContent = '📋 Cargar CSV manualmente';
-      btnManual.onclick = mostrarModalCargaManual;
-      controls.appendChild(btnManual);
-      log('✅ Botón de carga manual agregado.');
-    }
-  } catch (err) {
-    log('❌ Error fatal: ' + err.message);
-  }
+  // Datos de ejemplo para probar
+  tableData = [['apellido','nombre','documento'],['Perez','Juan','12345678']];
+  renderSimpleTable();
+  log('Datos de ejemplo mostrados');
 });
