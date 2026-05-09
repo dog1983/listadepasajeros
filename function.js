@@ -1,5 +1,5 @@
 // ============================================================
-// function.js - VERSIÓN ULTRA ROBUSTA PARA MÓVIL
+// function.js - VERSIÓN DEFINITIVA CON FALLBACK MANUAL
 // ============================================================
 
 // Panel de depuración (seguirá apareciendo)
@@ -29,7 +29,7 @@ function log(msg) {
   console.log(msg);
 }
 
-// Variables globales originales (sin cambios)
+// Variables globales
 let tableData = [];
 let editingIndex = null;
 let documentNumbersMap = new Map();
@@ -75,7 +75,7 @@ const nacionalidadesList = [
 validValues.nacionalidad = nacionalidadesList;
 
 // ------------------------------------------------------------
-// FUNCIONES AUXILIARES (sin cambios significativos)
+// FUNCIONES AUXILIARES (sin cambios)
 // ------------------------------------------------------------
 function getColumnIndex(columnName) {
   if (!tableData.length) return -1;
@@ -392,76 +392,58 @@ function confirmDownload() {
 }
 
 // ------------------------------------------------------------
-// NUEVA FUNCIÓN DE CARGA ULTRAROBUSTA (CON HEXADECIMAL)
+// CARGA DE ARCHIVO USANDO ArrayBuffer (más fiable)
 // ------------------------------------------------------------
 function cargarCSV(file) {
   log('📂 Archivo: ' + file.name + ', tamaño: ' + file.size + ' bytes');
+  if (file.size === 0) {
+    alert('El archivo está vacío (0 bytes).');
+    log('❌ Archivo vacío.');
+    return;
+  }
   const reader = new FileReader();
   reader.onload = function(evt) {
-    let text = evt.target.result;
-    log('✅ Longitud del texto: ' + text.length);
-    // Mostrar primeros 30 caracteres en hexadecimal para depurar
+    // Leer como ArrayBuffer y convertir a string manualmente (evita problemas de codificación)
+    const buffer = evt.target.result;
+    const uint8 = new Uint8Array(buffer);
+    let text = '';
+    for (let i = 0; i < uint8.length; i++) {
+      text += String.fromCharCode(uint8[i]);
+    }
+    log('✅ Longitud del texto decodificado: ' + text.length);
+    if (text.length === 0) {
+      alert('El contenido del archivo está vacío.');
+      return;
+    }
+    // Mostrar primeros 30 caracteres en hexadecimal
     let hexPreview = '';
     for (let i = 0; i < Math.min(30, text.length); i++) {
       hexPreview += text.charCodeAt(i).toString(16) + ' ';
     }
     log('🔎 Hexadecimal primeros bytes: ' + hexPreview);
-    // Si el texto está vacío o tiene menos de 2 caracteres, error
-    if (text.length < 2) {
-      log('❌ El texto leído está vacío o es muy corto.');
-      alert('El archivo está vacío o no se pudo leer correctamente.');
-      return;
-    }
     // Eliminar BOM si existe
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-    // NORMALIZACIÓN EXTREMA: reemplazar cualquier posible salto de línea por \n
-    // Incluye \r\n, \r, \n, y también \u2028 (separador de línea), \u2029 (separador de párrafo)
+    // Normalizar saltos de línea
     text = text.replace(/\r\n|\r|\u2028|\u2029/g, '\n');
-    // Eliminar caracteres de control no deseados (excepto \n y \t)
     text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-    // Eliminar posibles espacios al inicio y final
     text = text.trim();
     log('📄 Texto normalizado (primeros 200): ' + text.substring(0,200));
-    
-    // Dividir en líneas usando \n
-    let lines = text.split('\n');
-    log('🔢 Líneas después de split: ' + lines.length);
-    
-    // Si solo hay una línea, intentar dividir también por punto y coma y detectar si hay múltiples filas
+    const lines = text.split('\n');
+    log('🔢 Líneas obtenidas: ' + lines.length);
     if (lines.length < 2) {
-      log('⚠️ Menos de 2 líneas detectadas. Intentando detectar filas por otro método...');
-      // Podría ser que todo el contenido esté en una sola línea con saltos de línea incrustados de otro tipo
-      // También podría ser que el archivo tenga filas separadas por \r que no fueron reemplazadas (doble verificación)
-      let altText = text.replace(/[\r\n]+/g, '\n');
-      lines = altText.split('\n');
-      log('🔢 Después de doble normalización: ' + lines.length);
-      if (lines.length < 2 && text.length > 0) {
-        // Último recurso: asumir que el archivo tiene una sola línea con encabezados y datos separados por ; 
-        // pero entonces no hay datos válidos (al menos debería haber dos filas)
-        log('❌ El archivo parece tener una sola línea. Verifica que tenga saltos de línea.');
-        alert('El archivo CSV no contiene saltos de línea. Asegúrate de que esté guardado con filas separadas por saltos de línea estándar.');
-        return;
-      }
+      alert('El archivo tiene menos de 2 líneas. Asegúrate de que tenga encabezados y al menos una fila de datos.');
+      return;
     }
-    
-    if (lines.length < 2) {
-      throw new Error('Archivo con menos de 2 líneas incluso después de todas las normalizaciones.');
-    }
-    
-    // Procesar cabeceras
     const headers = lines[0].split(';').map(h => h.trim().toLowerCase());
     log('📑 Headers: ' + headers.join(', '));
-    
     const missing = [];
     for (let i = 0; i < requiredHeaders.length; i++) {
       if (headers.indexOf(requiredHeaders[i]) === -1) missing.push(requiredHeaders[i]);
     }
     if (missing.length > 0) {
       alert('Columnas faltantes: ' + missing.join(', '));
-      log('❌ Faltan columnas: ' + missing.join(', '));
       return;
     }
-    
     const data = [headers];
     let emptyLines = 0;
     for (let i = 1; i < lines.length; i++) {
@@ -471,27 +453,111 @@ function cargarCSV(file) {
       while (cols.length < headers.length) cols.push('');
       data.push(cols.map(cell => cell.trim()));
     }
-    
     if (data.length === 1) {
-      alert('No se encontraron filas de datos después del encabezado.');
-      log('⚠️ Sin datos.');
+      alert('No se encontraron filas de datos.');
       return;
     }
-    
     tableData = data;
     renderTable();
     log(`🎉 Cargados ${tableData.length - 1} pasajeros. Líneas vacías omitidas: ${emptyLines}`);
-    alert(`✅ Archivo cargado correctamente. ${tableData.length - 1} pasajeros importados.`);
+    alert(`✅ Archivo cargado: ${tableData.length - 1} pasajeros.`);
   };
-  reader.onerror = function() {
-    log('💥 Error de lectura del archivo');
-    alert('No se pudo leer el archivo. Es posible que el navegador no tenga permisos.');
+  reader.onerror = function(err) {
+    log('💥 Error de lectura: ' + err);
+    alert('No se pudo leer el archivo. Intente con la carga manual.');
   };
-  reader.readAsText(file, 'UTF-8');
+  reader.readAsArrayBuffer(file);  // Leer como ArrayBuffer, más seguro
 }
-// ------------------------------------------------------------
 
+// ------------------------------------------------------------
+// FALLBACK: CARGAR DESDE TEXTO PEGADO MANUALMENTE
+// ------------------------------------------------------------
+function mostrarModalCargaManual() {
+  // Crear modal si no existe
+  let modal = document.getElementById('manualCsvModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'manualCsvModal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    modal.style.zIndex = '10000';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.innerHTML = `
+      <div style="background:white; padding:20px; border-radius:8px; width:90%; max-width:500px;">
+        <h3>Cargar CSV manualmente</h3>
+        <p>Abra el archivo CSV con un editor de texto, copie TODO su contenido y péguelo aquí.</p>
+        <textarea id="manualCsvText" rows="10" style="width:100%; font-family:monospace;"></textarea>
+        <div style="margin-top:15px; text-align:right;">
+          <button id="btnProcesarManual" style="margin-right:10px;">Procesar</button>
+          <button id="btnCerrarManual">Cancelar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('btnProcesarManual').addEventListener('click', function() {
+      const texto = document.getElementById('manualCsvText').value;
+      if (!texto.trim()) {
+        alert('Pegue el contenido del archivo CSV.');
+        return;
+      }
+      procesarTextoCSV(texto);
+      modal.style.display = 'none';
+    });
+    document.getElementById('btnCerrarManual').addEventListener('click', function() {
+      modal.style.display = 'none';
+    });
+  } else {
+    modal.style.display = 'flex';
+    document.getElementById('manualCsvText').value = '';
+  }
+}
+
+function procesarTextoCSV(text) {
+  log('📝 Procesando texto pegado, longitud: ' + text.length);
+  try {
+    let textNormalized = text.replace(/\r\n|\r|\u2028|\u2029/g, '\n');
+    textNormalized = textNormalized.trim();
+    const lines = textNormalized.split('\n');
+    if (lines.length < 2) throw new Error('El texto debe tener al menos dos líneas (encabezados + datos).');
+    const headers = lines[0].split(';').map(h => h.trim().toLowerCase());
+    const missing = [];
+    for (let i = 0; i < requiredHeaders.length; i++) {
+      if (headers.indexOf(requiredHeaders[i]) === -1) missing.push(requiredHeaders[i]);
+    }
+    if (missing.length > 0) {
+      alert('Columnas faltantes: ' + missing.join(', '));
+      return;
+    }
+    const data = [headers];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === "") continue;
+      const cols = line.split(';');
+      while (cols.length < headers.length) cols.push('');
+      data.push(cols.map(cell => cell.trim()));
+    }
+    if (data.length === 1) {
+      alert('No hay filas de datos.');
+      return;
+    }
+    tableData = data;
+    renderTable();
+    log(`🎉 Cargados ${tableData.length - 1} pasajeros desde texto pegado.`);
+    alert(`✅ Cargados ${tableData.length - 1} pasajeros.`);
+  } catch (err) {
+    alert('Error al procesar el texto: ' + err.message);
+  }
+}
+
+// ------------------------------------------------------------
 // Exponer funciones globales
+// ------------------------------------------------------------
 window.openAddPassengerModal = openAddPassengerModal;
 window.closeAddPassengerModal = closeAddPassengerModal;
 window.savePassenger = savePassenger;
@@ -501,10 +567,13 @@ window.openSaveModal = openSaveModal;
 window.closeSaveModal = closeSaveModal;
 window.confirmDownload = confirmDownload;
 window.handleTipoDocumentoChange = handleTipoDocumentoChange;
+window.mostrarModalCargaManual = mostrarModalCargaManual;  // nuevo botón
 
+// ------------------------------------------------------------
 // Inicialización
+// ------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function() {
-  log('Editor iniciado en modo móvil/PC ultra robusto');
+  log('Editor iniciado con fallback manual');
   try {
     populateNationalities();
     if (tableData.length === 0) {
@@ -514,6 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderTable();
     const fileInput = document.getElementById('csvFile');
     if (fileInput) {
+      // Reemplazar el evento anterior
       fileInput.addEventListener('change', function(ev) {
         log('🖱️ Evento change disparado.');
         if (ev.target.files && ev.target.files[0]) {
@@ -525,6 +595,16 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     } else {
       log('❌ Elemento #csvFile no encontrado.');
+    }
+    // Agregar botón de carga manual en los controles
+    const controls = document.getElementById('controls');
+    if (controls && !document.getElementById('btnCargaManual')) {
+      const btnManual = document.createElement('button');
+      btnManual.id = 'btnCargaManual';
+      btnManual.textContent = '📋 Cargar CSV manualmente';
+      btnManual.onclick = mostrarModalCargaManual;
+      controls.appendChild(btnManual);
+      log('✅ Botón de carga manual agregado.');
     }
   } catch (err) {
     log('❌ Error fatal: ' + err.message);
