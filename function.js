@@ -667,6 +667,79 @@ function sortTableByColumn(columnIndex) {
   renderTable();
 }
 
+// ================= NUEVA FUNCIÓN CON SELECTOR DE CARPETA =================
+/**
+ * Guarda un archivo permitiendo al usuario elegir la ubicación.
+ * Si el navegador soporta la API File System Access, abre un selector de archivos nativo.
+ * Si no, recurre al método tradicional de descarga (que suele ir a Descargas).
+ *
+ * @param {Blob} blob - El contenido del archivo como Blob.
+ * @param {string} suggestedName - El nombre sugerido para el archivo.
+ */
+async function saveFile(blob, suggestedName) {
+    // Detectar si el navegador soporta la API moderna y no está dentro de un iframe que lo restrinja
+    const supportsFileSystemAccess = 'showSaveFilePicker' in window &&
+        (() => {
+            try {
+                return window.self === window.top;
+            } catch {
+                return false;
+            }
+        })();
+
+    if (supportsFileSystemAccess) {
+        try {
+            // Abrir el selector de archivos nativo del sistema operativo
+            const handle = await window.showSaveFilePicker({
+                suggestedName: suggestedName,
+                types: [{
+                    description: 'Archivo CSV',
+                    accept: { 'text/csv': ['.csv'] }
+                }]
+            });
+
+            // Crear un flujo de escritura hacia el archivo seleccionado por el usuario
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+
+            console.log('Archivo guardado exitosamente usando el selector nativo.');
+            return; // Salir de la función si todo fue bien
+        } catch (err) {
+            // Si el usuario cancela el selector, no hacemos nada.
+            if (err.name === 'AbortError') {
+                console.log('El usuario canceló el guardado.');
+                return;
+            }
+            // Si ocurre otro error, lo mostramos y pasamos al método alternativo
+            console.error('Error con el selector nativo, usando descarga tradicional:', err);
+        }
+    }
+
+    // --- MÉTODO ALTERNATIVO (TRADICIONAL) ---
+    // Se ejecuta si la API moderna no es soportada o si falló.
+    console.log('Usando método de descarga tradicional.');
+
+    // Crear una URL temporal para el Blob
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Crear un enlace <a> invisible y hacer clic en él programáticamente
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = suggestedName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+
+    // Liberar la memoria de la URL temporal después de un breve momento
+    setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+        a.remove();
+    }, 1000);
+}
+// ====================================================================
+
+// Función confirmDownload modificada para usar el selector de carpeta
 function confirmDownload() {
   // Verificar nuevamente antes de guardar
   if (document.getElementById('saveBtn').disabled) {
@@ -675,22 +748,16 @@ function confirmDownload() {
   }
 
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
-  const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-  
-  // Guardamos TODAS las columnas con sus nombres originales
+  const suggestedFileName = fileNameInput ? `${fileNameInput}.csv` : 'lista_pasajeros.csv';
+
+  // Preparar el contenido del archivo CSV
   const csvContent = tableData.map(row => row.join(';')).join('\n');
-  
-  // CORRECCIÓN: Agregar BOM (Byte Order Mark) para UTF-8
   const BOM = '\uFEFF';
   const csvWithBOM = BOM + csvContent;
-  
   const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  
-  URL.revokeObjectURL(url);
+
+  // Llamar a la nueva función saveFile con selector de carpeta
+  saveFile(blob, suggestedFileName);
+
   closeSaveModal();
 }
