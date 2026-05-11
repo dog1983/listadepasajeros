@@ -668,11 +668,38 @@ function sortTableByColumn(columnIndex) {
 }
 
 function confirmDownload() {
-  // Verificar nuevamente antes de guardar
   if (document.getElementById('saveBtn').disabled) {
     alert('No se puede guardar mientras existan errores en los datos');
     return;
   }
+
+  const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
+  const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
+  
+  const csvContent = tableData.map(row => row.join(';')).join('\n');
+  const BOM = '\uFEFF';
+  const csvWithBOM = BOM + csvContent;
+
+  // En móvil, crear un blob y mostrar el contenido
+  const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  // Detectar si es móvil
+  if (/Android|iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    // En móvil: abrir en nueva pestaña para que el usuario lo descargue
+    window.open(url, '_blank');
+    alert(`Abre el archivo y guárdalo en tu carpeta deseada`);
+  } else {
+    // En escritorio: descargar directamente
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+  }
+  
+  URL.revokeObjectURL(url);
+  closeSaveModal();
+}
 
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
   const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
