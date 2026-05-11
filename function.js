@@ -151,21 +151,15 @@ function validateCSVHeaders(headers) {
 }
 
 function parseCSV(text) {
-
-  // Eliminar BOM UTF8
-  text = text.replace(/^\uFEFF/, '');
-
-  const rows = text
-    .trim()
-    .split(/\r\n|\n|\r/)
-    .map(row => {
-      return row
-        .split(';')
-        .map(cell => cell.trim());
-    });
-
-  return rows;
-}
+  // Separar líneas y celdas
+  const rows = text.trim().split('\n').map(row => {
+    return row.split(';').map(cell => cell.trim());
+  });
+  
+  if (rows.length === 0) {
+    alert('El archivo está vacío');
+    return [defaultHeader];
+  }
   
   let header = rows[0];
   let body = rows.slice(1);
