@@ -53,7 +53,7 @@ const validValues = {
 
 const defaults = {
   tipo_documento: "DNI",
-  sexo: "F",
+  sexo: "M",
   menor: "0",
   nacionalidad: "Argentina",
   tripulante: "0",
