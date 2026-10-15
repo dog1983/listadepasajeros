@@ -739,8 +739,8 @@ async function saveFile(blob, suggestedName) {
 }
 // ====================================================================
 
-// Función confirmDownload modificada para usar el selector de carpeta
-function confirmDownload() {
+// Función confirmDownload modificada para priorizar el selector nativo en Android
+async function confirmDownload() {
   // Verificar nuevamente antes de guardar
   if (document.getElementById('saveBtn').disabled) {
     alert('No se puede guardar mientras existan errores en los datos');
@@ -756,8 +756,56 @@ function confirmDownload() {
   const csvWithBOM = BOM + csvContent;
   const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
 
-  // Llamar a la nueva función saveFile con selector de carpeta
-  saveFile(blob, suggestedFileName);
+  // --- DETECCIÓN DE LA API MODERNA ---
+  const supportsFileSystemAccess = 'showSaveFilePicker' in window;
+
+  if (supportsFileSystemAccess) {
+    // En Android (y navegadores modernos), usar SIEMPRE el selector nativo
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: suggestedFileName,
+        types: [{
+          description: 'Archivo CSV',
+          accept: { 'text/csv': ['.csv'] }
+        }]
+      });
+
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+
+      console.log('Archivo guardado correctamente con selector nativo.');
+      closeSaveModal();
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('Usuario canceló el guardado.');
+        closeSaveModal();
+        return;
+      }
+      // Si falla el selector nativo, mostramos el error y NO intentamos el fallback
+      console.error('Error con selector nativo:', err);
+      alert('Error al guardar: ' + err.message + '\nPor favor, intente de nuevo.');
+      closeSaveModal();
+      return;
+    }
+  }
+
+  // --- FALLBACK SOLO PARA NAVEGADORES ANTIGUOS (sin soporte de la API) ---
+  console.log('Navegador sin soporte de File System Access, usando método tradicional.');
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = suggestedFileName;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+
+  // Retrasar la revocación de la URL para dar tiempo a Android a escribir el archivo
+  setTimeout(() => {
+    URL.revokeObjectURL(blobUrl);
+    a.remove();
+  }, 3000); // 3 segundos en lugar de 1
 
   closeSaveModal();
 }
