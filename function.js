@@ -667,7 +667,80 @@ function sortTableByColumn(columnIndex) {
   renderTable();
 }
 
-function confirmDownload() {
+// ================= FUNCIÓN PARA GUARDAR CON SELECTOR DE CARPETA =================
+/**
+ * Guarda un archivo permitiendo al usuario elegir la ubicación.
+ * Si el navegador soporta la API File System Access, abre un selector de archivos nativo.
+ * Si no, recurre al método tradicional de descarga (que suele ir a Descargas).
+ *
+ * @param {Blob} blob - El contenido del archivo como Blob.
+ * @param {string} suggestedName - El nombre sugerido para el archivo.
+ */
+async function saveFile(blob, suggestedName) {
+    // Detectar si el navegador soporta la API moderna y no está dentro de un iframe que lo restrinja
+    const supportsFileSystemAccess = 'showSaveFilePicker' in window &&
+        (() => {
+            try {
+                return window.self === window.top;
+            } catch {
+                return false;
+            }
+        })();
+
+    if (supportsFileSystemAccess) {
+        try {
+            // Abrir el selector de archivos nativo del sistema operativo
+            const handle = await window.showSaveFilePicker({
+                suggestedName: suggestedName,
+                types: [{
+                    description: 'Archivo CSV',
+                    accept: { 'text/csv': ['.csv'] }
+                }]
+            });
+
+            // Crear un flujo de escritura hacia el archivo seleccionado por el usuario
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+
+            console.log('Archivo guardado exitosamente usando el selector nativo.');
+            return; // Salir de la función si todo fue bien
+        } catch (err) {
+            // Si el usuario cancela el selector, no hacemos nada.
+            if (err.name === 'AbortError') {
+                console.log('El usuario canceló el guardado.');
+                return;
+            }
+            // Si ocurre otro error, lo mostramos y pasamos al método alternativo
+            console.error('Error con el selector nativo, usando descarga tradicional:', err);
+        }
+    }
+
+    // --- MÉTODO ALTERNATIVO (TRADICIONAL) ---
+    // Se ejecuta si la API moderna no es soportada o si falló.
+    console.log('Usando método de descarga tradicional.');
+
+    // Crear una URL temporal para el Blob
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Crear un enlace <a> invisible y hacer clic en él programáticamente
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = suggestedName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+
+    // Liberar la memoria de la URL temporal después de un breve momento
+    setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+        a.remove();
+    }, 1000);
+}
+// =============================================================================
+
+// Función confirmDownload modificada para priorizar el selector nativo en Android
+async function confirmDownload() {
   // Verificar nuevamente antes de guardar
   if (document.getElementById('saveBtn').disabled) {
     alert('No se puede guardar mientras existan errores en los datos');
@@ -675,22 +748,120 @@ function confirmDownload() {
   }
 
   const fileNameInput = document.getElementById('fileNameInputModal').value.trim();
-  const fileName = fileNameInput ? fileNameInput + '.csv' : 'datos_editados.csv';
-  
-  // Guardamos TODAS las columnas con sus nombres originales
+  const suggestedFileName = fileNameInput ? `${fileNameInput}.csv` : 'lista_pasajeros.csv';
+
+  // Preparar el contenido del archivo CSV
   const csvContent = tableData.map(row => row.join(';')).join('\n');
-  
-  // CORRECCIÓN: Agregar BOM (Byte Order Mark) para UTF-8
   const BOM = '\uFEFF';
   const csvWithBOM = BOM + csvContent;
-  
   const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
+
+  // --- DETECCIÓN DE LA API MODERNA ---
+  const supportsFileSystemAccess = 'showSaveFilePicker' in window;
+
+  if (supportsFileSystemAccess) {
+    // En Android (y navegadores modernos), usar SIEMPRE el selector nativo
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: suggestedFileName,
+        types: [{
+          description: 'Archivo CSV',
+          accept: { 'text/csv': ['.csv'] }
+        }]
+      });
+
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+
+      console.log('Archivo guardado correctamente con selector nativo.');
+      closeSaveModal();
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('Usuario canceló el guardado.');
+        closeSaveModal();
+        return;
+      }
+      // Si falla el selector nativo, mostramos el error y NO intentamos el fallback
+      console.error('Error con selector nativo:', err);
+      alert('Error al guardar: ' + err.message + '\nPor favor, intente de nuevo.');
+      closeSaveModal();
+      return;
+    }
+  }
+
+  // --- FALLBACK SOLO PARA NAVEGADORES ANTIGUOS (sin soporte de la API) ---
+  console.log('Navegador sin soporte de File System Access, usando método tradicional.');
+  const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
+  a.href = blobUrl;
+  a.download = suggestedFileName;
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
-  
-  URL.revokeObjectURL(url);
+
+  // Retrasar la revocación de la URL para dar tiempo a Android a escribir el archivo
+  setTimeout(() => {
+    URL.revokeObjectURL(blobUrl);
+    a.remove();
+  }, 3000); // 3 segundos en lugar de 1
+
   closeSaveModal();
 }
+
+// ================= FUNCIÓN PARA COMPARTIR =================
+/**
+ * Comparte el CSV actual usando el menú nativo del dispositivo (WhatsApp, Gmail, etc.)
+ * Si el navegador no soporta compartir archivos, muestra un mensaje alternativo.
+ */
+async function compartirCSV() {
+  // Verificar que no haya errores antes de compartir
+  if (document.getElementById('saveBtn').disabled) {
+    alert('No se puede compartir mientras existan errores en los datos');
+    return;
+  }
+
+  // 1. Verificar si el navegador soporta la API
+  if (!navigator.share) {
+    alert('Tu navegador no soporta la función de compartir. Usa "Guardar CSV" en su lugar.');
+    return;
+  }
+
+  // 2. Preparar el archivo CSV (mismo contenido que al guardar)
+  const csvContent = tableData.map(row => row.join(';')).join('\n');
+  const BOM = '\uFEFF';
+  const csvWithBOM = BOM + csvContent;
+  const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+
+  // 3. Obtener el nombre del archivo (del modal de guardar, si tiene texto)
+  const fileNameInput = document.getElementById('fileNameInputModal')?.value?.trim();
+  const fileName = fileNameInput ? `${fileNameInput}.csv` : 'lista_pasajeros.csv';
+
+  // 4. Crear un objeto File (necesario para compartir archivos)
+  const file = new File([blob], fileName, { type: 'text/csv' });
+
+  // 5. Verificar si se puede compartir el archivo
+  const shareData = {
+    files: [file],
+    title: 'Lista de Pasajeros',
+    text: 'Lista de pasajeros exportada'
+  };
+
+  if (navigator.canShare && navigator.canShare(shareData)) {
+    try {
+      await navigator.share(shareData);
+      console.log('Archivo compartido exitosamente.');
+    } catch (err) {
+      // Si el usuario cancela, no mostrar error
+      if (err.name !== 'AbortError') {
+        console.error('Error al compartir:', err);
+        alert('No se pudo compartir el archivo: ' + err.message);
+      }
+    }
+  } else {
+    // Si no se puede compartir archivos, informar al usuario
+    alert('Tu navegador no permite compartir archivos. Usa "Guardar CSV" en su lugar.');
+  }
+}
+// ===========================================================
